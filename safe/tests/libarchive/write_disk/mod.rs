@@ -1,4 +1,6 @@
-use std::ffi::{c_char, c_int, c_void, CString};
+#![allow(dead_code)]
+
+use std::ffi::{c_int, c_void, CString};
 use std::ptr;
 
 use archive::common::error::{ARCHIVE_EOF, ARCHIVE_OK};

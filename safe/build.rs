@@ -428,12 +428,8 @@ fn main() {
         "unexpected original build contract link libraries"
     );
 
-    let package_metadata = fs::read_to_string(&package_metadata_path).unwrap_or_else(|err| {
-        panic!(
-            "failed to read {}: {err}",
-            package_metadata_path.display()
-        )
-    });
+    let package_metadata = fs::read_to_string(&package_metadata_path)
+        .unwrap_or_else(|err| panic!("failed to read {}: {err}", package_metadata_path.display()));
     assert!(
         package_metadata.contains(&format!("\"package_version\": \"{package_version}\"")),
         "unexpected original package metadata version"
@@ -479,7 +475,12 @@ pub const LIBARCHIVE_LIBTOOL_AGE: u32 = {libtool_age};
     cc::Build::new()
         .file(&variadic_shim)
         .compile("archive_variadic_shim");
-    build_vendored_backend(&manifest_dir, &libarchive_dir, &generated_config_dir, &out_dir);
+    build_vendored_backend(
+        &manifest_dir,
+        &libarchive_dir,
+        &generated_config_dir,
+        &out_dir,
+    );
 
     let target = env::var("TARGET").unwrap_or_default();
     if target.contains("linux") {

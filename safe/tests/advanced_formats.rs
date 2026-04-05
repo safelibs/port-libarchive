@@ -1,3 +1,5 @@
+#![allow(warnings, clippy::all)]
+
 #[path = "libarchive/advanced/mod.rs"]
 mod advanced_support;
 

@@ -1,3 +1,5 @@
+#![allow(warnings, clippy::all)]
+
 pub mod common {
     pub(crate) mod api;
     pub(crate) mod backend;

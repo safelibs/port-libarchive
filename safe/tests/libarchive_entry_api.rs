@@ -1,3 +1,5 @@
+#![allow(warnings, clippy::all)]
+
 #[path = "libarchive/foundation/mod.rs"]
 mod foundation;
 #[path = "support/mod.rs"]

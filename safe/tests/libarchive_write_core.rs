@@ -1,3 +1,5 @@
+#![allow(warnings, clippy::all)]
+
 #[path = "support/mod.rs"]
 mod support;
 #[path = "libarchive/write_disk/mod.rs"]
@@ -100,7 +102,7 @@ fn write_open_callbacks_handle_short_writes() {
 }
 
 #[test]
-fn write_format_name_and_extension_reject_deferred_formats() {
+fn write_format_name_and_extension_accept_supported_formats_and_reject_unknown_ones() {
     unsafe {
         let writer = write::archive_write_new();
         assert!(!writer.is_null());
@@ -113,13 +115,22 @@ fn write_format_name_and_extension_reject_deferred_formats() {
 
         let zip = CString::new("zip").unwrap();
         assert_eq!(
-            ARCHIVE_FATAL,
+            ARCHIVE_OK,
             write::archive_write_set_format_by_name(writer, zip.as_ptr())
+        );
+        let _ = common::archive_write_free(writer);
+
+        let writer = write::archive_write_new();
+        assert!(!writer.is_null());
+        let unknown = CString::new("definitely-not-a-format").unwrap();
+        assert_eq!(
+            ARCHIVE_FATAL,
+            write::archive_write_set_format_by_name(writer, unknown.as_ptr())
         );
         let message = std::ffi::CStr::from_ptr(common::archive_error_string(writer))
             .to_string_lossy()
             .into_owned();
-        assert!(message.contains("No such format 'zip'"));
+        assert!(message.contains("No such format 'definitely-not-a-format'"));
         let _ = common::archive_write_free(writer);
 
         let writer = write::archive_write_new();
@@ -132,13 +143,22 @@ fn write_format_name_and_extension_reject_deferred_formats() {
 
         let zip_ext = CString::new("archive.zip").unwrap();
         assert_eq!(
-            ARCHIVE_FATAL,
+            ARCHIVE_OK,
             write::archive_write_set_format_filter_by_ext(writer, zip_ext.as_ptr())
+        );
+        let _ = common::archive_write_free(writer);
+
+        let writer = write::archive_write_new();
+        assert!(!writer.is_null());
+        let unknown_ext = CString::new("archive.definitely-not-a-format").unwrap();
+        assert_eq!(
+            ARCHIVE_FATAL,
+            write::archive_write_set_format_filter_by_ext(writer, unknown_ext.as_ptr())
         );
         let message = std::ffi::CStr::from_ptr(common::archive_error_string(writer))
             .to_string_lossy()
             .into_owned();
-        assert!(message.contains("No such format 'archive.zip'"));
+        assert!(message.contains("No such format 'archive.definitely-not-a-format'"));
         let _ = common::archive_write_free(writer);
     }
 }

@@ -1,3 +1,8 @@
+#![allow(dead_code)]
+
+pub mod fixtures;
+pub mod upstream;
+
 use std::ffi::{c_char, CStr, CString};
 use std::fs;
 use std::path::{Path, PathBuf};

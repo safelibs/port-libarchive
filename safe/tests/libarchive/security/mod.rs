@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::path::{Path, PathBuf};
 
 use archive::common::error::{ARCHIVE_EOF, ARCHIVE_OK};

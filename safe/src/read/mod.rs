@@ -17,8 +17,8 @@ use crate::common::error::{
 use crate::common::helpers::from_optional_c_str;
 use crate::common::panic_boundary::ffi_int;
 use crate::common::state::{
-    alloc_archive, archive_check_magic, archive_magic, clear_error, core_from_archive, free_archive,
-    read_disk_from_archive, read_from_archive, set_error_string, sync_backend_core,
+    alloc_archive, archive_check_magic, archive_magic, clear_error, core_from_archive,
+    free_archive, read_disk_from_archive, read_from_archive, set_error_string, sync_backend_core,
     ArchiveCloseCallback, ArchiveKind, ArchiveOpenCallback, ArchivePassphraseCallback,
     ArchiveReadCallback, ArchiveSeekCallback, ArchiveSkipCallback, ArchiveSwitchCallback,
     ReadCallbackNode,
@@ -2090,11 +2090,7 @@ pub extern "C" fn archive_read_extract_set_progress_callback(
 }
 
 #[no_mangle]
-pub extern "C" fn archive_read_extract_set_skip_file(
-    a: *mut archive,
-    dev: i64,
-    ino: i64,
-) {
+pub extern "C" fn archive_read_extract_set_skip_file(a: *mut archive, dev: i64, ino: i64) {
     unsafe {
         let Some(handle) = validate_read_with_state(
             a,

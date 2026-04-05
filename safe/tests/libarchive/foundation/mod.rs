@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use archive::entry::EntryHandle;
 use archive::ffi::archive_entry_api as entry_ffi;
 

@@ -78,12 +78,7 @@ const fn linux_ioc(dir: u32, ty: u8, nr: u8, size: usize) -> libc::c_ulong {
 }
 
 const fn fs_ioc_getflags() -> libc::c_ulong {
-    linux_ioc(
-        LINUX_IOC_READ,
-        b'f',
-        1,
-        std::mem::size_of::<libc::c_long>(),
-    )
+    linux_ioc(LINUX_IOC_READ, b'f', 1, std::mem::size_of::<libc::c_long>())
 }
 
 const fn fs_ioc_setflags() -> libc::c_ulong {
@@ -1477,7 +1472,8 @@ fn resolve_write_target(
     create_intermediate: bool,
 ) -> Result<WriteDiskResolvedTarget, c_int> {
     let normalized_path = normalize_write_path(raw_path);
-    if (handle.options & ARCHIVE_EXTRACT_SECURE_NOABSOLUTEPATHS) != 0 && normalized_path.is_absolute()
+    if (handle.options & ARCHIVE_EXTRACT_SECURE_NOABSOLUTEPATHS) != 0
+        && normalized_path.is_absolute()
     {
         return Err(record_error(
             &mut handle.core,
@@ -2761,7 +2757,9 @@ pub(crate) unsafe fn write_disk_data_block(
             };
         }
         if let Some(limit) = current.size_limit {
-            current.written = current.written.max(offset.saturating_add(size as i64).min(limit));
+            current.written = current
+                .written
+                .max(offset.saturating_add(size as i64).min(limit));
         } else {
             current.written = current.written.max(offset.saturating_add(size as i64));
         }

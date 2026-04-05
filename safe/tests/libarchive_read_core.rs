@@ -1,3 +1,5 @@
+#![allow(warnings, clippy::all)]
+
 #[path = "libarchive/read_mainstream/mod.rs"]
 mod read_mainstream_support;
 #[path = "support/mod.rs"]

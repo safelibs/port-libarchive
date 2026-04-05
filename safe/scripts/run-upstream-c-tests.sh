@@ -6,14 +6,20 @@ MANIFEST="$ROOT/generated/test_manifest.json"
 CONTRACT="$ROOT/generated/original_build_contract.json"
 SUITE=""
 PHASE_GROUP=""
+BUILD_DIR=""
+LIB_DIR="$ROOT/target/release"
 LIST_ONLY=0
+BUILD_ONLY=0
+TEST_NAMES=()
 
 usage() {
   cat <<'EOF'
-usage: run-upstream-c-tests.sh [<suite> <phase-group>] [--suite <name>] [--phase-group <name>] [--list]
+usage: run-upstream-c-tests.sh [<suite> [<phase-group>] [<test>...]]
+       [--suite <name>] [--phase-group <name|all>] [--test <name>]
+       [--build-dir <path>] [--lib-dir <path>] [--build-only] [--list]
 
-Build a filtered upstream libarchive test harness using the preserved phase-1
-manifest/build contract artifacts and run only the selected suite/phase-group.
+Build a filtered preserved upstream libarchive test harness and either list,
+build, or run the selected tests. `all` selects the full suite.
 EOF
 }
 
@@ -26,6 +32,22 @@ while (($#)); do
     --phase-group)
       PHASE_GROUP="${2:?missing value for --phase-group}"
       shift 2
+      ;;
+    --build-dir)
+      BUILD_DIR="${2:?missing value for --build-dir}"
+      shift 2
+      ;;
+    --lib-dir)
+      LIB_DIR="${2:?missing value for --lib-dir}"
+      shift 2
+      ;;
+    --test)
+      TEST_NAMES+=("${2:?missing value for --test}")
+      shift 2
+      ;;
+    --build-only)
+      BUILD_ONLY=1
+      shift
       ;;
     --list)
       LIST_ONLY=1
@@ -46,9 +68,7 @@ while (($#)); do
       elif [[ -z "$PHASE_GROUP" ]]; then
         PHASE_GROUP="$1"
       else
-        printf 'unexpected positional argument: %s\n' "$1" >&2
-        usage >&2
-        exit 1
+        TEST_NAMES+=("$1")
       fi
       shift
       ;;
@@ -63,6 +83,11 @@ done
   printf 'missing build contract: %s\n' "$CONTRACT" >&2
   exit 1
 }
+
+if [[ "$PHASE_GROUP" == "all" ]]; then
+  PHASE_GROUP=""
+fi
+PHASE_GROUP_LABEL="${PHASE_GROUP:-all}"
 
 if [[ $LIST_ONLY -eq 1 ]]; then
   python3 - "$MANIFEST" "$SUITE" "$PHASE_GROUP" <<'PY'
@@ -79,7 +104,8 @@ rows = [
     and (not phase_group or row["phase_group"] == phase_group)
 ]
 for row in rows:
-    print(f'{row["suite"]}:{row["define_test"]}:{row["phase_group"]}')
+    phase = row["phase_group"] if row["phase_group"] else "all"
+    print(f'{row["suite"]}:{row["define_test"]}:{phase}')
 PY
   exit 0
 fi
@@ -89,13 +115,27 @@ fi
   usage >&2
   exit 1
 }
-[[ -n "$PHASE_GROUP" ]] || {
-  printf 'phase-group is required\n' >&2
-  usage >&2
-  exit 1
-}
 
-BUILD_DIR="$ROOT/target/upstream-c-tests/${SUITE}-${PHASE_GROUP}"
+case "$SUITE" in
+  libarchive|tar|cpio|cat|unzip)
+    ;;
+  *)
+    printf 'unsupported suite: %s\n' "$SUITE" >&2
+    exit 1
+    ;;
+esac
+
+if [[ -z "$BUILD_DIR" ]]; then
+  BUILD_DIR="$ROOT/target/upstream-c-tests/${SUITE}-${PHASE_GROUP_LABEL}"
+fi
+
+mkdir -p "$(dirname "$BUILD_DIR")"
+BUILD_DIR="$(cd -- "$(dirname "$BUILD_DIR")" && pwd)/$(basename "$BUILD_DIR")"
+
+if [[ "${LIB_DIR:0:1}" != "/" ]]; then
+  LIB_DIR="$(cd -- "$LIB_DIR" && pwd)"
+fi
+
 rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 
@@ -124,10 +164,11 @@ def resolve(path: str) -> Path:
 
 rows = [
     row for row in manifest["rows"]
-    if row["suite"] == suite and row["phase_group"] == phase_group
+    if row["suite"] == suite and (not phase_group or row["phase_group"] == phase_group)
 ]
 if not rows:
-    raise SystemExit(f"no tests selected for suite={suite!r} phase_group={phase_group!r}")
+    label = phase_group or "all"
+    raise SystemExit(f"no tests selected for suite={suite!r} phase_group={label!r}")
 
 selected_names = {row["define_test"] for row in rows}
 selected_sources = []
@@ -167,8 +208,18 @@ PY
 printf 'selected tests:\n'
 sed 's/^/  /' "$BUILD_DIR/tests.txt"
 
-cargo build --release >/dev/null
-"$ROOT/scripts/build-c-frontends.sh" --suite "$SUITE" --build-dir "$BUILD_DIR/frontends"
+if [[ ! -f "$LIB_DIR/libarchive.so" ]]; then
+  if [[ "$LIB_DIR" == "$ROOT/target/release" ]]; then
+    cargo build --release >/dev/null
+  else
+    printf 'missing required shared library: %s\n' "$LIB_DIR/libarchive.so" >&2
+    exit 1
+  fi
+fi
+
+if [[ "$SUITE" != "libarchive" ]]; then
+  "$ROOT/scripts/build-c-frontends.sh" --suite "$SUITE" --build-dir "$BUILD_DIR/frontends" --lib-dir "$LIB_DIR"
+fi
 
 CONFIG_DIR="$ROOT/generated/original_c_build"
 SAFE_INCLUDE_DIR="$ROOT/include"
@@ -176,7 +227,7 @@ LIBARCHIVE_DIR="$ROOT/c_src/libarchive"
 TEST_UTILS_DIR="$ROOT/c_src/test_utils"
 SUITE_DIR="$ROOT/c_src/$SUITE"
 SUITE_TEST_DIR="$SUITE_DIR/test"
-TEST_BIN="$BUILD_DIR/${SUITE}-${PHASE_GROUP}-tests"
+TEST_BIN="$BUILD_DIR/${SUITE}-${PHASE_GROUP_LABEL}-tests"
 CC_BIN="${CC:-cc}"
 
 read -r -a COMMON_FLAG_ARR <<<"${CPPFLAGS:-} ${CFLAGS:-}"
@@ -201,7 +252,15 @@ fi
 
 mapfile -t SELECTED_SOURCES < "$BUILD_DIR/sources.txt"
 
+FRONTEND_BIN=""
+SUPPORT_SOURCES=()
 case "$SUITE" in
+  libarchive)
+    FRONTEND_BIN=""
+    SUPPORT_SOURCES=(
+      "$ROOT/c_src/libarchive/test/read_open_memory.c"
+    )
+    ;;
   tar)
     FRONTEND_BIN="$BUILD_DIR/frontends/bsdtar"
     SUPPORT_SOURCES=()
@@ -223,10 +282,6 @@ case "$SUITE" in
       "$ROOT/c_src/libarchive_fe/err.c"
     )
     ;;
-  *)
-    printf 'unsupported suite: %s\n' "$SUITE" >&2
-    exit 1
-    ;;
 esac
 
 "$CC_BIN" \
@@ -235,26 +290,48 @@ esac
   "$TEST_UTILS_DIR/test_main.c" \
   "${SUPPORT_SOURCES[@]}" \
   "${SELECTED_SOURCES[@]}" \
+  -L"$LIB_DIR" \
+  -larchive \
   "${EXTRA_TEST_LIBS[@]}" \
   "${LDFLAG_ARR[@]}" \
   -o "$TEST_BIN"
 
-EXPECTED_ARCHIVE="$(readlink -f "$ROOT/target/release/libarchive.so.13")"
-RESOLVED_ARCHIVE="$(
-  LD_LIBRARY_PATH="$ROOT/target/release${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
-    ldd "$FRONTEND_BIN" | awk '/libarchive\.so\.13/ {print $3; exit}'
-)"
-if [[ -z "$RESOLVED_ARCHIVE" ]]; then
-  printf 'failed to resolve libarchive.so.13 for %s\n' "$FRONTEND_BIN" >&2
-  exit 1
-fi
-if [[ "$(readlink -f "$RESOLVED_ARCHIVE")" != "$EXPECTED_ARCHIVE" ]]; then
-  printf 'frontend %s resolved libarchive to %s, expected %s\n' \
-    "$FRONTEND_BIN" \
-    "$RESOLVED_ARCHIVE" \
-    "$EXPECTED_ARCHIVE" >&2
-  exit 1
+if [[ $BUILD_ONLY -eq 1 ]]; then
+  exit 0
 fi
 
-LD_LIBRARY_PATH="$ROOT/target/release${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
-  "$TEST_BIN" -p "$FRONTEND_BIN" -r "$SUITE_TEST_DIR" -vv
+if [[ -n "$FRONTEND_BIN" ]]; then
+  EXPECTED_ARCHIVE="$(readlink -f "$LIB_DIR/libarchive.so.13")"
+  RESOLVED_ARCHIVE="$(
+    LD_LIBRARY_PATH="$LIB_DIR${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+      ldd "$FRONTEND_BIN" | awk '/libarchive\.so\.13/ {print $3; exit}'
+  )"
+  if [[ -z "$RESOLVED_ARCHIVE" ]]; then
+    printf 'failed to resolve libarchive.so.13 for %s\n' "$FRONTEND_BIN" >&2
+    exit 1
+  fi
+  if [[ "$(readlink -f "$RESOLVED_ARCHIVE")" != "$EXPECTED_ARCHIVE" ]]; then
+    printf 'frontend %s resolved libarchive to %s, expected %s\n' \
+      "$FRONTEND_BIN" \
+      "$RESOLVED_ARCHIVE" \
+      "$EXPECTED_ARCHIVE" >&2
+    exit 1
+  fi
+fi
+
+COMMAND=("$TEST_BIN")
+if [[ -n "$FRONTEND_BIN" ]]; then
+  COMMAND+=(-p "$FRONTEND_BIN")
+fi
+COMMAND+=(-r "$SUITE_TEST_DIR" -vv)
+if ((${#TEST_NAMES[@]})); then
+  for test_name in "${TEST_NAMES[@]}"; do
+    if ! grep -Fx -- "$test_name" "$BUILD_DIR/tests.txt" >/dev/null 2>&1; then
+      printf 'unknown test for suite %s: %s\n' "$SUITE" "$test_name" >&2
+      exit 1
+    fi
+  done
+  COMMAND+=("${TEST_NAMES[@]}")
+fi
+
+LD_LIBRARY_PATH="$LIB_DIR${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" "${COMMAND[@]}"

@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::ffi::{c_char, c_void, CStr};
 
 use archive::common::error::ARCHIVE_OK;

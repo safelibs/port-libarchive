@@ -1,3 +1,5 @@
+#![allow(warnings, clippy::all)]
+
 #[path = "support/mod.rs"]
 mod support;
 

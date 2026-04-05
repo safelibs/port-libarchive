@@ -729,8 +729,7 @@ impl AclState {
             if (self.acl_types & !ARCHIVE_ENTRY_ACL_TYPE_NFS4) != 0 {
                 return ARCHIVE_FAILED;
             }
-            if (permset & !(ARCHIVE_ENTRY_ACL_PERMS_NFS4 | ARCHIVE_ENTRY_ACL_INHERITANCE_NFS4))
-                != 0
+            if (permset & !(ARCHIVE_ENTRY_ACL_PERMS_NFS4 | ARCHIVE_ENTRY_ACL_INHERITANCE_NFS4)) != 0
             {
                 return ARCHIVE_FAILED;
             }
@@ -1569,9 +1568,8 @@ fn linkify_strategy(format_code: c_int) -> c_int {
     match format_code & ARCHIVE_FORMAT_BASE_MASK {
         ARCHIVE_FORMAT_7ZIP | ARCHIVE_FORMAT_AR | ARCHIVE_FORMAT_ZIP => LINKIFY_LIKE_OLD_CPIO,
         ARCHIVE_FORMAT_CPIO => match format_code {
-            crate::ffi::archive_common::ARCHIVE_FORMAT_CPIO_SVR4_NOCRC | ARCHIVE_FORMAT_CPIO_SVR4_CRC => {
-                LINKIFY_LIKE_NEW_CPIO
-            }
+            crate::ffi::archive_common::ARCHIVE_FORMAT_CPIO_SVR4_NOCRC
+            | ARCHIVE_FORMAT_CPIO_SVR4_CRC => LINKIFY_LIKE_NEW_CPIO,
             _ => LINKIFY_LIKE_OLD_CPIO,
         },
         ARCHIVE_FORMAT_MTREE => LINKIFY_LIKE_MTREE,
