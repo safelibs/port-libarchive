@@ -1,0 +1,184 @@
+{
+  "library": "libarchive",
+  "distribution": "Ubuntu 24.04 LTS (noble)",
+  "collection_date_local": "2026-04-05",
+  "generated_at_utc": "2026-04-05T07:31:47Z",
+  "selection_scope": {
+    "goal": "Curate a diverse, non-exhaustive set of Ubuntu 24.04 repository packages whose runtime behavior directly depends on libarchive.",
+    "selection_policy": [
+      "Prefer direct binary-package dependencies on libarchive13t64 in Ubuntu 24.04.",
+      "Prefer packages from different domains: archive managers, desktop helpers, FUSE tools, media and document plugins, firmware update tooling, package management, libraries, and language bindings.",
+      "Describe the runtime behavior that exercises libarchive, not just the fact that the package depends on it."
+    ],
+    "notes": [
+      "This file focuses on direct runtime dependents because those are the easiest to verify concretely from Noble package metadata and package source.",
+      "The set is intentionally diverse rather than exhaustive."
+    ]
+  },
+  "dependents": [
+    {
+      "binary_package": "file-roller",
+      "source_package": "file-roller",
+      "section": "gnome",
+      "category": "GNOME archive manager",
+      "dependency_kind": "runtime",
+      "direct_dependency": "libarchive13t64",
+      "runtime_functionality": "Uses a libarchive-backed archive class to list, extract, create, update, rename, and remove entries for archive formats handled by libarchive.",
+      "evidence": [
+        "Ubuntu package metadata: file-roller depends on libarchive13t64 and advertises browse, extract, create, and modify archive support.",
+        "file-roller HACKING says src/fr-archive-libarchive.c adds support for archives handled by the libarchive library.",
+        "file-roller src/fr-archive-libarchive.c uses archive_read_* and archive_write_* APIs for listing, extraction, and archive updates."
+      ]
+    },
+    {
+      "binary_package": "ark",
+      "source_package": "ark",
+      "section": "universe/utils",
+      "category": "KDE archive manager",
+      "dependency_kind": "runtime",
+      "direct_dependency": "libarchive13t64",
+      "runtime_functionality": "Handles most of Ark's built-in archive browsing, extraction, creation, and modification paths for libarchive-supported formats such as tar-family archives, rpm, deb, and cab files.",
+      "evidence": [
+        "Ubuntu package metadata: ark depends on libarchive13t64 and describes browse, extract, create, and modify archive support.",
+        "Ark documentation says libarchive 3.1+ is required for most archive types, including tar, compressed tar, rpm, deb, and cab.",
+        "Ark source ships a dedicated libarchive plugin under plugins/libarchive/."
+      ]
+    },
+    {
+      "binary_package": "archivemount",
+      "source_package": "archivemount",
+      "section": "universe/utils",
+      "category": "FUSE archive filesystem",
+      "dependency_kind": "runtime",
+      "direct_dependency": "libarchive13t64",
+      "runtime_functionality": "Mounts supported archives as a FUSE filesystem so other programs can browse and access archive contents without manual extraction.",
+      "evidence": [
+        "Ubuntu package metadata: archivemount depends on libarchive13t64.",
+        "Ubuntu package description says it mounts archives for read/write access as a filesystem and lists libarchive-style formats such as tar, cpio, ISO9660, zip, and shar."
+      ]
+    },
+    {
+      "binary_package": "zathura-cb",
+      "source_package": "zathura-cb",
+      "section": "universe/text",
+      "category": "Document-viewer plugin",
+      "dependency_kind": "runtime",
+      "direct_dependency": "libarchive13t64",
+      "runtime_functionality": "Adds comic-book archive document support to zathura, letting the viewer open comic archives through a libarchive-backed plugin.",
+      "evidence": [
+        "Ubuntu package metadata: zathura-cb depends on libarchive13t64.",
+        "Ubuntu package description identifies it as zathura's comic book archive plugin."
+      ]
+    },
+    {
+      "binary_package": "kodi-vfs-libarchive",
+      "source_package": "kodi-vfs-libarchive",
+      "section": "universe/libs",
+      "category": "Kodi virtual filesystem add-on",
+      "dependency_kind": "runtime",
+      "direct_dependency": "libarchive13t64",
+      "runtime_functionality": "Lets Kodi browse and read archive contents through a libarchive-based VFS add-on.",
+      "evidence": [
+        "Ubuntu package metadata: kodi-vfs-libarchive depends on libarchive13t64.",
+        "Ubuntu package description explicitly says it is a Kodi VFS add-on to support archives and then enumerates libarchive's supported formats and filters."
+      ]
+    },
+    {
+      "binary_package": "gnome-epub-thumbnailer",
+      "source_package": "gnome-epub-thumbnailer",
+      "section": "universe/gnome",
+      "category": "Desktop thumbnailer",
+      "dependency_kind": "runtime",
+      "direct_dependency": "libarchive13t64",
+      "runtime_functionality": "Reads EPUB ZIP containers to pull metadata and image assets needed to generate Nautilus thumbnails for EPUB and MOBI books.",
+      "evidence": [
+        "Ubuntu package metadata: gnome-epub-thumbnailer depends on libarchive13t64 and describes itself as a thumbnailer for EPUB and MOBI books.",
+        "gnome-epub-thumbnailer src/gnome-epub-thumbnailer.c opens the book with archive_read_support_format_zip(), iterates entries, and reads matching files from inside the archive."
+      ]
+    },
+    {
+      "binary_package": "libgepub-0.7-0",
+      "source_package": "libgepub",
+      "section": "universe/libs",
+      "category": "EPUB parsing/rendering library",
+      "dependency_kind": "runtime",
+      "direct_dependency": "libarchive13t64",
+      "runtime_functionality": "Provides EPUB document access by opening the EPUB ZIP container, listing archive members, reading arbitrary entries, and locating META-INF/container.xml.",
+      "evidence": [
+        "Ubuntu package metadata: libgepub-0.7-0 depends on libarchive13t64 and is described as a library to read EPUB files.",
+        "libgepub libgepub/gepub-archive.c uses archive_read_support_format_zip(), archive_read_next_header(), and archive_read_data() to enumerate and read EPUB members."
+      ]
+    },
+    {
+      "binary_package": "libgnome-autoar-0-0",
+      "source_package": "gnome-autoar",
+      "section": "libs",
+      "category": "GNOME archive integration library",
+      "dependency_kind": "runtime",
+      "direct_dependency": "libarchive13t64",
+      "runtime_functionality": "Gives GNOME applications safe, automatic archive extraction and archive creation backed directly by libarchive.",
+      "evidence": [
+        "Ubuntu package metadata: libgnome-autoar-0-0 depends on libarchive13t64 and describes itself as archive integration support for GNOME.",
+        "gnome-autoar README says it provides functions and widgets for GNOME applications that want to use archives.",
+        "gnome-autoar source uses archive_read_* in gnome-autoar/autoar-extractor.c and archive_write_* in gnome-autoar/autoar-compressor.c."
+      ]
+    },
+    {
+      "binary_package": "fwupd",
+      "source_package": "fwupd",
+      "section": "admin",
+      "category": "Firmware update daemon",
+      "dependency_kind": "runtime",
+      "direct_dependency": "libarchive13t64",
+      "runtime_functionality": "Parses cabinet-based firmware update payloads, extracts embedded firmware blobs, and reads update metadata from archive contents during firmware update workflows.",
+      "evidence": [
+        "Ubuntu package metadata: fwupd depends on libarchive13t64.",
+        "fwupd src/fu-cabinet-common.c says fu_cabinet_build_silo creates an AppStream silo from a cabinet archive.",
+        "fwupd libfwupdplugin/fu-archive.c wraps archive_read_* and archive_write_* APIs for in-memory archive parsing and writing.",
+        "fwupd plugin README files, such as plugins/wacom-usb/README.md, describe the daemon decompressing cabinet archives and extracting firmware blobs."
+      ]
+    },
+    {
+      "binary_package": "pacman-package-manager",
+      "source_package": "pacman-package-manager",
+      "section": "universe/admin",
+      "category": "Package manager",
+      "dependency_kind": "runtime",
+      "direct_dependency": "libarchive13t64",
+      "runtime_functionality": "Opens package archives, reads package metadata such as .PKGINFO and .MTREE, builds file lists, and extracts package payloads during package installation and inspection.",
+      "evidence": [
+        "Ubuntu package metadata: pacman-package-manager depends on libarchive13t64.",
+        "pacman lib/libalpm/util.c uses archive_read_new(), archive_read_support_filter_all(), archive_read_support_format_all(), and archive_read_extract() to open and unpack package archives.",
+        "pacman lib/libalpm/be_package.c walks archive entries to parse .PKGINFO, .MTREE, and the packaged file list."
+      ]
+    },
+    {
+      "binary_package": "libextractor-plugin-archive",
+      "source_package": "libextractor",
+      "section": "universe/libs",
+      "category": "Metadata extraction plugin",
+      "dependency_kind": "runtime",
+      "direct_dependency": "libarchive13t64",
+      "runtime_functionality": "Uses libarchive to inspect archive members and report metadata such as embedded filenames and archive format names to libextractor consumers.",
+      "evidence": [
+        "Ubuntu package metadata: libextractor-plugin-archive depends on libarchive13t64 and describes itself as the archive plugin.",
+        "The package description lists the archive formats supported by the libarchive-based plugin.",
+        "libextractor src/plugins/archive_extractor.c uses archive_read_support_filter_all(), archive_read_support_format_all(), archive_read_next_header(), archive_entry_pathname(), and archive_format_name()."
+      ]
+    },
+    {
+      "binary_package": "python3-libarchive-c",
+      "source_package": "python-libarchive-c",
+      "section": "universe/python",
+      "category": "Language binding",
+      "dependency_kind": "runtime",
+      "direct_dependency": "libarchive13t64",
+      "runtime_functionality": "Exposes libarchive archive reading, extraction, and archive writing to Python code through ctypes wrappers such as file_reader(), extract_file(), and file_writer().",
+      "evidence": [
+        "Ubuntu package metadata: python3-libarchive-c depends on libarchive13t64 and describes itself as a Python3 interface to libarchive.",
+        "python-libarchive-c README shows runtime examples for extract_file(), file_reader(), and file_writer().",
+        "python-libarchive-c libarchive/read.py and libarchive/write.py open archives and writers through libarchive-backed FFI calls."
+      ]
+    }
+  ]
+}
