@@ -7,6 +7,7 @@ pub mod common {
     pub mod state;
 }
 
+pub mod algorithms;
 pub mod disk;
 pub mod entry;
 pub mod ffi;

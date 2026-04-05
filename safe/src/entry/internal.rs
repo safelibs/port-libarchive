@@ -71,6 +71,77 @@ pub(crate) const ARCHIVE_ENTRY_ACL_STYLE_MARK_DEFAULT: c_int = 0x0000_0002;
 pub(crate) const ARCHIVE_ENTRY_ACL_STYLE_SEPARATOR_COMMA: c_int = 0x0000_0008;
 pub(crate) const ARCHIVE_ENTRY_ACL_STYLE_COMPACT: c_int = 0x0000_0010;
 
+pub(crate) const ARCHIVE_ENTRY_DIGEST_MD5: c_int = 0x0000_0001;
+pub(crate) const ARCHIVE_ENTRY_DIGEST_RMD160: c_int = 0x0000_0002;
+pub(crate) const ARCHIVE_ENTRY_DIGEST_SHA1: c_int = 0x0000_0003;
+pub(crate) const ARCHIVE_ENTRY_DIGEST_SHA256: c_int = 0x0000_0004;
+pub(crate) const ARCHIVE_ENTRY_DIGEST_SHA384: c_int = 0x0000_0005;
+pub(crate) const ARCHIVE_ENTRY_DIGEST_SHA512: c_int = 0x0000_0006;
+
+#[derive(Clone)]
+pub(crate) struct EntryDigests {
+    pub(crate) md5: [u8; 16],
+    pub(crate) rmd160: [u8; 20],
+    pub(crate) sha1: [u8; 20],
+    pub(crate) sha256: [u8; 32],
+    pub(crate) sha384: [u8; 48],
+    pub(crate) sha512: [u8; 64],
+}
+
+impl Default for EntryDigests {
+    fn default() -> Self {
+        Self {
+            md5: [0; 16],
+            rmd160: [0; 20],
+            sha1: [0; 20],
+            sha256: [0; 32],
+            sha384: [0; 48],
+            sha512: [0; 64],
+        }
+    }
+}
+
+impl EntryDigests {
+    pub(crate) fn get(&self, digest_type: c_int) -> *const c_uchar {
+        match digest_type {
+            ARCHIVE_ENTRY_DIGEST_MD5 => self.md5.as_ptr(),
+            ARCHIVE_ENTRY_DIGEST_RMD160 => self.rmd160.as_ptr(),
+            ARCHIVE_ENTRY_DIGEST_SHA1 => self.sha1.as_ptr(),
+            ARCHIVE_ENTRY_DIGEST_SHA256 => self.sha256.as_ptr(),
+            ARCHIVE_ENTRY_DIGEST_SHA384 => self.sha384.as_ptr(),
+            ARCHIVE_ENTRY_DIGEST_SHA512 => self.sha512.as_ptr(),
+            _ => ptr::null(),
+        }
+    }
+
+    pub(crate) unsafe fn copy_from_ptr(&mut self, digest_type: c_int, digest: *const c_uchar) {
+        if digest.is_null() {
+            return;
+        }
+        match digest_type {
+            ARCHIVE_ENTRY_DIGEST_MD5 => self
+                .md5
+                .copy_from_slice(std::slice::from_raw_parts(digest, 16)),
+            ARCHIVE_ENTRY_DIGEST_RMD160 => self
+                .rmd160
+                .copy_from_slice(std::slice::from_raw_parts(digest, 20)),
+            ARCHIVE_ENTRY_DIGEST_SHA1 => self
+                .sha1
+                .copy_from_slice(std::slice::from_raw_parts(digest, 20)),
+            ARCHIVE_ENTRY_DIGEST_SHA256 => self
+                .sha256
+                .copy_from_slice(std::slice::from_raw_parts(digest, 32)),
+            ARCHIVE_ENTRY_DIGEST_SHA384 => self
+                .sha384
+                .copy_from_slice(std::slice::from_raw_parts(digest, 48)),
+            ARCHIVE_ENTRY_DIGEST_SHA512 => self
+                .sha512
+                .copy_from_slice(std::slice::from_raw_parts(digest, 64)),
+            _ => {}
+        }
+    }
+}
+
 #[derive(Default)]
 pub(crate) struct CachedText {
     value: Option<String>,
@@ -238,9 +309,11 @@ pub(crate) struct ArchiveEntryData {
     pub(crate) symlink_type: c_int,
     pub(crate) data_encrypted: bool,
     pub(crate) metadata_encrypted: bool,
+    pub(crate) digests: EntryDigests,
     pub(crate) mac_metadata: Vec<u8>,
     pub(crate) fflags_set: c_ulong,
     pub(crate) fflags_clear: c_ulong,
+    pub(crate) fflags_text_cache: Option<CString>,
     pub(crate) acl: AclState,
     pub(crate) xattrs: Vec<XattrEntry>,
     pub(crate) xattr_iter: usize,
@@ -279,9 +352,11 @@ impl Clone for ArchiveEntryData {
             symlink_type: self.symlink_type,
             data_encrypted: self.data_encrypted,
             metadata_encrypted: self.metadata_encrypted,
+            digests: self.digests.clone(),
             mac_metadata: self.mac_metadata.clone(),
             fflags_set: self.fflags_set,
             fflags_clear: self.fflags_clear,
+            fflags_text_cache: None,
             acl: self.acl.clone(),
             xattrs: self.xattrs.clone(),
             xattr_iter: 0,
@@ -322,9 +397,11 @@ impl Default for ArchiveEntryData {
             symlink_type: 0,
             data_encrypted: false,
             metadata_encrypted: false,
+            digests: EntryDigests::default(),
             mac_metadata: Vec::new(),
             fflags_set: 0,
             fflags_clear: 0,
+            fflags_text_cache: None,
             acl: AclState::default(),
             xattrs: Vec::new(),
             xattr_iter: 0,
@@ -371,7 +448,9 @@ pub(crate) fn update_text(target: &mut CachedText, value: Option<String>) {
 }
 
 pub(crate) fn update_c_text(target: &mut CachedText, value: *const c_char) {
-    target.set_bytes((!value.is_null()).then(|| unsafe { CStr::from_ptr(value).to_bytes().to_vec() }));
+    target.set_bytes(
+        (!value.is_null()).then(|| unsafe { CStr::from_ptr(value).to_bytes().to_vec() }),
+    );
 }
 
 pub(crate) fn update_wide_text(target: &mut CachedText, value: *const wchar_t) {

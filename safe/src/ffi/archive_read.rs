@@ -46,10 +46,7 @@ unsafe extern "C" {
     pub fn archive_read_support_filter_lzma(a: *mut archive) -> c_int;
     pub fn archive_read_support_filter_lzop(a: *mut archive) -> c_int;
     pub fn archive_read_support_filter_none(a: *mut archive) -> c_int;
-    pub fn archive_read_support_filter_program(
-        a: *mut archive,
-        command: *const c_char,
-    ) -> c_int;
+    pub fn archive_read_support_filter_program(a: *mut archive, command: *const c_char) -> c_int;
     pub fn archive_read_support_filter_program_signature(
         a: *mut archive,
         command: *const c_char,
@@ -84,10 +81,7 @@ unsafe extern "C" {
 
     pub fn archive_read_set_format(a: *mut archive, format_code: c_int) -> c_int;
     pub fn archive_read_append_filter(a: *mut archive, filter_code: c_int) -> c_int;
-    pub fn archive_read_append_filter_program(
-        a: *mut archive,
-        command: *const c_char,
-    ) -> c_int;
+    pub fn archive_read_append_filter_program(a: *mut archive, command: *const c_char) -> c_int;
     pub fn archive_read_append_filter_program_signature(
         a: *mut archive,
         command: *const c_char,
@@ -130,14 +124,8 @@ unsafe extern "C" {
         client_data: *mut c_void,
         index: u32,
     ) -> c_int;
-    pub fn archive_read_append_callback_data(
-        a: *mut archive,
-        client_data: *mut c_void,
-    ) -> c_int;
-    pub fn archive_read_prepend_callback_data(
-        a: *mut archive,
-        client_data: *mut c_void,
-    ) -> c_int;
+    pub fn archive_read_append_callback_data(a: *mut archive, client_data: *mut c_void) -> c_int;
+    pub fn archive_read_prepend_callback_data(a: *mut archive, client_data: *mut c_void) -> c_int;
 
     pub fn archive_read_open1(a: *mut archive) -> c_int;
     pub fn archive_read_open(
@@ -175,11 +163,7 @@ unsafe extern "C" {
         path: *const c_char,
         block_size: size_t,
     ) -> c_int;
-    pub fn archive_read_open_memory(
-        a: *mut archive,
-        buffer: *const c_void,
-        size: size_t,
-    ) -> c_int;
+    pub fn archive_read_open_memory(a: *mut archive, buffer: *const c_void, size: size_t) -> c_int;
     pub fn archive_read_open_memory2(
         a: *mut archive,
         buffer: *const c_void,

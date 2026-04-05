@@ -31,8 +31,7 @@ pub(crate) enum ArchiveKind {
 pub(crate) type ArchiveOpenCallback = unsafe extern "C" fn(*mut archive, *mut c_void) -> c_int;
 pub(crate) type ArchiveReadCallback =
     unsafe extern "C" fn(*mut archive, *mut c_void, *mut *const c_void) -> isize;
-pub(crate) type ArchiveSkipCallback =
-    unsafe extern "C" fn(*mut archive, *mut c_void, i64) -> i64;
+pub(crate) type ArchiveSkipCallback = unsafe extern "C" fn(*mut archive, *mut c_void, i64) -> i64;
 pub(crate) type ArchiveSeekCallback =
     unsafe extern "C" fn(*mut archive, *mut c_void, i64, c_int) -> i64;
 pub(crate) type ArchiveSwitchCallback =
@@ -133,6 +132,7 @@ pub(crate) enum WriteFilterConfig {
 
 #[derive(Clone)]
 pub(crate) enum WriteFormatConfig {
+    SevenZip,
     ArBsd,
     ArSvr4,
     Cpio,
@@ -141,6 +141,9 @@ pub(crate) enum WriteFormatConfig {
     CpioOdc,
     CpioPwb,
     Gnutar,
+    Iso9660,
+    Mtree,
+    MtreeClassic,
     Pax,
     PaxRestricted,
     Raw,
@@ -148,6 +151,8 @@ pub(crate) enum WriteFormatConfig {
     SharDump,
     Ustar,
     V7tar,
+    Warc,
+    Xar,
     Zip,
 }
 
@@ -331,6 +336,8 @@ pub(crate) struct WriteArchiveHandle {
     pub(crate) write_cb: Option<ArchiveWriteCallback>,
     pub(crate) close_cb: Option<ArchiveCloseCallback>,
     pub(crate) free_cb: Option<ArchiveFreeCallback>,
+    pub(crate) passphrase_cb: Option<ArchivePassphraseCallback>,
+    pub(crate) passphrase_client_data: *mut c_void,
     pub(crate) backend_opened: bool,
     pub(crate) bytes_per_block: c_int,
     pub(crate) bytes_in_last_block: c_int,
@@ -472,6 +479,8 @@ pub(crate) fn alloc_archive(kind: ArchiveKind) -> *mut archive {
             write_cb: None,
             close_cb: None,
             free_cb: None,
+            passphrase_cb: None,
+            passphrase_client_data: ptr::null_mut(),
             backend_opened: false,
             bytes_per_block: 10240,
             bytes_in_last_block: -1,

@@ -27,7 +27,11 @@ use crate::common::state::{
     archive_check_magic, clear_error, read_disk_from_archive, write_disk_from_archive,
     ReadDiskOpenPath, ReadDiskSymlinkMode,
 };
-use crate::entry::internal::{clear_entry, from_raw, CachedText, SparseEntry, XattrEntry};
+use crate::entry::internal::{
+    clear_entry, from_raw, CachedText, SparseEntry, XattrEntry, ARCHIVE_ENTRY_DIGEST_MD5,
+    ARCHIVE_ENTRY_DIGEST_RMD160, ARCHIVE_ENTRY_DIGEST_SHA1, ARCHIVE_ENTRY_DIGEST_SHA256,
+    ARCHIVE_ENTRY_DIGEST_SHA384, ARCHIVE_ENTRY_DIGEST_SHA512,
+};
 use crate::ffi::{archive, archive_entry};
 
 fn c_string_opt(value: Option<&str>) -> Option<CString> {
@@ -220,6 +224,11 @@ pub(crate) unsafe fn backend_entry_to_custom(
         );
     }
     (api.archive_entry_fflags)(src, &mut dst_data.fflags_set, &mut dst_data.fflags_clear);
+    let fflags_text = (api.archive_entry_fflags_text)(src);
+    if !fflags_text.is_null() {
+        dst_data.fflags_text_cache =
+            Some(CString::new(CStr::from_ptr(fflags_text).to_bytes()).expect("fflags text"));
+    }
     let mut mac_size = 0usize;
     let mac_ptr = (api.archive_entry_mac_metadata)(src, &mut mac_size);
     if !mac_ptr.is_null() && mac_size != 0 {
@@ -227,6 +236,18 @@ pub(crate) unsafe fn backend_entry_to_custom(
     }
     dst_data.data_encrypted = (api.archive_entry_is_data_encrypted)(src) != 0;
     dst_data.metadata_encrypted = (api.archive_entry_is_metadata_encrypted)(src) != 0;
+    for digest_type in [
+        ARCHIVE_ENTRY_DIGEST_MD5,
+        ARCHIVE_ENTRY_DIGEST_RMD160,
+        ARCHIVE_ENTRY_DIGEST_SHA1,
+        ARCHIVE_ENTRY_DIGEST_SHA256,
+        ARCHIVE_ENTRY_DIGEST_SHA384,
+        ARCHIVE_ENTRY_DIGEST_SHA512,
+    ] {
+        dst_data
+            .digests
+            .copy_from_ptr(digest_type, (api.archive_entry_digest)(src, digest_type));
+    }
 
     let acl_types = (api.archive_entry_acl_types)(src);
     if acl_types != 0 {

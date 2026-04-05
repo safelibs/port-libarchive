@@ -1,9 +1,9 @@
 #[path = "libarchive/read_mainstream/mod.rs"]
 mod read_mainstream_support;
-#[path = "libarchive/write_disk/mod.rs"]
-mod write_disk_support;
 #[path = "support/mod.rs"]
 mod support;
+#[path = "libarchive/write_disk/mod.rs"]
+mod write_disk_support;
 
 use std::ffi::{c_void, CString};
 use std::ptr;
@@ -24,9 +24,8 @@ unsafe fn read_single_pathname(reader: *mut archive::ffi::archive) -> String {
 
 #[test]
 fn reader_open_variants_read_the_same_archive() {
-    let archive = unsafe {
-        write_disk_support::write_single_file_archive("payload.txt", b"hello world")
-    };
+    let archive =
+        unsafe { write_disk_support::write_single_file_archive("payload.txt", b"hello world") };
     let archive_bytes = &archive.buffer[..archive.used];
     let archive_path = support::write_temp_file("read-core.tar", archive_bytes);
     let archive_path_str = archive_path.to_str().expect("utf-8 temp path");
@@ -116,7 +115,10 @@ fn reader_callbacks_option_wrappers_and_callback_data_plumbing_work() {
         assert!(!reader.is_null());
         assert_eq!(ARCHIVE_OK, read::archive_read_support_filter_all(reader));
         assert_eq!(ARCHIVE_OK, read::archive_read_support_format_all(reader));
-        assert_eq!(ARCHIVE_OK, read::archive_read_set_options(reader, c"joliet".as_ptr()));
+        assert_eq!(
+            ARCHIVE_OK,
+            read::archive_read_set_options(reader, c"joliet".as_ptr())
+        );
         assert_eq!(
             ARCHIVE_OK,
             read::archive_read_add_passphrase(reader, c"secret".as_ptr())
@@ -133,15 +135,24 @@ fn reader_callbacks_option_wrappers_and_callback_data_plumbing_work() {
         );
         assert_eq!(
             ARCHIVE_OK,
-            read::archive_read_set_open_callback(reader, Some(read_mainstream_support::open_callback))
+            read::archive_read_set_open_callback(
+                reader,
+                Some(read_mainstream_support::open_callback)
+            )
         );
         assert_eq!(
             ARCHIVE_OK,
-            read::archive_read_set_read_callback(reader, Some(read_mainstream_support::read_callback))
+            read::archive_read_set_read_callback(
+                reader,
+                Some(read_mainstream_support::read_callback)
+            )
         );
         assert_eq!(
             ARCHIVE_OK,
-            read::archive_read_set_skip_callback(reader, Some(read_mainstream_support::skip_callback))
+            read::archive_read_set_skip_callback(
+                reader,
+                Some(read_mainstream_support::skip_callback)
+            )
         );
         assert_eq!(
             ARCHIVE_OK,
@@ -164,7 +175,10 @@ fn reader_callbacks_option_wrappers_and_callback_data_plumbing_work() {
             ARCHIVE_OK,
             read::archive_read_next_header(reader, &mut entry_ptr)
         );
-        assert_eq!("callbacks.txt", read_mainstream_support::entry_pathname(entry_ptr));
+        assert_eq!(
+            "callbacks.txt",
+            read_mainstream_support::entry_pathname(entry_ptr)
+        );
         assert_eq!(ARCHIVE_OK, read::archive_read_data_skip(reader));
         assert_eq!(
             ARCHIVE_EOF,
@@ -189,11 +203,17 @@ fn reader_callbacks_option_wrappers_and_callback_data_plumbing_work() {
         );
         assert_eq!(
             ARCHIVE_OK,
-            read::archive_read_append_callback_data(reader, (&mut third as *mut u8).cast::<c_void>())
+            read::archive_read_append_callback_data(
+                reader,
+                (&mut third as *mut u8).cast::<c_void>()
+            )
         );
         assert_eq!(
             ARCHIVE_OK,
-            read::archive_read_prepend_callback_data(reader, (&mut first as *mut u8).cast::<c_void>())
+            read::archive_read_prepend_callback_data(
+                reader,
+                (&mut first as *mut u8).cast::<c_void>()
+            )
         );
         assert_eq!(
             ARCHIVE_OK,

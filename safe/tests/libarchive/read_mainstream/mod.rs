@@ -57,7 +57,8 @@ pub unsafe extern "C" fn read_callback(
     }
     let end = (state.cursor + state.chunk_size).min(state.bytes.len());
     state.scratch.clear();
-    state.scratch
+    state
+        .scratch
         .extend_from_slice(&state.bytes[state.cursor..end]);
     state.cursor = end;
     state.read_calls += 1;

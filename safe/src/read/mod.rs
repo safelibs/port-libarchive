@@ -1,3 +1,5 @@
+pub mod format;
+
 use std::ffi::{c_char, c_int, c_void, CString};
 use std::ptr;
 
@@ -9,9 +11,8 @@ use crate::common::backend::{
     BackendSwitchCallback,
 };
 use crate::common::error::{
-    ARCHIVE_EOF, ARCHIVE_FAILED, ARCHIVE_FATAL, ARCHIVE_OK, ARCHIVE_READ_MAGIC,
-    ARCHIVE_STATE_DATA, ARCHIVE_STATE_EOF, ARCHIVE_STATE_FATAL, ARCHIVE_STATE_HEADER,
-    ARCHIVE_STATE_NEW, ARCHIVE_WARN,
+    ARCHIVE_EOF, ARCHIVE_FAILED, ARCHIVE_FATAL, ARCHIVE_OK, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_DATA,
+    ARCHIVE_STATE_EOF, ARCHIVE_STATE_FATAL, ARCHIVE_STATE_HEADER, ARCHIVE_STATE_NEW, ARCHIVE_WARN,
 };
 use crate::common::helpers::from_optional_c_str;
 use crate::common::panic_boundary::ffi_int;
@@ -64,7 +65,6 @@ impl<'a> ReadLike<'a> {
             _ => None,
         }
     }
-
 }
 
 fn header_status_has_entry(status: c_int) -> bool {
@@ -182,9 +182,9 @@ unsafe extern "C" fn open_callback_shim(
 ) -> c_int {
     let node = &mut *(client_data as *mut ReadCallbackNode);
     let handle = &mut *node.owner.cast::<crate::common::state::ReadArchiveHandle>();
-    handle
-        .open_cb
-        .map_or(ARCHIVE_OK, |callback| callback(node.owner, node.client_data))
+    handle.open_cb.map_or(ARCHIVE_OK, |callback| {
+        callback(node.owner, node.client_data)
+    })
 }
 
 unsafe extern "C" fn read_callback_shim(
@@ -206,9 +206,9 @@ unsafe extern "C" fn skip_callback_shim(
 ) -> i64 {
     let node = &mut *(client_data as *mut ReadCallbackNode);
     let handle = &mut *node.owner.cast::<crate::common::state::ReadArchiveHandle>();
-    handle
-        .skip_cb
-        .map_or(0, |callback| callback(node.owner, node.client_data, request))
+    handle.skip_cb.map_or(0, |callback| {
+        callback(node.owner, node.client_data, request)
+    })
 }
 
 unsafe extern "C" fn seek_callback_shim(
@@ -230,9 +230,9 @@ unsafe extern "C" fn close_callback_shim(
 ) -> c_int {
     let node = &mut *(client_data as *mut ReadCallbackNode);
     let handle = &mut *node.owner.cast::<crate::common::state::ReadArchiveHandle>();
-    handle
-        .close_cb
-        .map_or(ARCHIVE_OK, |callback| callback(node.owner, node.client_data))
+    handle.close_cb.map_or(ARCHIVE_OK, |callback| {
+        callback(node.owner, node.client_data)
+    })
 }
 
 unsafe extern "C" fn switch_callback_shim(
@@ -253,8 +253,11 @@ unsafe extern "C" fn switch_callback_shim(
     handle.switch_cb.map_or(ARCHIVE_OK, |callback| {
         callback(
             owner,
-            left.as_ref().map_or(ptr::null_mut(), |node| node.client_data),
-            right.as_ref().map_or(ptr::null_mut(), |node| node.client_data),
+            left.as_ref()
+                .map_or(ptr::null_mut(), |node| node.client_data),
+            right
+                .as_ref()
+                .map_or(ptr::null_mut(), |node| node.client_data),
         )
     })
 }
@@ -316,8 +319,7 @@ unsafe fn update_backend_read_callbacks(
     rv = (backend_api().archive_read_set_skip_callback)(
         handle.backend,
         handle.skip_cb.map(|_| {
-            skip_callback_shim
-                as unsafe extern "C" fn(*mut BackendArchive, *mut c_void, i64) -> i64
+            skip_callback_shim as unsafe extern "C" fn(*mut BackendArchive, *mut c_void, i64) -> i64
         }),
     );
     if rv != ARCHIVE_OK {
@@ -326,8 +328,7 @@ unsafe fn update_backend_read_callbacks(
     rv = (backend_api().archive_read_set_close_callback)(
         handle.backend,
         handle.close_cb.map(|_| {
-            close_callback_shim
-                as unsafe extern "C" fn(*mut BackendArchive, *mut c_void) -> c_int
+            close_callback_shim as unsafe extern "C" fn(*mut BackendArchive, *mut c_void) -> c_int
         }),
     );
     if rv != ARCHIVE_OK {
@@ -342,7 +343,10 @@ unsafe fn update_backend_read_callbacks(
     )
 }
 
-unsafe fn new_callback_node(owner: *mut archive, client_data: *mut c_void) -> Box<ReadCallbackNode> {
+unsafe fn new_callback_node(
+    owner: *mut archive,
+    client_data: *mut c_void,
+) -> Box<ReadCallbackNode> {
     Box::new(ReadCallbackNode { owner, client_data })
 }
 
@@ -361,7 +365,9 @@ unsafe fn set_callback_node(
             );
             return ARCHIVE_FATAL;
         }
-        handle.callback_nodes.push(new_callback_node(owner, client_data));
+        handle
+            .callback_nodes
+            .push(new_callback_node(owner, client_data));
     } else if index >= handle.callback_nodes.len() {
         set_error_string(
             &mut handle.core,
@@ -494,11 +500,21 @@ pub extern "C" fn backend_archive_read_support_format_by_code(
 ) -> c_int {
     unsafe {
         match format_code & ARCHIVE_FORMAT_BASE_MASK {
+            ARCHIVE_FORMAT_7ZIP => (backend_api().archive_read_support_format_7zip)(a),
             ARCHIVE_FORMAT_AR => (backend_api().archive_read_support_format_ar)(a),
+            ARCHIVE_FORMAT_CAB => (backend_api().archive_read_support_format_cab)(a),
             ARCHIVE_FORMAT_CPIO => (backend_api().archive_read_support_format_cpio)(a),
             ARCHIVE_FORMAT_EMPTY => (backend_api().archive_read_support_format_empty)(a),
+            ARCHIVE_FORMAT_ISO9660 => (backend_api().archive_read_support_format_iso9660)(a),
+            ARCHIVE_FORMAT_LHA => (backend_api().archive_read_support_format_lha)(a),
+            ARCHIVE_FORMAT_MTREE => (backend_api().archive_read_support_format_mtree)(a),
+            ARCHIVE_FORMAT_RAR => (backend_api().archive_read_support_format_rar)(a),
+            ARCHIVE_FORMAT_RAR_V5 => (backend_api().archive_read_support_format_rar5)(a),
             ARCHIVE_FORMAT_RAW => (backend_api().archive_read_support_format_raw)(a),
             ARCHIVE_FORMAT_TAR => (backend_api().archive_read_support_format_tar)(a),
+            ARCHIVE_FORMAT_WARC => (backend_api().archive_read_support_format_warc)(a),
+            ARCHIVE_FORMAT_XAR => (backend_api().archive_read_support_format_xar)(a),
+            ARCHIVE_FORMAT_ZIP => (backend_api().archive_read_support_format_zip)(a),
             _ => ARCHIVE_FATAL,
         }
     }
@@ -509,7 +525,8 @@ macro_rules! backend_reader_filter_support {
         #[no_mangle]
         pub extern "C" fn $name(a: *mut archive) -> c_int {
             ffi_int(ARCHIVE_FATAL, || unsafe {
-                let Some(handle) = validate_read_with_state(a, stringify!($name), ARCHIVE_STATE_NEW)
+                let Some(handle) =
+                    validate_read_with_state(a, stringify!($name), ARCHIVE_STATE_NEW)
                 else {
                     return ARCHIVE_FATAL;
                 };
@@ -532,7 +549,8 @@ macro_rules! backend_reader_format_support {
         #[no_mangle]
         pub extern "C" fn $name(a: *mut archive) -> c_int {
             ffi_int(ARCHIVE_FATAL, || unsafe {
-                let Some(handle) = validate_read_with_state(a, stringify!($name), ARCHIVE_STATE_NEW)
+                let Some(handle) =
+                    validate_read_with_state(a, stringify!($name), ARCHIVE_STATE_NEW)
                 else {
                     return ARCHIVE_FATAL;
                 };
@@ -555,7 +573,8 @@ macro_rules! placeholder_reader_format_support {
         #[no_mangle]
         pub extern "C" fn $name(a: *mut archive) -> c_int {
             ffi_int(ARCHIVE_FATAL, || unsafe {
-                let Some(handle) = validate_read_with_state(a, stringify!($name), ARCHIVE_STATE_NEW)
+                let Some(handle) =
+                    validate_read_with_state(a, stringify!($name), ARCHIVE_STATE_NEW)
                 else {
                     return ARCHIVE_FATAL;
                 };
@@ -565,7 +584,10 @@ macro_rules! placeholder_reader_format_support {
     };
 }
 
-backend_reader_filter_support!(archive_read_support_filter_all, archive_read_support_filter_all);
+backend_reader_filter_support!(
+    archive_read_support_filter_all,
+    archive_read_support_filter_all
+);
 backend_reader_filter_support!(
     archive_read_support_filter_none,
     archive_read_support_filter_none
@@ -590,7 +612,10 @@ backend_reader_filter_support!(
     archive_read_support_filter_lrzip,
     archive_read_support_filter_lrzip
 );
-backend_reader_filter_support!(archive_read_support_filter_lz4, archive_read_support_filter_lz4);
+backend_reader_filter_support!(
+    archive_read_support_filter_lz4,
+    archive_read_support_filter_lz4
+);
 backend_reader_filter_support!(
     archive_read_support_filter_lzip,
     archive_read_support_filter_lzip
@@ -603,15 +628,27 @@ backend_reader_filter_support!(
     archive_read_support_filter_lzop,
     archive_read_support_filter_lzop
 );
-backend_reader_filter_support!(archive_read_support_filter_rpm, archive_read_support_filter_rpm);
-backend_reader_filter_support!(archive_read_support_filter_uu, archive_read_support_filter_uu);
-backend_reader_filter_support!(archive_read_support_filter_xz, archive_read_support_filter_xz);
+backend_reader_filter_support!(
+    archive_read_support_filter_rpm,
+    archive_read_support_filter_rpm
+);
+backend_reader_filter_support!(
+    archive_read_support_filter_uu,
+    archive_read_support_filter_uu
+);
+backend_reader_filter_support!(
+    archive_read_support_filter_xz,
+    archive_read_support_filter_xz
+);
 backend_reader_filter_support!(
     archive_read_support_filter_zstd,
     archive_read_support_filter_zstd
 );
 
-backend_reader_format_support!(archive_read_support_format_ar, archive_read_support_format_ar);
+backend_reader_format_support!(
+    archive_read_support_format_ar,
+    archive_read_support_format_ar
+);
 backend_reader_format_support!(
     archive_read_support_format_cpio,
     archive_read_support_format_cpio
@@ -624,50 +661,55 @@ backend_reader_format_support!(
     archive_read_support_format_gnutar,
     archive_read_support_format_gnutar
 );
-backend_reader_format_support!(archive_read_support_format_raw, archive_read_support_format_raw);
-backend_reader_format_support!(archive_read_support_format_tar, archive_read_support_format_tar);
+backend_reader_format_support!(
+    archive_read_support_format_raw,
+    archive_read_support_format_raw
+);
+backend_reader_format_support!(
+    archive_read_support_format_tar,
+    archive_read_support_format_tar
+);
 
-placeholder_reader_format_support!(
+backend_reader_format_support!(
     archive_read_support_format_7zip,
-    PLACEHOLDER_FORMAT_7ZIP,
-    "7zip"
+    archive_read_support_format_7zip
 );
-placeholder_reader_format_support!(
+backend_reader_format_support!(
     archive_read_support_format_cab,
-    PLACEHOLDER_FORMAT_CAB,
-    "cab"
+    archive_read_support_format_cab
 );
-placeholder_reader_format_support!(
+backend_reader_format_support!(
     archive_read_support_format_iso9660,
-    PLACEHOLDER_FORMAT_ISO9660,
-    "iso9660"
+    archive_read_support_format_iso9660
 );
-placeholder_reader_format_support!(
+backend_reader_format_support!(
     archive_read_support_format_lha,
-    PLACEHOLDER_FORMAT_LHA,
-    "lha"
+    archive_read_support_format_lha
 );
-placeholder_reader_format_support!(
+backend_reader_format_support!(
     archive_read_support_format_mtree,
-    PLACEHOLDER_FORMAT_MTREE,
-    "mtree"
+    archive_read_support_format_mtree
 );
-backend_reader_format_support!(archive_read_support_format_rar, archive_read_support_format_rar);
+backend_reader_format_support!(
+    archive_read_support_format_warc,
+    archive_read_support_format_warc
+);
+backend_reader_format_support!(
+    archive_read_support_format_xar,
+    archive_read_support_format_xar
+);
+backend_reader_format_support!(
+    archive_read_support_format_rar,
+    archive_read_support_format_rar
+);
 backend_reader_format_support!(
     archive_read_support_format_rar5,
     archive_read_support_format_rar5
 );
-placeholder_reader_format_support!(
-    archive_read_support_format_warc,
-    PLACEHOLDER_FORMAT_WARC,
-    "warc"
+backend_reader_format_support!(
+    archive_read_support_format_zip,
+    archive_read_support_format_zip
 );
-placeholder_reader_format_support!(
-    archive_read_support_format_xar,
-    PLACEHOLDER_FORMAT_XAR,
-    "xar"
-);
-backend_reader_format_support!(archive_read_support_format_zip, archive_read_support_format_zip);
 backend_reader_format_support!(
     archive_read_support_format_zip_streamable,
     archive_read_support_format_zip_streamable
@@ -746,7 +788,10 @@ pub extern "C" fn archive_read_support_compression_xz(a: *mut archive) -> c_int 
 }
 
 #[no_mangle]
-pub extern "C" fn archive_read_support_filter_by_code(a: *mut archive, filter_code: c_int) -> c_int {
+pub extern "C" fn archive_read_support_filter_by_code(
+    a: *mut archive,
+    filter_code: c_int,
+) -> c_int {
     ffi_int(ARCHIVE_FATAL, || unsafe {
         let Some(handle) =
             validate_read_with_state(a, "archive_read_support_filter_by_code", ARCHIVE_STATE_NEW)
@@ -759,7 +804,8 @@ pub extern "C" fn archive_read_support_filter_by_code(a: *mut archive, filter_co
             return status;
         }
         clear_backend_error(handle);
-        let status = (backend_api().archive_read_support_filter_by_code)(handle.backend, filter_code);
+        let status =
+            (backend_api().archive_read_support_filter_by_code)(handle.backend, filter_code);
         sync_backend_core(a);
         status
     })
@@ -906,23 +952,14 @@ pub extern "C" fn archive_read_set_format(a: *mut archive, format_code: c_int) -
             return ARCHIVE_FATAL;
         };
         clear_error(&mut handle.core);
-        match format_code & ARCHIVE_FORMAT_BASE_MASK {
-            ARCHIVE_FORMAT_AR
-            | ARCHIVE_FORMAT_CPIO
-            | ARCHIVE_FORMAT_EMPTY
-            | ARCHIVE_FORMAT_RAW
-            | ARCHIVE_FORMAT_TAR => {
-                let status = ensure_read_backend(handle);
-                if status != ARCHIVE_OK {
-                    return status;
-                }
-                clear_backend_error(handle);
-                let status = (backend_api().archive_read_set_format)(handle.backend, format_code);
-                sync_backend_core(a);
-                status
-            }
-            _ => archive_read_support_format_by_code(a, format_code),
+        let status = ensure_read_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
         }
+        clear_backend_error(handle);
+        let status = (backend_api().archive_read_set_format)(handle.backend, format_code);
+        sync_backend_core(a);
+        status
     })
 }
 
@@ -952,11 +989,9 @@ pub extern "C" fn archive_read_append_filter_program(
     command: *const c_char,
 ) -> c_int {
     ffi_int(ARCHIVE_FATAL, || unsafe {
-        let Some(handle) = validate_read_with_state(
-            a,
-            "archive_read_append_filter_program",
-            ARCHIVE_STATE_NEW,
-        ) else {
+        let Some(handle) =
+            validate_read_with_state(a, "archive_read_append_filter_program", ARCHIVE_STATE_NEW)
+        else {
             return ARCHIVE_FATAL;
         };
         clear_error(&mut handle.core);
@@ -1100,7 +1135,10 @@ pub extern "C" fn archive_read_set_switch_callback(
 }
 
 #[no_mangle]
-pub extern "C" fn archive_read_set_callback_data(a: *mut archive, client_data: *mut c_void) -> c_int {
+pub extern "C" fn archive_read_set_callback_data(
+    a: *mut archive,
+    client_data: *mut c_void,
+) -> c_int {
     ffi_int(ARCHIVE_FATAL, || unsafe {
         let Some(handle) =
             validate_read_with_state(a, "archive_read_set_callback_data", ARCHIVE_STATE_NEW)
@@ -1329,8 +1367,7 @@ pub extern "C" fn archive_read_open_file(
     block_size: size_t,
 ) -> c_int {
     ffi_int(ARCHIVE_FATAL, || unsafe {
-        let Some(handle) =
-            validate_read_with_state(a, "archive_read_open_file", ARCHIVE_STATE_NEW)
+        let Some(handle) = validate_read_with_state(a, "archive_read_open_file", ARCHIVE_STATE_NEW)
         else {
             return ARCHIVE_FATAL;
         };
@@ -1363,8 +1400,7 @@ pub extern "C" fn archive_read_open_filenames(
             return status;
         }
         clear_backend_error(handle);
-        let status =
-            (backend_api().archive_read_open_filenames)(handle.backend, paths, block_size);
+        let status = (backend_api().archive_read_open_filenames)(handle.backend, paths, block_size);
         finish_reader_status(a, handle, status)
     })
 }
@@ -1393,14 +1429,9 @@ pub extern "C" fn archive_read_open_filename_w(
 }
 
 #[no_mangle]
-pub extern "C" fn archive_read_open_fd(
-    a: *mut archive,
-    fd: c_int,
-    block_size: size_t,
-) -> c_int {
+pub extern "C" fn archive_read_open_fd(a: *mut archive, fd: c_int, block_size: size_t) -> c_int {
     ffi_int(ARCHIVE_FATAL, || unsafe {
-        let Some(handle) =
-            validate_read_with_state(a, "archive_read_open_fd", ARCHIVE_STATE_NEW)
+        let Some(handle) = validate_read_with_state(a, "archive_read_open_fd", ARCHIVE_STATE_NEW)
         else {
             return ARCHIVE_FATAL;
         };
@@ -1418,8 +1449,7 @@ pub extern "C" fn archive_read_open_fd(
 #[no_mangle]
 pub extern "C" fn archive_read_open_FILE(a: *mut archive, file: *mut libc::FILE) -> c_int {
     ffi_int(ARCHIVE_FATAL, || unsafe {
-        let Some(handle) =
-            validate_read_with_state(a, "archive_read_open_FILE", ARCHIVE_STATE_NEW)
+        let Some(handle) = validate_read_with_state(a, "archive_read_open_FILE", ARCHIVE_STATE_NEW)
         else {
             return ARCHIVE_FATAL;
         };
@@ -1475,7 +1505,7 @@ pub extern "C" fn archive_read_next_header(
                 let status =
                     (backend_api().archive_read_next_header)(reader.backend, &mut backend_entry);
                 reader.current_entry = backend_entry;
-                if header_status_has_entry(status) && !backend_entry.is_null() {
+                if !backend_entry.is_null() {
                     let convert_status = backend_entry_to_custom(backend_entry, reader.entry);
                     if convert_status != ARCHIVE_OK {
                         return convert_status;
@@ -1541,7 +1571,7 @@ pub extern "C" fn archive_read_next_header2(a: *mut archive, entry: *mut archive
                 let status =
                     (backend_api().archive_read_next_header)(reader.backend, &mut backend_entry);
                 reader.current_entry = backend_entry;
-                if header_status_has_entry(status) && !backend_entry.is_null() {
+                if !backend_entry.is_null() {
                     let convert_status = backend_entry_to_custom(backend_entry, entry);
                     if convert_status != ARCHIVE_OK {
                         return convert_status;
@@ -1745,16 +1775,16 @@ pub extern "C" fn archive_read_set_format_option(
     value: *const c_char,
 ) -> c_int {
     ffi_int(ARCHIVE_FATAL, || unsafe {
-        let Some(handle) = validate_read_with_state(
-            a,
-            "archive_read_set_format_option",
-            ARCHIVE_STATE_NEW,
-        ) else {
+        let Some(handle) =
+            validate_read_with_state(a, "archive_read_set_format_option", ARCHIVE_STATE_NEW)
+        else {
             return ARCHIVE_FATAL;
         };
-        if let Some(status) =
-            emulate_placeholder_format_option(handle, from_optional_c_str(module).as_deref(), from_optional_c_str(option).as_deref())
-        {
+        if let Some(status) = emulate_placeholder_format_option(
+            handle,
+            from_optional_c_str(module).as_deref(),
+            from_optional_c_str(option).as_deref(),
+        ) {
             clear_backend_error(handle);
             return status;
         }
@@ -1779,11 +1809,9 @@ pub extern "C" fn archive_read_set_filter_option(
     value: *const c_char,
 ) -> c_int {
     ffi_int(ARCHIVE_FATAL, || unsafe {
-        let Some(handle) = validate_read_with_state(
-            a,
-            "archive_read_set_filter_option",
-            ARCHIVE_STATE_NEW,
-        ) else {
+        let Some(handle) =
+            validate_read_with_state(a, "archive_read_set_filter_option", ARCHIVE_STATE_NEW)
+        else {
             return ARCHIVE_FATAL;
         };
         clear_error(&mut handle.core);
@@ -1812,9 +1840,11 @@ pub extern "C" fn archive_read_set_option(
         else {
             return ARCHIVE_FATAL;
         };
-        if let Some(status) =
-            emulate_placeholder_format_option(handle, from_optional_c_str(module).as_deref(), from_optional_c_str(option).as_deref())
-        {
+        if let Some(status) = emulate_placeholder_format_option(
+            handle,
+            from_optional_c_str(module).as_deref(),
+            from_optional_c_str(option).as_deref(),
+        ) {
             clear_backend_error(handle);
             return status;
         }
@@ -1838,9 +1868,10 @@ pub extern "C" fn archive_read_set_options(a: *mut archive, options: *const c_ch
         else {
             return ARCHIVE_FATAL;
         };
-        if let Some(status) =
-            emulate_placeholder_format_options_string(handle, from_optional_c_str(options).as_deref())
-        {
+        if let Some(status) = emulate_placeholder_format_options_string(
+            handle,
+            from_optional_c_str(options).as_deref(),
+        ) {
             clear_backend_error(handle);
             return status;
         }
@@ -1857,10 +1888,7 @@ pub extern "C" fn archive_read_set_options(a: *mut archive, options: *const c_ch
 }
 
 #[no_mangle]
-pub extern "C" fn archive_read_add_passphrase(
-    a: *mut archive,
-    passphrase: *const c_char,
-) -> c_int {
+pub extern "C" fn archive_read_add_passphrase(a: *mut archive, passphrase: *const c_char) -> c_int {
     ffi_int(ARCHIVE_FATAL, || unsafe {
         let Some(handle) =
             validate_read_with_state(a, "archive_read_add_passphrase", ARCHIVE_STATE_NEW)
@@ -1886,11 +1914,9 @@ pub extern "C" fn archive_read_set_passphrase_callback(
     callback: Option<ArchivePassphraseCallback>,
 ) -> c_int {
     ffi_int(ARCHIVE_FATAL, || unsafe {
-        let Some(handle) = validate_read_with_state(
-            a,
-            "archive_read_set_passphrase_callback",
-            ARCHIVE_STATE_NEW,
-        ) else {
+        let Some(handle) =
+            validate_read_with_state(a, "archive_read_set_passphrase_callback", ARCHIVE_STATE_NEW)
+        else {
             return ARCHIVE_FATAL;
         };
         handle.passphrase_client_data = client_data;

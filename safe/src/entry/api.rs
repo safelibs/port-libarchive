@@ -10,9 +10,8 @@ use crate::entry::internal::{
     free_linkresolver, free_raw_entry, from_raw, linkify, materialize_stat, new_raw_entry,
     next_sparse, next_xattr, partial_links, reset_sparse, reset_xattrs, set_filetype,
     set_link_target, set_link_target_bytes, set_mode, set_perm, sparse_count, strmode,
-    update_c_text, update_text, update_wide_text,
-    AclState, ArchiveEntryData, LinkResolverData, AE_IFMT,
-    ARCHIVE_ENTRY_ACL_ENTRY_DIRECTORY_INHERIT, ARCHIVE_ENTRY_ACL_ENTRY_FAILED_ACCESS,
+    update_c_text, update_text, update_wide_text, AclState, ArchiveEntryData, LinkResolverData,
+    AE_IFMT, ARCHIVE_ENTRY_ACL_ENTRY_DIRECTORY_INHERIT, ARCHIVE_ENTRY_ACL_ENTRY_FAILED_ACCESS,
     ARCHIVE_ENTRY_ACL_ENTRY_FILE_INHERIT, ARCHIVE_ENTRY_ACL_ENTRY_INHERITED,
     ARCHIVE_ENTRY_ACL_ENTRY_INHERIT_ONLY, ARCHIVE_ENTRY_ACL_ENTRY_NO_PROPAGATE_INHERIT,
     ARCHIVE_ENTRY_ACL_ENTRY_SUCCESSFUL_ACCESS, ARCHIVE_ENTRY_ACL_EXECUTE, ARCHIVE_ENTRY_ACL_READ,
@@ -21,7 +20,9 @@ use crate::entry::internal::{
     ARCHIVE_ENTRY_ACL_TYPE_ACCESS, ARCHIVE_ENTRY_ACL_TYPE_ALLOW, ARCHIVE_ENTRY_ACL_TYPE_DEFAULT,
     ARCHIVE_ENTRY_ACL_TYPE_DENY, ARCHIVE_ENTRY_ACL_WRITE, ARCHIVE_ENTRY_ACL_WRITE_ACL,
     ARCHIVE_ENTRY_ACL_WRITE_ATTRIBUTES, ARCHIVE_ENTRY_ACL_WRITE_DATA,
-    ARCHIVE_ENTRY_ACL_WRITE_NAMED_ATTRS, ARCHIVE_ENTRY_ACL_WRITE_OWNER,
+    ARCHIVE_ENTRY_ACL_WRITE_NAMED_ATTRS, ARCHIVE_ENTRY_ACL_WRITE_OWNER, ARCHIVE_ENTRY_DIGEST_MD5,
+    ARCHIVE_ENTRY_DIGEST_RMD160, ARCHIVE_ENTRY_DIGEST_SHA1, ARCHIVE_ENTRY_DIGEST_SHA256,
+    ARCHIVE_ENTRY_DIGEST_SHA384, ARCHIVE_ENTRY_DIGEST_SHA512,
 };
 use crate::ffi::{archive, archive_acl, archive_entry, archive_entry_linkresolver};
 
@@ -52,6 +53,9 @@ fn parse_fflags_text(text: &str) -> (c_ulong, c_ulong) {
     const FS_IMMUTABLE_FL: c_ulong = 0x0000_0010;
     const FS_NODUMP_FL: c_ulong = 0x0000_0040;
     const FS_UNRM_FL: c_ulong = 0x0000_0002;
+    const FILE_ATTRIBUTE_READONLY: c_ulong = 0x0000_0001;
+    const FILE_ATTRIBUTE_HIDDEN: c_ulong = 0x0000_0002;
+    const FILE_ATTRIBUTE_SYSTEM: c_ulong = 0x0000_0004;
 
     let mut set = 0;
     let mut clear = 0;
@@ -60,23 +64,51 @@ fn parse_fflags_text(text: &str) -> (c_ulong, c_ulong) {
         .map(str::trim)
         .filter(|token| !token.is_empty())
     {
-        let (negated, name) = token
-            .strip_prefix("no")
-            .map_or((false, token), |name| (true, name));
-        let bit = match name {
-            "sappnd" | "uappnd" => FS_APPEND_FL,
-            "schg" | "uchg" => FS_IMMUTABLE_FL,
-            "dump" => FS_NODUMP_FL,
-            "undel" | "uunlink" => FS_UNRM_FL,
-            _ => 0,
+        let (set_name, bit) = match token {
+            "sappnd" | "uappnd" => (true, FS_APPEND_FL),
+            "schg" | "uchg" => (true, FS_IMMUTABLE_FL),
+            "dump" => (true, FS_NODUMP_FL),
+            "undel" | "uunlink" => (true, FS_UNRM_FL),
+            "hidden" | "uhidden" => (true, FILE_ATTRIBUTE_HIDDEN),
+            "rdonly" | "urdonly" | "readonly" => (true, FILE_ATTRIBUTE_READONLY),
+            "system" | "usystem" => (true, FILE_ATTRIBUTE_SYSTEM),
+            "nosappnd" | "nouappnd" => (false, FS_APPEND_FL),
+            "noschg" | "nouchg" => (false, FS_IMMUTABLE_FL),
+            "nodump" => (false, FS_NODUMP_FL),
+            "noundel" | "nouunlink" => (false, FS_UNRM_FL),
+            "nohidden" | "nouhidden" => (false, FILE_ATTRIBUTE_HIDDEN),
+            "nordonly" | "nourdonly" | "noreadonly" => (false, FILE_ATTRIBUTE_READONLY),
+            "nosystem" | "nousystem" => (false, FILE_ATTRIBUTE_SYSTEM),
+            _ => continue,
         };
-        if negated {
-            clear |= bit;
-        } else {
+        if set_name {
             set |= bit;
+        } else {
+            clear |= bit;
         }
     }
     (set, clear)
+}
+
+fn format_fflags_text(set: c_ulong, clear: c_ulong) -> Option<String> {
+    let names = [
+        ("sappnd", "nosappnd", 0x0000_0020),
+        ("schg", "noschg", 0x0000_0010),
+        ("dump", "nodump", 0x0000_0040),
+        ("rdonly", "nordonly", 0x0000_0001),
+        ("hidden", "nohidden", 0x0000_0002),
+        ("system", "nosystem", 0x0000_0004),
+    ];
+    let mut parts = Vec::new();
+    for (set_name, clear_name, bit) in names {
+        if set & bit != 0 {
+            parts.push(set_name);
+        }
+        if clear & bit != 0 {
+            parts.push(clear_name);
+        }
+    }
+    (!parts.is_empty()).then(|| parts.join(","))
 }
 
 #[no_mangle]
@@ -328,8 +360,27 @@ pub unsafe extern "C" fn archive_entry_fflags(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_entry_fflags_text(_entry: *mut archive_entry) -> *const c_char {
-    ptr::null()
+pub unsafe extern "C" fn archive_entry_fflags_text(entry: *mut archive_entry) -> *const c_char {
+    let Some(entry_data) = from_raw(entry) else {
+        return ptr::null();
+    };
+    if let Some(text) = entry_data.fflags_text_cache.as_ref() {
+        return text.as_ptr();
+    }
+    if entry_data.fflags_set == 0 && entry_data.fflags_clear == 0 {
+        return ptr::null();
+    }
+    if entry_data.fflags_text_cache.is_none() {
+        let Some(text) = format_fflags_text(entry_data.fflags_set, entry_data.fflags_clear) else {
+            return ptr::null();
+        };
+        entry_data.fflags_text_cache =
+            Some(std::ffi::CString::new(text).expect("fflags text must not contain interior NUL"));
+    }
+    entry_data
+        .fflags_text_cache
+        .as_ref()
+        .map_or(ptr::null(), |text| text.as_ptr())
 }
 
 #[no_mangle]
@@ -341,6 +392,7 @@ pub unsafe extern "C" fn archive_entry_set_fflags(
     if let Some(entry_data) = from_raw(entry) {
         entry_data.fflags_set = set;
         entry_data.fflags_clear = clear;
+        entry_data.fflags_text_cache = None;
     }
 }
 
@@ -353,6 +405,7 @@ pub unsafe extern "C" fn archive_entry_copy_fflags_text(
         let (set, clear) = parse_fflags_text(&from_optional_c_str(text).unwrap_or_default());
         entry_data.fflags_set = set;
         entry_data.fflags_clear = clear;
+        entry_data.fflags_text_cache = None;
     }
     ptr::null()
 }
@@ -366,6 +419,7 @@ pub unsafe extern "C" fn archive_entry_copy_fflags_text_w(
         let (set, clear) = parse_fflags_text(&from_optional_wide(text).unwrap_or_default());
         entry_data.fflags_set = set;
         entry_data.fflags_clear = clear;
+        entry_data.fflags_text_cache = None;
     }
     ptr::null()
 }
@@ -732,10 +786,13 @@ pub unsafe extern "C" fn archive_entry_strmode(entry: *mut archive_entry) -> *co
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_digest(
-    _entry: *mut archive_entry,
-    _digest_type: c_int,
+    entry: *mut archive_entry,
+    digest_type: c_int,
 ) -> *const c_uchar {
-    ptr::null()
+    let Some(entry_data) = from_raw(entry) else {
+        return ptr::null();
+    };
+    entry_data.digests.get(digest_type)
 }
 
 #[no_mangle]

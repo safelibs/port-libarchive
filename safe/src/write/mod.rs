@@ -1,3 +1,5 @@
+pub mod format;
+
 use std::ffi::{c_char, c_int, c_void, CString};
 use std::ptr;
 
@@ -10,8 +12,8 @@ use crate::common::panic_boundary::ffi_int;
 use crate::common::state::{
     archive_check_magic, archive_magic, clear_error, set_error_string, sync_backend_core,
     write_disk_from_archive, write_from_archive, ArchiveCloseCallback, ArchiveFreeCallback,
-    ArchiveOpenCallback, ArchiveWriteCallback, WriteFilterConfig, WriteFormatConfig,
-    WriteOpenConfig, WriteOptionConfig,
+    ArchiveOpenCallback, ArchivePassphraseCallback, ArchiveWriteCallback, WriteFilterConfig,
+    WriteFormatConfig, WriteOpenConfig, WriteOptionConfig,
 };
 use crate::disk::{
     backend_entry_to_custom, custom_entry_to_backend, native_write_disk_data,
@@ -28,12 +30,17 @@ const ARCHIVE_FORMAT_SHAR: c_int = 0x20000;
 const ARCHIVE_FORMAT_SHAR_BASE: c_int = ARCHIVE_FORMAT_SHAR | 1;
 const ARCHIVE_FORMAT_SHAR_DUMP: c_int = ARCHIVE_FORMAT_SHAR | 2;
 const ARCHIVE_FORMAT_TAR: c_int = 0x30000;
+const ARCHIVE_FORMAT_ISO9660: c_int = 0x40000;
 const ARCHIVE_FORMAT_ZIP: c_int = 0x50000;
+const ARCHIVE_FORMAT_MTREE: c_int = 0x80000;
 const ARCHIVE_FORMAT_TAR_USTAR: c_int = ARCHIVE_FORMAT_TAR | 1;
 const ARCHIVE_FORMAT_TAR_PAX_INTERCHANGE: c_int = ARCHIVE_FORMAT_TAR | 2;
 const ARCHIVE_FORMAT_TAR_PAX_RESTRICTED: c_int = ARCHIVE_FORMAT_TAR | 3;
 const ARCHIVE_FORMAT_TAR_GNUTAR: c_int = ARCHIVE_FORMAT_TAR | 4;
 const ARCHIVE_FORMAT_RAW: c_int = 0x90000;
+const ARCHIVE_FORMAT_XAR: c_int = 0xA0000;
+const ARCHIVE_FORMAT_7ZIP: c_int = 0xE0000;
+const ARCHIVE_FORMAT_WARC: c_int = 0xF0000;
 
 enum WriteLike<'a> {
     Archive(&'a mut crate::common::state::WriteArchiveHandle),
@@ -85,21 +92,6 @@ impl<'a> WriteLike<'a> {
         }
     }
 }
-
-macro_rules! unsupported_backend_writer_stub {
-    ($name:ident) => {
-        #[no_mangle]
-        pub extern "C" fn $name(_a: *mut BackendArchive) -> c_int {
-            ARCHIVE_FATAL
-        }
-    };
-}
-
-unsupported_backend_writer_stub!(backend_archive_write_set_format_7zip);
-unsupported_backend_writer_stub!(backend_archive_write_set_format_iso9660);
-unsupported_backend_writer_stub!(backend_archive_write_set_format_mtree);
-unsupported_backend_writer_stub!(backend_archive_write_set_format_warc);
-unsupported_backend_writer_stub!(backend_archive_write_set_format_xar);
 
 fn validate_writer(
     a: *mut archive,
@@ -175,6 +167,19 @@ unsafe extern "C" fn free_callback_shim(
     })
 }
 
+unsafe extern "C" fn passphrase_callback_shim(
+    _backend: *mut BackendArchive,
+    client_data: *mut c_void,
+) -> *const c_char {
+    let handle = &mut *(client_data as *mut crate::common::state::WriteArchiveHandle);
+    handle.passphrase_cb.map_or(ptr::null(), |callback| {
+        callback(
+            (handle as *mut crate::common::state::WriteArchiveHandle).cast(),
+            handle.passphrase_client_data,
+        )
+    })
+}
+
 unsafe fn with_c_string<F>(value: &str, f: F) -> c_int
 where
     F: FnOnce(*const c_char) -> c_int,
@@ -225,6 +230,9 @@ unsafe fn apply_write_format(
     format: &WriteFormatConfig,
 ) -> c_int {
     match format {
+        WriteFormatConfig::SevenZip => {
+            (backend_api().archive_write_set_format_7zip)(handle.backend)
+        }
         WriteFormatConfig::ArBsd => (backend_api().archive_write_set_format_ar_bsd)(handle.backend),
         WriteFormatConfig::ArSvr4 => {
             (backend_api().archive_write_set_format_ar_svr4)(handle.backend)
@@ -245,6 +253,13 @@ unsafe fn apply_write_format(
         WriteFormatConfig::Gnutar => {
             (backend_api().archive_write_set_format_gnutar)(handle.backend)
         }
+        WriteFormatConfig::Iso9660 => {
+            (backend_api().archive_write_set_format_iso9660)(handle.backend)
+        }
+        WriteFormatConfig::Mtree => (backend_api().archive_write_set_format_mtree)(handle.backend),
+        WriteFormatConfig::MtreeClassic => {
+            (backend_api().archive_write_set_format_mtree_classic)(handle.backend)
+        }
         WriteFormatConfig::Pax => (backend_api().archive_write_set_format_pax)(handle.backend),
         WriteFormatConfig::PaxRestricted => {
             (backend_api().archive_write_set_format_pax_restricted)(handle.backend)
@@ -256,6 +271,8 @@ unsafe fn apply_write_format(
         }
         WriteFormatConfig::Ustar => (backend_api().archive_write_set_format_ustar)(handle.backend),
         WriteFormatConfig::V7tar => (backend_api().archive_write_set_format_v7tar)(handle.backend),
+        WriteFormatConfig::Warc => (backend_api().archive_write_set_format_warc)(handle.backend),
+        WriteFormatConfig::Xar => (backend_api().archive_write_set_format_xar)(handle.backend),
         WriteFormatConfig::Zip => (backend_api().archive_write_set_format_zip)(handle.backend),
     }
 }
@@ -274,12 +291,16 @@ fn resolve_write_format_by_name(
     name: &str,
 ) -> Result<WriteFormatConfig, c_int> {
     let format = match name {
+        "7zip" => WriteFormatConfig::SevenZip,
         "ar" | "arbsd" => WriteFormatConfig::ArBsd,
         "argnu" | "arsvr4" => WriteFormatConfig::ArSvr4,
         "bin" => WriteFormatConfig::CpioBin,
         "bsdtar" | "paxr" | "rpax" => WriteFormatConfig::PaxRestricted,
+        "cd9660" | "iso" | "iso9660" => WriteFormatConfig::Iso9660,
         "cpio" => WriteFormatConfig::Cpio,
         "gnutar" => WriteFormatConfig::Gnutar,
+        "mtree" => WriteFormatConfig::Mtree,
+        "mtree-classic" => WriteFormatConfig::MtreeClassic,
         "newc" => WriteFormatConfig::CpioNewc,
         "odc" => WriteFormatConfig::CpioOdc,
         "oldtar" | "v7" | "v7tar" => WriteFormatConfig::V7tar,
@@ -289,6 +310,8 @@ fn resolve_write_format_by_name(
         "shar" => WriteFormatConfig::Shar,
         "shardump" => WriteFormatConfig::SharDump,
         "ustar" => WriteFormatConfig::Ustar,
+        "warc" => WriteFormatConfig::Warc,
+        "xar" => WriteFormatConfig::Xar,
         "zip" => WriteFormatConfig::Zip,
         _ => {
             return Err(set_write_format_error(
@@ -305,11 +328,14 @@ fn resolve_write_format_code(
     code: c_int,
 ) -> Result<WriteFormatConfig, c_int> {
     let format = match code {
+        ARCHIVE_FORMAT_7ZIP => WriteFormatConfig::SevenZip,
         ARCHIVE_FORMAT_CPIO => WriteFormatConfig::Cpio,
         ARCHIVE_FORMAT_CPIO_BIN_LE => WriteFormatConfig::CpioBin,
         ARCHIVE_FORMAT_CPIO_PWB => WriteFormatConfig::CpioPwb,
         ARCHIVE_FORMAT_CPIO_POSIX => WriteFormatConfig::CpioOdc,
         ARCHIVE_FORMAT_CPIO_SVR4_NOCRC => WriteFormatConfig::CpioNewc,
+        ARCHIVE_FORMAT_ISO9660 => WriteFormatConfig::Iso9660,
+        ARCHIVE_FORMAT_MTREE => WriteFormatConfig::Mtree,
         ARCHIVE_FORMAT_RAW => WriteFormatConfig::Raw,
         ARCHIVE_FORMAT_SHAR | ARCHIVE_FORMAT_SHAR_BASE => WriteFormatConfig::Shar,
         ARCHIVE_FORMAT_SHAR_DUMP => WriteFormatConfig::SharDump,
@@ -318,6 +344,8 @@ fn resolve_write_format_code(
         ARCHIVE_FORMAT_TAR_PAX_INTERCHANGE => WriteFormatConfig::Pax,
         ARCHIVE_FORMAT_TAR_PAX_RESTRICTED => WriteFormatConfig::PaxRestricted,
         ARCHIVE_FORMAT_TAR_USTAR => WriteFormatConfig::Ustar,
+        ARCHIVE_FORMAT_WARC => WriteFormatConfig::Warc,
+        ARCHIVE_FORMAT_XAR => WriteFormatConfig::Xar,
         ARCHIVE_FORMAT_ZIP => WriteFormatConfig::Zip,
         _ => return Err(set_write_format_error(handle, "No such format".to_string())),
     };
@@ -330,10 +358,14 @@ fn resolve_write_format_by_ext(
     default_ext: Option<&str>,
 ) -> Result<(WriteFormatConfig, WriteFilterConfig), c_int> {
     fn mapping(filename: &str) -> Option<(WriteFormatConfig, WriteFilterConfig)> {
-        if filename.ends_with(".cpio") {
+        if filename.ends_with(".7z") {
+            Some((WriteFormatConfig::SevenZip, WriteFilterConfig::None))
+        } else if filename.ends_with(".cpio") {
             Some((WriteFormatConfig::Cpio, WriteFilterConfig::None))
         } else if filename.ends_with(".a") || filename.ends_with(".ar") {
             Some((WriteFormatConfig::ArSvr4, WriteFilterConfig::None))
+        } else if filename.ends_with(".iso") {
+            Some((WriteFormatConfig::Iso9660, WriteFilterConfig::None))
         } else if filename.ends_with(".tar") {
             Some((WriteFormatConfig::PaxRestricted, WriteFilterConfig::None))
         } else if filename.ends_with(".tgz") || filename.ends_with(".tar.gz") {
@@ -440,6 +472,19 @@ unsafe fn apply_write_option(
     }
 }
 
+unsafe fn apply_write_passphrase_callback(
+    handle: &mut crate::common::state::WriteArchiveHandle,
+) -> c_int {
+    (backend_api().archive_write_set_passphrase_callback)(
+        handle.backend,
+        (handle as *mut crate::common::state::WriteArchiveHandle).cast(),
+        handle.passphrase_cb.map(|_| {
+            passphrase_callback_shim
+                as unsafe extern "C" fn(*mut BackendArchive, *mut c_void) -> *const c_char
+        }),
+    )
+}
+
 unsafe fn ensure_write_backend(handle: &mut crate::common::state::WriteArchiveHandle) -> c_int {
     if handle.backend.is_null() {
         handle.backend = (backend_api().archive_write_new)();
@@ -492,6 +537,10 @@ unsafe fn ensure_write_backend(handle: &mut crate::common::state::WriteArchiveHa
                 return status;
             }
         }
+        status = apply_write_passphrase_callback(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
     }
     ARCHIVE_OK
 }
@@ -542,7 +591,9 @@ unsafe fn ensure_write_backend_open(
             let path = to_wide_null(path);
             (backend_api().archive_write_open_filename_w)(handle.backend, path.as_ptr())
         }
-        WriteOpenConfig::File(file) => (backend_api().archive_write_open_FILE)(handle.backend, *file),
+        WriteOpenConfig::File(file) => {
+            (backend_api().archive_write_open_FILE)(handle.backend, *file)
+        }
     };
     if status == ARCHIVE_OK {
         handle.backend_opened = true;
@@ -693,6 +744,7 @@ writer_filter_call0!(
 writer_filter_call0!(archive_write_add_filter_xz, WriteFilterConfig::Xz);
 writer_filter_call0!(archive_write_add_filter_zstd, WriteFilterConfig::Zstd);
 
+writer_format_call0!(archive_write_set_format_7zip, WriteFormatConfig::SevenZip);
 writer_format_call0!(archive_write_set_format_ar_bsd, WriteFormatConfig::ArBsd);
 writer_format_call0!(archive_write_set_format_ar_svr4, WriteFormatConfig::ArSvr4);
 writer_format_call0!(archive_write_set_format_cpio, WriteFormatConfig::Cpio);
@@ -713,6 +765,12 @@ writer_format_call0!(
     WriteFormatConfig::CpioPwb
 );
 writer_format_call0!(archive_write_set_format_gnutar, WriteFormatConfig::Gnutar);
+writer_format_call0!(archive_write_set_format_iso9660, WriteFormatConfig::Iso9660);
+writer_format_call0!(archive_write_set_format_mtree, WriteFormatConfig::Mtree);
+writer_format_call0!(
+    archive_write_set_format_mtree_classic,
+    WriteFormatConfig::MtreeClassic
+);
 writer_format_call0!(archive_write_set_format_pax, WriteFormatConfig::Pax);
 writer_format_call0!(
     archive_write_set_format_pax_restricted,
@@ -726,7 +784,43 @@ writer_format_call0!(
 );
 writer_format_call0!(archive_write_set_format_ustar, WriteFormatConfig::Ustar);
 writer_format_call0!(archive_write_set_format_v7tar, WriteFormatConfig::V7tar);
+writer_format_call0!(archive_write_set_format_warc, WriteFormatConfig::Warc);
+writer_format_call0!(archive_write_set_format_xar, WriteFormatConfig::Xar);
 writer_format_call0!(archive_write_set_format_zip, WriteFormatConfig::Zip);
+
+#[no_mangle]
+pub extern "C" fn archive_write_zip_set_compression_deflate(a: *mut archive) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) = validate_writer(a, "archive_write_zip_set_compression_deflate") else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        let status = ensure_write_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        let status = (backend_api().archive_write_zip_set_compression_deflate)(handle.backend);
+        sync_backend_core(a);
+        status
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_write_zip_set_compression_store(a: *mut archive) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) = validate_writer(a, "archive_write_zip_set_compression_store") else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        let status = ensure_write_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        let status = (backend_api().archive_write_zip_set_compression_store)(handle.backend);
+        sync_backend_core(a);
+        status
+    })
+}
 
 #[no_mangle]
 pub extern "C" fn archive_write_fail(a: *mut archive) -> c_int {
@@ -1052,10 +1146,7 @@ pub extern "C" fn archive_write_open_fd(a: *mut archive, fd: c_int) -> c_int {
 }
 
 #[no_mangle]
-pub extern "C" fn archive_write_open_filename_w(
-    a: *mut archive,
-    file: *const wchar_t,
-) -> c_int {
+pub extern "C" fn archive_write_open_filename_w(a: *mut archive, file: *const wchar_t) -> c_int {
     ffi_int(ARCHIVE_FATAL, || unsafe {
         let Some(handle) = validate_writer(a, "archive_write_open_filename_w") else {
             return ARCHIVE_FATAL;
@@ -1307,6 +1398,9 @@ pub extern "C" fn archive_write_set_options(a: *mut archive, options: *const c_c
         let Some(handle) = validate_writer(a, "archive_write_set_options") else {
             return ARCHIVE_FATAL;
         };
+        if options.is_null() {
+            return ARCHIVE_OK;
+        }
         let Some(options) = from_optional_c_str(options) else {
             return ARCHIVE_FATAL;
         };
@@ -1323,9 +1417,40 @@ pub extern "C" fn archive_write_set_passphrase(
         let Some(handle) = validate_writer(a, "archive_write_set_passphrase") else {
             return ARCHIVE_FATAL;
         };
+        if passphrase.is_null() {
+            set_error_string(
+                &mut handle.core,
+                -1,
+                "Empty passphrase is unacceptable".to_string(),
+            );
+            return crate::common::error::ARCHIVE_FAILED;
+        }
         let Some(passphrase) = from_optional_c_str(passphrase) else {
             return ARCHIVE_FATAL;
         };
         push_or_apply_option(handle, WriteOptionConfig::Passphrase(passphrase))
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_write_set_passphrase_callback(
+    a: *mut archive,
+    client_data: *mut c_void,
+    callback: Option<ArchivePassphraseCallback>,
+) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) = validate_writer(a, "archive_write_set_passphrase_callback") else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        handle.passphrase_client_data = client_data;
+        handle.passphrase_cb = callback;
+        let status = ensure_write_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        let status = apply_write_passphrase_callback(handle);
+        sync_backend_core(a);
+        status
     })
 }

@@ -1,0 +1,347 @@
+{
+  "library": "libarchive",
+  "all_cves_context": "all_cves.json",
+  "relevant_cves_crosswalk": "relevant_cves.json",
+  "rows": [
+    {
+      "cve_id": "CVE-2026-5121",
+      "targeted_area": "32-bit zisofs block-pointer allocation in the ISO9660 reader",
+      "required_controls": [
+        "use checked multiplication and addition when sizing zisofs block-pointer tables",
+        "reject images whose derived allocation exceeds the target architecture's addressable size",
+        "test 32-bit builds explicitly for size and count overflow behavior"
+      ],
+      "verification": "./scripts/check-i686-cve.sh"
+    },
+    {
+      "cve_id": "CVE-2026-4426",
+      "targeted_area": "zisofs decompression in the ISO9660 reader",
+      "required_controls": [
+        "validate `pz_log2_bs` against the format's legal range",
+        "use checked shift and size computations for block sizing",
+        "cap allocation requests derived from archive metadata"
+      ],
+      "verification": "./scripts/check-i686-cve.sh"
+    },
+    {
+      "cve_id": "CVE-2026-4424",
+      "targeted_area": "RAR LZSS window handling across compression-method transitions",
+      "required_controls": [
+        "revalidate LZSS window size after every compression-method transition",
+        "bind filter and copy operations to the active window bounds before decoding",
+        "treat inconsistent decoder state transitions as hard parse failures"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+    },
+    {
+      "cve_id": "CVE-2026-4111",
+      "targeted_area": "RAR5 decompression during `archive_read_data()`",
+      "required_controls": [
+        "detect iterations that consume no input and produce no output",
+        "bound decompressor work relative to consumed bytes",
+        "treat checksum-valid archives as still untrusted for progress guarantees"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+    },
+    {
+      "cve_id": "CVE-2025-5916",
+      "targeted_area": "WARC content-length handling",
+      "required_controls": [
+        "reject WARC content lengths that exceed representable internal limits",
+        "use checked arithmetic when adding framing overhead to claimed body sizes",
+        "cap read, skip, and allocation paths derived from WARC length metadata"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact checked_arithmetic_helpers_cover_legacy_and_advanced_formats"
+    },
+    {
+      "cve_id": "CVE-2025-5915",
+      "targeted_area": "RAR filter-block versus LZSS-window validation",
+      "required_controls": [
+        "check filter-block size against the currently active LZSS window before use",
+        "reject archives that require copying or reading beyond the decoder window",
+        "keep filter execution state synchronized with window-size updates"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+    },
+    {
+      "cve_id": "CVE-2025-5914",
+      "targeted_area": "RAR seek-data position tracking",
+      "required_controls": [
+        "use checked arithmetic for seek offsets and compressed-data extents",
+        "reject entries whose derived seek positions wrap or move backward unexpectedly",
+        "keep reader state transitions single-owner and monotonic across seek calculations"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact checked_arithmetic_helpers_cover_legacy_and_advanced_formats"
+    },
+    {
+      "cve_id": "CVE-2024-57970",
+      "targeted_area": "GNU longlink truncation handling in the TAR reader",
+      "required_controls": [
+        "treat truncated GNU longlink payloads as malformed headers",
+        "require complete name termination before longlink material is consumed",
+        "keep path-buffer length bookkeeping synchronized with truncated input"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+    },
+    {
+      "cve_id": "CVE-2024-48958",
+      "targeted_area": "RAR delta-filter cursor validation",
+      "required_controls": [
+        "validate every delta-filter cursor move against the destination window",
+        "reject filters whose computed `src` position runs past `dst`",
+        "keep filter-state transitions explicit and bounds-checked"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+    },
+    {
+      "cve_id": "CVE-2024-48957",
+      "targeted_area": "RAR audio-filter cursor validation",
+      "required_controls": [
+        "validate audio-filter cursor updates before each read or write",
+        "forbid filter state that allows `src` to advance beyond `dst`",
+        "convert inconsistent filter metadata into a hard decode error"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+    },
+    {
+      "cve_id": "CVE-2024-37407",
+      "targeted_area": "ZIP empty-name handling with mac-ext enabled",
+      "required_controls": [
+        "reject or explicitly special-case empty ZIP entry names before mac-ext processing",
+        "keep name-length checks consistent between local and central directory parsing",
+        "avoid deriving path or metadata state from zero-length names without an explicit rule"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+    },
+    {
+      "cve_id": "CVE-2023-30571",
+      "targeted_area": "write-to-disk path handling and permission application",
+      "required_controls": [
+        "avoid temporary process-wide `umask()` changes during extraction",
+        "create directories with explicit modes and repair permissions without global side effects",
+        "document or enforce thread-safety expectations for disk-write APIs"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact filesystem_extraction_guards_block_absolute_parent_symlink_and_hardlink_escape"
+    },
+    {
+      "cve_id": "CVE-2021-31566",
+      "targeted_area": "link resolution while applying metadata during extraction",
+      "required_controls": [
+        "apply metadata to opened file descriptors instead of re-resolving paths",
+        "re-check containment after filesystem mutations",
+        "refuse symlink and hardlink targets that escape the extraction root"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact filesystem_extraction_guards_block_absolute_parent_symlink_and_hardlink_escape"
+    },
+    {
+      "cve_id": "CVE-2021-23177",
+      "targeted_area": "ACL application during extraction",
+      "required_controls": [
+        "treat ACL application as a privileged metadata operation requiring containment checks",
+        "avoid following links when setting ACLs",
+        "bind ACL updates to the extracted object rather than a later pathname lookup"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact filesystem_extraction_guards_block_absolute_parent_symlink_and_hardlink_escape"
+    },
+    {
+      "cve_id": "CVE-2020-9308",
+      "targeted_area": "RAR5 header-size validation",
+      "required_controls": [
+        "enforce minimum nonzero header-size constraints before header dispatch",
+        "reject corrupted headers before any derived cursor movement or allocation",
+        "require header length fields to fit the remaining input window"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+    },
+    {
+      "cve_id": "CVE-2019-1000020",
+      "targeted_area": "ISO9660 Rock Ridge continuation parsing",
+      "required_controls": [
+        "track visited continuation locations or bound the chain length",
+        "guarantee progress on every Rock Ridge parsing step",
+        "fail closed when a continuation record repeats or regresses"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+    },
+    {
+      "cve_id": "CVE-2018-1000880",
+      "targeted_area": "WARC parser record and body handling",
+      "required_controls": [
+        "cap WARC record sizes and output growth",
+        "reject implausible body lengths before streaming work begins",
+        "budget CPU and disk work for records that expand attacker-controlled content"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+    },
+    {
+      "cve_id": "CVE-2016-8689",
+      "targeted_area": "7zip EmptyStream attribute parsing",
+      "required_controls": [
+        "validate that each 7zip stream attribute appears only in legal combinations",
+        "bound EmptyStream-derived indexing against the file count",
+        "treat repeated or contradictory header attributes as malformed input"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+    },
+    {
+      "cve_id": "CVE-2016-8688",
+      "targeted_area": "mtree line-length tracking during read-ahead",
+      "required_controls": [
+        "track current line length separately from total read-ahead size",
+        "enforce maximum line sizes before extending the lookahead buffer",
+        "recompute parser cursors after read-ahead growth instead of assuming prior offsets stay valid"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+    },
+    {
+      "cve_id": "CVE-2016-7166",
+      "targeted_area": "recursive decompression filter handling",
+      "required_controls": [
+        "limit recursive filter nesting depth",
+        "cap total decompressed output and intermediate expansion",
+        "surface hard failure instead of continuing after budget exhaustion"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+    },
+    {
+      "cve_id": "CVE-2016-6250",
+      "targeted_area": "ISO9660 writer filename-length accounting",
+      "required_controls": [
+        "use checked length accounting for ISO9660 path components and directory records",
+        "reject filenames whose encoded size exceeds format limits before buffer or record construction",
+        "avoid lossy conversions between host lengths and on-disk field widths"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact checked_arithmetic_helpers_cover_legacy_and_advanced_formats"
+    },
+    {
+      "cve_id": "CVE-2016-5418",
+      "targeted_area": "sandboxed extraction of hardlink entries with data",
+      "required_controls": [
+        "treat hardlink entries with data as security-sensitive special cases",
+        "never allow sandbox escape through link target resolution",
+        "perform path containment and overwrite policy checks before any data write"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact filesystem_extraction_guards_block_absolute_parent_symlink_and_hardlink_escape"
+    },
+    {
+      "cve_id": "CVE-2016-4809",
+      "targeted_area": "CPIO symlink-size validation in header parsing",
+      "required_controls": [
+        "cap CPIO symlink target sizes before allocating or decoding the link body",
+        "reject entries whose declared symlink length exceeds the remaining archive data",
+        "treat oversized or truncated symlink metadata as a hard parse error"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+    },
+    {
+      "cve_id": "CVE-2016-5844",
+      "targeted_area": "ISO parser offset and length calculations",
+      "required_controls": [
+        "use checked add, mul, and shift operations for ISO offsets and sizes",
+        "reject records whose claimed layout cannot fit within the input",
+        "treat arithmetic overflow as a parse error, not a recoverable condition"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact checked_arithmetic_helpers_cover_legacy_and_advanced_formats"
+    },
+    {
+      "cve_id": "CVE-2016-4300",
+      "targeted_area": "7zip substream count handling",
+      "required_controls": [
+        "cap the number of substreams permitted by a single folder or entry",
+        "use checked multiplication when sizing per-substream tables",
+        "reject metadata whose aggregate decoded structure cannot fit in memory or the input model"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact checked_arithmetic_helpers_cover_legacy_and_advanced_formats"
+    },
+    {
+      "cve_id": "CVE-2015-8933",
+      "targeted_area": "tar stream-skip arithmetic",
+      "required_controls": [
+        "use checked arithmetic for skip amounts and block alignment calculations",
+        "reject tar entries whose claimed size would wrap or exceed the remaining stream",
+        "preserve monotonic reader-position invariants across skip operations"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact checked_arithmetic_helpers_cover_legacy_and_advanced_formats"
+    },
+    {
+      "cve_id": "CVE-2015-8932",
+      "targeted_area": "compressed-input bidder initialization",
+      "required_controls": [
+        "validate shift counts before any bit operation",
+        "bound compression parameters to the format's legal range",
+        "convert malformed bidder state into an early parse error"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact checked_arithmetic_helpers_cover_legacy_and_advanced_formats"
+    },
+    {
+      "cve_id": "CVE-2015-8931",
+      "targeted_area": "mtree timestamp bound calculations",
+      "required_controls": [
+        "use checked conversions between archive timestamps and host time types",
+        "reject mtree values outside representable bounds",
+        "keep min and max helper logic free of wraparound assumptions"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact checked_arithmetic_helpers_cover_legacy_and_advanced_formats"
+    },
+    {
+      "cve_id": "CVE-2015-8930",
+      "targeted_area": "ISO directory traversal surfaced through bsdtar",
+      "required_controls": [
+        "detect self-referential and cyclic directory structures",
+        "bound directory walk depth and node revisits",
+        "fail closed when parent-child relationships are inconsistent"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+    },
+    {
+      "cve_id": "CVE-2015-8923",
+      "targeted_area": "ZIP extra-field offset handling",
+      "required_controls": [
+        "normalize signed versus unsigned lengths before offset arithmetic",
+        "check every cursor advance against the available buffer",
+        "reject malformed ZIP extra fields before partial parsing mutates state"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact checked_arithmetic_helpers_cover_legacy_and_advanced_formats"
+    },
+    {
+      "cve_id": "CVE-2015-2304",
+      "targeted_area": "absolute-path handling during extraction",
+      "required_controls": [
+        "reject absolute paths unless an explicit unsafe mode is enabled",
+        "canonicalize and enforce extraction-root containment for every entry",
+        "separate archive path semantics from host filesystem path joins"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact filesystem_extraction_guards_block_absolute_parent_symlink_and_hardlink_escape"
+    },
+    {
+      "cve_id": "CVE-2013-0211",
+      "targeted_area": "ZIP writer signed and unsigned size conversion",
+      "required_controls": [
+        "use checked conversions when writing ZIP field sizes and offsets",
+        "reject host-side lengths that cannot be represented in the target ZIP encoding",
+        "test writer behavior on both 32-bit and 64-bit platforms"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact checked_arithmetic_helpers_cover_legacy_and_advanced_formats"
+    },
+    {
+      "cve_id": "CVE-2007-3644",
+      "targeted_area": "PAX extended-header parsing",
+      "required_controls": [
+        "ensure PAX parsing advances the cursor or aborts",
+        "treat EOF inside an extended header as a hard parse failure",
+        "bound the number of malformed-record recovery attempts"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+    },
+    {
+      "cve_id": "CVE-2006-5680",
+      "targeted_area": "generic skip logic near physical end of archive",
+      "required_controls": [
+        "reject skip requests that extend past known physical EOF",
+        "treat repeated zero-byte reads during a skip as fatal",
+        "maintain monotonic stream-position invariants in the reader core"
+      ],
+      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+    }
+  ]
+}

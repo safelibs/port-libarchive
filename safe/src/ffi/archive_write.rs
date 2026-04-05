@@ -3,7 +3,8 @@ use std::ffi::{c_char, c_int, c_void};
 use libc::{size_t, wchar_t};
 
 use crate::common::state::{
-    ArchiveCloseCallback, ArchiveFreeCallback, ArchiveOpenCallback, ArchiveWriteCallback,
+    ArchiveCloseCallback, ArchiveFreeCallback, ArchiveOpenCallback, ArchivePassphraseCallback,
+    ArchiveWriteCallback,
 };
 use crate::ffi::{archive, archive_entry};
 
@@ -38,6 +39,7 @@ unsafe extern "C" {
 
     pub fn archive_write_set_format(a: *mut archive, format_code: c_int) -> c_int;
     pub fn archive_write_set_format_by_name(a: *mut archive, name: *const c_char) -> c_int;
+    pub fn archive_write_set_format_7zip(a: *mut archive) -> c_int;
     pub fn archive_write_set_format_ar_bsd(a: *mut archive) -> c_int;
     pub fn archive_write_set_format_ar_svr4(a: *mut archive) -> c_int;
     pub fn archive_write_set_format_cpio(a: *mut archive) -> c_int;
@@ -46,6 +48,9 @@ unsafe extern "C" {
     pub fn archive_write_set_format_cpio_odc(a: *mut archive) -> c_int;
     pub fn archive_write_set_format_cpio_pwb(a: *mut archive) -> c_int;
     pub fn archive_write_set_format_gnutar(a: *mut archive) -> c_int;
+    pub fn archive_write_set_format_iso9660(a: *mut archive) -> c_int;
+    pub fn archive_write_set_format_mtree(a: *mut archive) -> c_int;
+    pub fn archive_write_set_format_mtree_classic(a: *mut archive) -> c_int;
     pub fn archive_write_set_format_pax(a: *mut archive) -> c_int;
     pub fn archive_write_set_format_pax_restricted(a: *mut archive) -> c_int;
     pub fn archive_write_set_format_raw(a: *mut archive) -> c_int;
@@ -53,6 +58,8 @@ unsafe extern "C" {
     pub fn archive_write_set_format_shar_dump(a: *mut archive) -> c_int;
     pub fn archive_write_set_format_ustar(a: *mut archive) -> c_int;
     pub fn archive_write_set_format_v7tar(a: *mut archive) -> c_int;
+    pub fn archive_write_set_format_warc(a: *mut archive) -> c_int;
+    pub fn archive_write_set_format_xar(a: *mut archive) -> c_int;
     pub fn archive_write_set_format_zip(a: *mut archive) -> c_int;
     pub fn archive_write_set_format_filter_by_ext(
         a: *mut archive,
@@ -122,4 +129,11 @@ unsafe extern "C" {
     ) -> c_int;
     pub fn archive_write_set_options(a: *mut archive, options: *const c_char) -> c_int;
     pub fn archive_write_set_passphrase(a: *mut archive, passphrase: *const c_char) -> c_int;
+    pub fn archive_write_set_passphrase_callback(
+        a: *mut archive,
+        client_data: *mut c_void,
+        callback: Option<ArchivePassphraseCallback>,
+    ) -> c_int;
+    pub fn archive_write_zip_set_compression_deflate(a: *mut archive) -> c_int;
+    pub fn archive_write_zip_set_compression_store(a: *mut archive) -> c_int;
 }
