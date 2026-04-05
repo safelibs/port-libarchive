@@ -2,22 +2,18 @@ use std::ffi::{c_char, c_int, CStr};
 use std::ptr;
 use std::sync::Once;
 
+use crate::common::backend::api as backend_api;
 use crate::common::error::{ARCHIVE_FATAL, ARCHIVE_OK};
 use crate::common::helpers::from_optional_c_str;
 use crate::common::state::{
-    archive_check_magic, clear_error, close_archive, core_from_archive, error_string_ptr,
-    free_archive, set_error_option, ArchiveKind,
+    archive_check_magic, archive_magic, backend_archive, backend_error_number,
+    backend_error_string_ptr, clear_error, close_archive, core_from_archive, error_string_ptr,
+    free_archive, set_error_option, sync_backend_core,
 };
 use crate::ffi::archive;
 use crate::generated::{LIBARCHIVE_VERSION_NUMBER, LIBARCHIVE_VERSION_STRING};
 
 static VERSION_STRING: &[u8] = b"libarchive 3.7.2\0";
-static VERSION_DETAILS: &[u8] = b"libarchive 3.7.2\0";
-static BZLIB_VERSION: &[u8] = b"rust-builtin\0";
-static LZ4_VERSION: &[u8] = b"rust-builtin\0";
-static LZMA_VERSION: &[u8] = b"rust-builtin\0";
-static ZSTD_VERSION: &[u8] = b"rust-builtin\0";
-static ZLIB_VERSION: &[u8] = b"rust-builtin\0";
 
 #[link(name = "archive_variadic_shim", kind = "static")]
 unsafe extern "C" {
@@ -73,12 +69,26 @@ pub unsafe extern "C" fn archive_copy_error(dest: *mut archive, src: *mut archiv
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_errno(a: *mut archive) -> c_int {
-    core_from_archive(a).map_or(0, |core| core.archive_error_number)
+    let Some(core) = core_from_archive(a) else {
+        return 0;
+    };
+    if core.archive_error_number != 0 || core.error_string.is_some() {
+        core.archive_error_number
+    } else {
+        backend_error_number(a)
+    }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_error_string(a: *mut archive) -> *const c_char {
-    core_from_archive(a).map_or(ptr::null(), |core| error_string_ptr(core))
+    let Some(core) = core_from_archive(a) else {
+        return ptr::null();
+    };
+    if core.archive_error_number != 0 || core.error_string.is_some() {
+        error_string_ptr(core)
+    } else {
+        backend_error_string_ptr(a)
+    }
 }
 
 #[no_mangle]
@@ -88,9 +98,15 @@ pub unsafe extern "C" fn archive_free(a: *mut archive) -> c_int {
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_read_free(a: *mut archive) -> c_int {
+    let magic = archive_magic(a);
+    let expected = if magic == crate::common::error::ARCHIVE_READ_DISK_MAGIC {
+        crate::common::error::ARCHIVE_READ_DISK_MAGIC
+    } else {
+        crate::common::error::ARCHIVE_READ_MAGIC
+    };
     if archive_check_magic(
         a,
-        crate::common::error::ARCHIVE_READ_MAGIC,
+        expected,
         crate::common::error::ARCHIVE_STATE_ANY,
         "archive_read_free",
     ) == ARCHIVE_FATAL
@@ -102,7 +118,7 @@ pub unsafe extern "C" fn archive_read_free(a: *mut archive) -> c_int {
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_write_free(a: *mut archive) -> c_int {
-    let magic = crate::common::state::archive_magic(a);
+    let magic = archive_magic(a);
     let expected = if magic == crate::common::error::ARCHIVE_WRITE_DISK_MAGIC {
         crate::common::error::ARCHIVE_WRITE_DISK_MAGIC
     } else {
@@ -155,48 +171,109 @@ pub unsafe extern "C" fn archive_filter_count(a: *mut archive) -> c_int {
     if core_from_archive(a).is_none() {
         return ARCHIVE_FATAL;
     }
-    0
+    let magic = archive_magic(a);
+    if matches!(
+        magic,
+        crate::common::error::ARCHIVE_READ_DISK_MAGIC
+            | crate::common::error::ARCHIVE_WRITE_DISK_MAGIC
+    ) {
+        return 0;
+    }
+    let backend = backend_archive(a);
+    if backend.is_null() {
+        0
+    } else {
+        (backend_api().archive_filter_count)(backend)
+    }
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_filter_bytes(_a: *mut archive, _n: c_int) -> i64 {
-    0
+pub unsafe extern "C" fn archive_filter_bytes(a: *mut archive, n: c_int) -> i64 {
+    let magic = archive_magic(a);
+    if matches!(
+        magic,
+        crate::common::error::ARCHIVE_READ_DISK_MAGIC
+            | crate::common::error::ARCHIVE_WRITE_DISK_MAGIC
+    ) {
+        return 0;
+    }
+    let backend = backend_archive(a);
+    if backend.is_null() {
+        0
+    } else {
+        (backend_api().archive_filter_bytes)(backend, n)
+    }
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_filter_code(_a: *mut archive, _n: c_int) -> c_int {
-    0
+pub unsafe extern "C" fn archive_filter_code(a: *mut archive, n: c_int) -> c_int {
+    let magic = archive_magic(a);
+    if matches!(
+        magic,
+        crate::common::error::ARCHIVE_READ_DISK_MAGIC
+            | crate::common::error::ARCHIVE_WRITE_DISK_MAGIC
+    ) {
+        return 0;
+    }
+    let backend = backend_archive(a);
+    if backend.is_null() {
+        0
+    } else {
+        (backend_api().archive_filter_code)(backend, n)
+    }
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_filter_name(_a: *mut archive, _n: c_int) -> *const c_char {
-    ptr::null()
+pub unsafe extern "C" fn archive_filter_name(a: *mut archive, n: c_int) -> *const c_char {
+    let magic = archive_magic(a);
+    if matches!(
+        magic,
+        crate::common::error::ARCHIVE_READ_DISK_MAGIC
+            | crate::common::error::ARCHIVE_WRITE_DISK_MAGIC
+    ) {
+        return ptr::null();
+    }
+    let backend = backend_archive(a);
+    if backend.is_null() {
+        ptr::null()
+    } else {
+        (backend_api().archive_filter_name)(backend, n)
+    }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_format(a: *mut archive) -> c_int {
+    sync_backend_core(a);
     core_from_archive(a).map_or(0, |core| core.archive_format)
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_format_name(a: *mut archive) -> *const c_char {
-    core_from_archive(a)
-        .and_then(|core| core.archive_format_name.as_ref())
-        .map_or(ptr::null(), |name| name.as_ptr())
+    let backend = backend_archive(a);
+    if backend.is_null() {
+        core_from_archive(a)
+            .and_then(|core| core.archive_format_name.as_ref())
+            .map_or(ptr::null(), |name| name.as_ptr())
+    } else {
+        (backend_api().archive_format_name)(backend)
+    }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_file_count(a: *mut archive) -> c_int {
+    sync_backend_core(a);
     core_from_archive(a).map_or(0, |core| core.file_count)
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_position_compressed(a: *mut archive) -> i64 {
+    sync_backend_core(a);
     core_from_archive(a).map_or(0, |core| core.position_compressed)
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_position_uncompressed(a: *mut archive) -> i64 {
+    sync_backend_core(a);
     core_from_archive(a).map_or(0, |core| core.position_uncompressed)
 }
 
@@ -212,32 +289,32 @@ pub extern "C" fn archive_version_string() -> *const c_char {
 
 #[no_mangle]
 pub extern "C" fn archive_version_details() -> *const c_char {
-    VERSION_DETAILS.as_ptr().cast()
+    unsafe { (backend_api().archive_version_details)() }
 }
 
 #[no_mangle]
 pub extern "C" fn archive_bzlib_version() -> *const c_char {
-    BZLIB_VERSION.as_ptr().cast()
+    unsafe { (backend_api().archive_bzlib_version)() }
 }
 
 #[no_mangle]
 pub extern "C" fn archive_liblz4_version() -> *const c_char {
-    LZ4_VERSION.as_ptr().cast()
+    unsafe { (backend_api().archive_liblz4_version)() }
 }
 
 #[no_mangle]
 pub extern "C" fn archive_liblzma_version() -> *const c_char {
-    LZMA_VERSION.as_ptr().cast()
+    unsafe { (backend_api().archive_liblzma_version)() }
 }
 
 #[no_mangle]
 pub extern "C" fn archive_libzstd_version() -> *const c_char {
-    ZSTD_VERSION.as_ptr().cast()
+    unsafe { (backend_api().archive_libzstd_version)() }
 }
 
 #[no_mangle]
 pub extern "C" fn archive_zlib_version() -> *const c_char {
-    ZLIB_VERSION.as_ptr().cast()
+    unsafe { (backend_api().archive_zlib_version)() }
 }
 
 #[no_mangle]
@@ -270,5 +347,5 @@ pub(crate) fn version_string() -> &'static str {
 }
 
 pub(crate) fn is_match_archive(a: *mut archive) -> bool {
-    unsafe { crate::common::state::archive_magic(a) == ArchiveKind::Match as u32 }
+    unsafe { crate::common::state::archive_magic(a) == crate::common::error::ARCHIVE_MATCH_MAGIC }
 }

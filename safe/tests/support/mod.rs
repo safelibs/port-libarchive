@@ -1,10 +1,12 @@
 use std::ffi::{c_char, CStr, CString};
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Mutex, MutexGuard};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 static UNIQUE_ID: AtomicU64 = AtomicU64::new(0);
+static CWD_LOCK: Mutex<()> = Mutex::new(());
 
 pub fn c_str(ptr: *const c_char) -> Option<String> {
     if ptr.is_null() {
@@ -62,8 +64,71 @@ pub fn temp_path(stem: &str) -> PathBuf {
     std::env::temp_dir().join(format!("libarchive-safe-{stem}-{nanos}-{unique}"))
 }
 
+pub struct TempDir {
+    path: PathBuf,
+}
+
+impl TempDir {
+    pub fn new(stem: &str) -> Self {
+        let path = temp_path(stem);
+        fs::create_dir_all(&path).expect("failed to create temporary directory");
+        Self { path }
+    }
+
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl Drop for TempDir {
+    fn drop(&mut self) {
+        let _ = fs::remove_dir_all(&self.path);
+    }
+}
+
+pub struct CurrentDirGuard {
+    original: PathBuf,
+    _cwd_lock: MutexGuard<'static, ()>,
+}
+
+impl Drop for CurrentDirGuard {
+    fn drop(&mut self) {
+        let _ = std::env::set_current_dir(&self.original);
+    }
+}
+
+pub fn pushd(path: &Path) -> CurrentDirGuard {
+    let cwd_lock = CWD_LOCK.lock().expect("cwd lock");
+    let original = std::env::current_dir().expect("current dir");
+    std::env::set_current_dir(path).expect("failed to change current dir");
+    CurrentDirGuard {
+        original,
+        _cwd_lock: cwd_lock,
+    }
+}
+
 pub fn write_temp_file(stem: &str, contents: &[u8]) -> PathBuf {
     let path = temp_path(stem);
     fs::write(&path, contents).expect("failed to write temporary file");
     path
+}
+
+pub fn make_dir(path: &Path) {
+    fs::create_dir_all(path).expect("failed to create directory");
+}
+
+pub fn write_file(path: &Path, contents: &[u8]) {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).expect("failed to create parent directory");
+    }
+    fs::write(path, contents).expect("failed to write file");
+}
+
+pub fn read_file(path: &Path) -> Vec<u8> {
+    fs::read(path).expect("failed to read file")
+}
+
+#[cfg(unix)]
+pub fn symlink(path: &Path, target: &Path) {
+    std::os::unix::fs::symlink(target, path).expect("failed to create symlink");
 }

@@ -1,17 +1,15 @@
-use std::ffi::{c_char, c_int, CString};
-use std::fs;
-use std::path::PathBuf;
+use std::ffi::{c_char, c_int, c_void, CString};
 use std::ptr;
 
-use libc::{size_t, wchar_t};
+use libc::size_t;
 
-use crate::common::error::{
-    ARCHIVE_EOF, ARCHIVE_FAILED, ARCHIVE_FATAL, ARCHIVE_MATCH_MAGIC, ARCHIVE_OK,
-    ARCHIVE_READ_DISK_MAGIC, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_ANY, ARCHIVE_STATE_CLOSED,
-    ARCHIVE_STATE_FATAL, ARCHIVE_STATE_NEW, ARCHIVE_WRITE_DISK_MAGIC, ARCHIVE_WRITE_MAGIC,
-};
 use crate::common::api::ensure_variadic_shim_initialized;
-use crate::common::helpers::{from_optional_c_str, from_optional_wide};
+use crate::common::backend::{api as backend_api, BackendArchive, BackendEntry};
+use crate::common::error::{
+    ARCHIVE_FATAL, ARCHIVE_MATCH_MAGIC, ARCHIVE_OK, ARCHIVE_READ_DISK_MAGIC, ARCHIVE_READ_MAGIC,
+    ARCHIVE_STATE_ANY, ARCHIVE_STATE_CLOSED, ARCHIVE_STATE_FATAL, ARCHIVE_STATE_NEW,
+    ARCHIVE_WRITE_DISK_MAGIC, ARCHIVE_WRITE_MAGIC,
+};
 use crate::ffi::{archive, archive_entry};
 
 #[repr(u32)]
@@ -23,6 +21,16 @@ pub(crate) enum ArchiveKind {
     WriteDisk = ARCHIVE_WRITE_DISK_MAGIC,
     Match = ARCHIVE_MATCH_MAGIC,
 }
+
+pub(crate) type ArchiveOpenCallback = unsafe extern "C" fn(*mut archive, *mut c_void) -> c_int;
+pub(crate) type ArchiveWriteCallback =
+    unsafe extern "C" fn(*mut archive, *mut c_void, *const c_void, size_t) -> isize;
+pub(crate) type ArchiveCloseCallback = unsafe extern "C" fn(*mut archive, *mut c_void) -> c_int;
+pub(crate) type ArchiveFreeCallback = unsafe extern "C" fn(*mut archive, *mut c_void) -> c_int;
+pub(crate) type ReadDiskExcludedCallback =
+    unsafe extern "C" fn(*mut archive, *mut c_void, *mut archive_entry);
+pub(crate) type ReadDiskMetadataFilterCallback =
+    unsafe extern "C" fn(*mut archive, *mut c_void, *mut archive_entry) -> c_int;
 
 #[repr(C)]
 pub(crate) struct ArchiveCore {
@@ -45,10 +53,39 @@ pub(crate) struct ArchiveBaseHandle {
 #[repr(C)]
 pub(crate) struct ReadArchiveHandle {
     pub(crate) core: ArchiveCore,
-    pub(crate) data: Vec<u8>,
-    pub(crate) header_emitted: bool,
-    pub(crate) data_emitted: bool,
+    pub(crate) backend: *mut BackendArchive,
     pub(crate) entry: *mut archive_entry,
+    pub(crate) current_entry: *mut BackendEntry,
+}
+
+#[repr(C)]
+pub(crate) struct WriteArchiveHandle {
+    pub(crate) core: ArchiveCore,
+    pub(crate) backend: *mut BackendArchive,
+    pub(crate) client_data: *mut c_void,
+    pub(crate) open_cb: Option<ArchiveOpenCallback>,
+    pub(crate) write_cb: Option<ArchiveWriteCallback>,
+    pub(crate) close_cb: Option<ArchiveCloseCallback>,
+    pub(crate) free_cb: Option<ArchiveFreeCallback>,
+}
+
+#[repr(C)]
+pub(crate) struct ReadDiskArchiveHandle {
+    pub(crate) core: ArchiveCore,
+    pub(crate) backend: *mut BackendArchive,
+    pub(crate) entry: *mut archive_entry,
+    pub(crate) current_entry: *mut BackendEntry,
+    pub(crate) backend_match: *mut BackendArchive,
+    pub(crate) excluded_cb: Option<ReadDiskExcludedCallback>,
+    pub(crate) excluded_client_data: *mut c_void,
+    pub(crate) metadata_filter_cb: Option<ReadDiskMetadataFilterCallback>,
+    pub(crate) metadata_filter_client_data: *mut c_void,
+}
+
+#[repr(C)]
+pub(crate) struct WriteDiskArchiveHandle {
+    pub(crate) core: ArchiveCore,
+    pub(crate) backend: *mut BackendArchive,
 }
 
 impl ArchiveCore {
@@ -75,17 +112,96 @@ pub(crate) unsafe fn read_from_archive<'a>(a: *mut archive) -> Option<&'a mut Re
     a.cast::<ReadArchiveHandle>().as_mut()
 }
 
+pub(crate) unsafe fn write_from_archive<'a>(a: *mut archive) -> Option<&'a mut WriteArchiveHandle> {
+    a.cast::<WriteArchiveHandle>().as_mut()
+}
+
+pub(crate) unsafe fn read_disk_from_archive<'a>(
+    a: *mut archive,
+) -> Option<&'a mut ReadDiskArchiveHandle> {
+    a.cast::<ReadDiskArchiveHandle>().as_mut()
+}
+
+pub(crate) unsafe fn write_disk_from_archive<'a>(
+    a: *mut archive,
+) -> Option<&'a mut WriteDiskArchiveHandle> {
+    a.cast::<WriteDiskArchiveHandle>().as_mut()
+}
+
+pub(crate) unsafe fn backend_archive(a: *mut archive) -> *mut BackendArchive {
+    match archive_magic(a) {
+        ARCHIVE_READ_MAGIC => read_from_archive(a).map_or(ptr::null_mut(), |handle| handle.backend),
+        ARCHIVE_WRITE_MAGIC => {
+            write_from_archive(a).map_or(ptr::null_mut(), |handle| handle.backend)
+        }
+        ARCHIVE_READ_DISK_MAGIC => {
+            read_disk_from_archive(a).map_or(ptr::null_mut(), |handle| handle.backend)
+        }
+        ARCHIVE_WRITE_DISK_MAGIC => {
+            write_disk_from_archive(a).map_or(ptr::null_mut(), |handle| handle.backend)
+        }
+        _ => ptr::null_mut(),
+    }
+}
+
 pub(crate) fn alloc_archive(kind: ArchiveKind) -> *mut archive {
     ensure_variadic_shim_initialized();
     match kind {
-        ArchiveKind::Read => Box::into_raw(Box::new(ReadArchiveHandle {
-            core: ArchiveCore::new(kind),
-            data: Vec::new(),
-            header_emitted: false,
-            data_emitted: false,
-            entry: ptr::null_mut(),
-        })) as *mut archive,
-        _ => Box::into_raw(Box::new(ArchiveBaseHandle {
+        ArchiveKind::Read => {
+            let backend = unsafe { (backend_api().archive_read_new)() };
+            if backend.is_null() {
+                return ptr::null_mut();
+            }
+            Box::into_raw(Box::new(ReadArchiveHandle {
+                core: ArchiveCore::new(kind),
+                backend,
+                entry: ptr::null_mut(),
+                current_entry: ptr::null_mut(),
+            })) as *mut archive
+        }
+        ArchiveKind::Write => {
+            let backend = unsafe { (backend_api().archive_write_new)() };
+            if backend.is_null() {
+                return ptr::null_mut();
+            }
+            Box::into_raw(Box::new(WriteArchiveHandle {
+                core: ArchiveCore::new(kind),
+                backend,
+                client_data: ptr::null_mut(),
+                open_cb: None,
+                write_cb: None,
+                close_cb: None,
+                free_cb: None,
+            })) as *mut archive
+        }
+        ArchiveKind::ReadDisk => {
+            let backend = unsafe { (backend_api().archive_read_disk_new)() };
+            if backend.is_null() {
+                return ptr::null_mut();
+            }
+            Box::into_raw(Box::new(ReadDiskArchiveHandle {
+                core: ArchiveCore::new(kind),
+                backend,
+                entry: ptr::null_mut(),
+                current_entry: ptr::null_mut(),
+                backend_match: ptr::null_mut(),
+                excluded_cb: None,
+                excluded_client_data: ptr::null_mut(),
+                metadata_filter_cb: None,
+                metadata_filter_client_data: ptr::null_mut(),
+            })) as *mut archive
+        }
+        ArchiveKind::WriteDisk => {
+            let backend = unsafe { (backend_api().archive_write_disk_new)() };
+            if backend.is_null() {
+                return ptr::null_mut();
+            }
+            Box::into_raw(Box::new(WriteDiskArchiveHandle {
+                core: ArchiveCore::new(kind),
+                backend,
+            })) as *mut archive
+        }
+        ArchiveKind::Match => Box::into_raw(Box::new(ArchiveBaseHandle {
             core: ArchiveCore::new(kind),
         })) as *mut archive,
     }
@@ -109,9 +225,7 @@ pub(crate) unsafe fn archive_check_magic(
         set_error_string(
             core,
             -1,
-            format!(
-                "PROGRAMMER ERROR: Function '{function}' invoked on wrong archive object"
-            ),
+            format!("PROGRAMMER ERROR: Function '{function}' invoked on wrong archive object"),
         );
         core.state = ARCHIVE_STATE_FATAL;
         return ARCHIVE_FATAL;
@@ -154,8 +268,8 @@ pub(crate) fn set_error_string(core: &mut ArchiveCore, errno: c_int, message: St
 
 pub(crate) fn set_error_option(core: &mut ArchiveCore, errno: c_int, message: Option<String>) {
     core.archive_error_number = errno;
-    core.error_string = message
-        .map(|message| CString::new(message).expect("error message must not contain NUL"));
+    core.error_string =
+        message.map(|message| CString::new(message).expect("error message must not contain NUL"));
 }
 
 pub(crate) fn clear_error(core: &mut ArchiveCore) {
@@ -180,13 +294,40 @@ pub(crate) unsafe fn free_archive(a: *mut archive) -> c_int {
             if !(*handle).entry.is_null() {
                 crate::entry::internal::free_raw_entry((*handle).entry);
             }
+            if !(*handle).backend.is_null() {
+                (backend_api().archive_read_free)((*handle).backend);
+            }
+            drop(Box::from_raw(handle));
+        }
+        ARCHIVE_WRITE_MAGIC => {
+            let handle = a.cast::<WriteArchiveHandle>();
+            if !(*handle).backend.is_null() {
+                (backend_api().archive_write_free)((*handle).backend);
+            }
+            drop(Box::from_raw(handle));
+        }
+        ARCHIVE_READ_DISK_MAGIC => {
+            let handle = a.cast::<ReadDiskArchiveHandle>();
+            if !(*handle).entry.is_null() {
+                crate::entry::internal::free_raw_entry((*handle).entry);
+            }
+            if !(*handle).backend_match.is_null() {
+                (backend_api().archive_match_free)((*handle).backend_match);
+            }
+            if !(*handle).backend.is_null() {
+                (backend_api().archive_read_free)((*handle).backend);
+            }
+            drop(Box::from_raw(handle));
+        }
+        ARCHIVE_WRITE_DISK_MAGIC => {
+            let handle = a.cast::<WriteDiskArchiveHandle>();
+            if !(*handle).backend.is_null() {
+                (backend_api().archive_write_free)((*handle).backend);
+            }
             drop(Box::from_raw(handle));
         }
         ARCHIVE_MATCH_MAGIC => {
             crate::r#match::internal::free_match_archive(a);
-        }
-        ARCHIVE_WRITE_MAGIC | ARCHIVE_READ_DISK_MAGIC | ARCHIVE_WRITE_DISK_MAGIC => {
-            drop(Box::from_raw(a.cast::<ArchiveBaseHandle>()));
         }
         _ => return ARCHIVE_FATAL,
     }
@@ -198,149 +339,63 @@ pub(crate) unsafe fn close_archive(a: *mut archive) -> c_int {
     let Some(core) = core_from_archive(a) else {
         return ARCHIVE_FATAL;
     };
-    core.state = ARCHIVE_STATE_CLOSED;
-    ARCHIVE_OK
-}
 
-pub(crate) unsafe fn read_archive_support_format(a: *mut archive) -> c_int {
-    if archive_check_magic(a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_ANY, "archive_read_support_format")
-        == ARCHIVE_FATAL
-    {
-        return ARCHIVE_FATAL;
-    }
-    ARCHIVE_OK
-}
-
-pub(crate) unsafe fn read_archive_open_filename(
-    a: *mut archive,
-    path: *const c_char,
-) -> c_int {
-    if path.is_null() {
-        return ARCHIVE_FAILED;
-    }
-    let Some(path) = from_optional_c_str(path) else {
-        return ARCHIVE_FAILED;
+    let status = match core.magic {
+        ARCHIVE_READ_MAGIC | ARCHIVE_READ_DISK_MAGIC => {
+            let backend = backend_archive(a);
+            if backend.is_null() {
+                ARCHIVE_OK
+            } else {
+                (backend_api().archive_read_close)(backend)
+            }
+        }
+        ARCHIVE_WRITE_MAGIC | ARCHIVE_WRITE_DISK_MAGIC => {
+            let backend = backend_archive(a);
+            if backend.is_null() {
+                ARCHIVE_OK
+            } else {
+                (backend_api().archive_write_close)(backend)
+            }
+        }
+        _ => ARCHIVE_OK,
     };
-    read_archive_load_path(a, &PathBuf::from(path))
+    if status == ARCHIVE_OK {
+        core.state = ARCHIVE_STATE_CLOSED;
+    }
+    status
 }
 
-pub(crate) unsafe fn read_archive_open_filenames(
-    a: *mut archive,
-    paths: *const *const c_char,
-) -> c_int {
-    if paths.is_null() {
-        return ARCHIVE_FAILED;
-    }
-    read_archive_open_filename(a, *paths)
-}
-
-pub(crate) unsafe fn read_archive_open_filename_w(
-    a: *mut archive,
-    path: *const wchar_t,
-) -> c_int {
-    if path.is_null() {
-        return ARCHIVE_FAILED;
-    }
-    let Some(path) = from_optional_wide(path) else {
-        return ARCHIVE_FAILED;
+pub(crate) unsafe fn sync_backend_core(a: *mut archive) {
+    let Some(core) = core_from_archive(a) else {
+        return;
     };
-    read_archive_load_path(a, &PathBuf::from(path))
+    if !matches!(core.magic, ARCHIVE_READ_MAGIC | ARCHIVE_WRITE_MAGIC) {
+        return;
+    }
+    let backend = backend_archive(a);
+    if backend.is_null() {
+        return;
+    }
+    core.archive_format = (backend_api().archive_format)(backend);
+    core.file_count = (backend_api().archive_file_count)(backend);
+    core.position_compressed = (backend_api().archive_position_compressed)(backend);
+    core.position_uncompressed = (backend_api().archive_position_uncompressed)(backend);
 }
 
-unsafe fn read_archive_load_path(a: *mut archive, path: &PathBuf) -> c_int {
-    if archive_check_magic(a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_ANY, "archive_read_open_filename")
-        == ARCHIVE_FATAL
-    {
-        return ARCHIVE_FATAL;
-    }
-    let Some(handle) = read_from_archive(a) else {
-        return ARCHIVE_FATAL;
-    };
-
-    match fs::read(path) {
-        Ok(data) => {
-            handle.data = data;
-            handle.header_emitted = false;
-            handle.data_emitted = false;
-            ARCHIVE_OK
-        }
-        Err(err) => {
-            set_error_string(&mut handle.core, err.raw_os_error().unwrap_or(-1), err.to_string());
-            ARCHIVE_FAILED
-        }
+pub(crate) unsafe fn backend_error_number(a: *mut archive) -> c_int {
+    let backend = backend_archive(a);
+    if backend.is_null() {
+        0
+    } else {
+        (backend_api().archive_errno)(backend)
     }
 }
 
-pub(crate) unsafe fn read_archive_next_header(
-    a: *mut archive,
-    entry: *mut *mut archive_entry,
-) -> c_int {
-    if archive_check_magic(a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_ANY, "archive_read_next_header")
-        == ARCHIVE_FATAL
-    {
-        return ARCHIVE_FATAL;
+pub(crate) unsafe fn backend_error_string_ptr(a: *mut archive) -> *const c_char {
+    let backend = backend_archive(a);
+    if backend.is_null() {
+        ptr::null()
+    } else {
+        (backend_api().archive_error_string)(backend)
     }
-    let Some(handle) = read_from_archive(a) else {
-        return ARCHIVE_FATAL;
-    };
-
-    if handle.header_emitted || handle.data.is_empty() {
-        if !entry.is_null() {
-            *entry = ptr::null_mut();
-        }
-        return ARCHIVE_EOF;
-    }
-
-    if handle.entry.is_null() {
-        handle.entry = crate::entry::internal::new_raw_entry(ptr::null_mut());
-        if handle.entry.is_null() {
-            return ARCHIVE_FATAL;
-        }
-    }
-    handle.header_emitted = true;
-    if !entry.is_null() {
-        *entry = handle.entry;
-    }
-    ARCHIVE_OK
-}
-
-pub(crate) unsafe fn read_archive_data_block(
-    a: *mut archive,
-    buff: *mut *const std::ffi::c_void,
-    size: *mut size_t,
-    offset: *mut i64,
-) -> c_int {
-    if archive_check_magic(a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_ANY, "archive_read_data_block")
-        == ARCHIVE_FATAL
-    {
-        return ARCHIVE_FATAL;
-    }
-    let Some(handle) = read_from_archive(a) else {
-        return ARCHIVE_FATAL;
-    };
-
-    if handle.data_emitted {
-        if !buff.is_null() {
-            *buff = ptr::null();
-        }
-        if !size.is_null() {
-            *size = 0;
-        }
-        if !offset.is_null() {
-            *offset = 0;
-        }
-        return ARCHIVE_EOF;
-    }
-
-    handle.data_emitted = true;
-    if !buff.is_null() {
-        *buff = handle.data.as_ptr().cast();
-    }
-    if !size.is_null() {
-        *size = handle.data.len();
-    }
-    if !offset.is_null() {
-        *offset = 0;
-    }
-    ARCHIVE_OK
 }

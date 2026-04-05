@@ -1,15 +1,19 @@
 pub mod common {
     pub(crate) mod api;
+    pub(crate) mod backend;
     pub mod error;
     pub(crate) mod helpers;
     pub mod panic_boundary;
     pub mod state;
 }
 
+pub mod disk;
 pub mod entry;
 pub mod ffi;
 pub mod r#match;
+pub mod read;
 pub mod util;
+pub mod write;
 
 pub(crate) mod generated {
     include!(concat!(env!("OUT_DIR"), "/version.rs"));

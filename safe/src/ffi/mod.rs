@@ -23,5 +23,9 @@ pub mod archive_common;
 pub mod archive_entry_api;
 #[path = "archive_match.rs"]
 pub mod archive_match_api;
+pub mod archive_read;
+pub mod archive_read_disk;
+pub mod archive_write;
+pub mod archive_write_disk;
 
 mod bootstrap;
