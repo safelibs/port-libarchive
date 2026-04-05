@@ -12,11 +12,9 @@ fn trim_component(component: &str) -> u32 {
 fn collect_public_symbols(header: &Path, symbols: &mut BTreeSet<String>) {
     let contents = fs::read_to_string(header)
         .unwrap_or_else(|err| panic!("failed to read {}: {err}", header.display()));
-    for line in contents.lines() {
-        if !line.contains("__LA_DECL") {
-            continue;
-        }
-        let mut rest = line;
+    for decl in contents.split("__LA_DECL").skip(1) {
+        let decl = decl.split(';').next().unwrap_or("");
+        let mut rest = decl;
         while let Some(index) = rest.find("archive_") {
             let candidate = &rest[index..];
             let name_len = candidate
@@ -230,11 +228,15 @@ fn libarchive_backend_sources(original_dir: &Path) -> Vec<PathBuf> {
         "archive_read_add_passphrase.c",
         "archive_read_append_filter.c",
         "archive_read_data_into_fd.c",
+        "archive_read_open_fd.c",
         "archive_read_open_filename.c",
+        "archive_read_open_file.c",
         "archive_read_open_memory.c",
         "archive_read_set_format.c",
         "archive_read_set_options.c",
+        "archive_read_support_filter_all.c",
         "archive_read_support_filter_bzip2.c",
+        "archive_read_support_filter_by_code.c",
         "archive_read_support_filter_compress.c",
         "archive_read_support_filter_grzip.c",
         "archive_read_support_filter_gzip.c",
@@ -243,6 +245,7 @@ fn libarchive_backend_sources(original_dir: &Path) -> Vec<PathBuf> {
         "archive_read_support_filter_lzop.c",
         "archive_read_support_filter_none.c",
         "archive_read_support_filter_program.c",
+        "archive_read_support_filter_rpm.c",
         "archive_read_support_filter_uu.c",
         "archive_read_support_filter_xz.c",
         "archive_read_support_filter_zstd.c",
@@ -273,6 +276,7 @@ fn libarchive_backend_sources(original_dir: &Path) -> Vec<PathBuf> {
         "archive_write_add_filter_xz.c",
         "archive_write_add_filter_zstd.c",
         "archive_write_open_fd.c",
+        "archive_write_open_file.c",
         "archive_write_open_filename.c",
         "archive_write_open_memory.c",
         "archive_write_set_format.c",
@@ -287,6 +291,7 @@ fn libarchive_backend_sources(original_dir: &Path) -> Vec<PathBuf> {
         "archive_write_set_format_shar.c",
         "archive_write_set_format_ustar.c",
         "archive_write_set_format_v7tar.c",
+        "archive_write_set_format_zip.c",
         "archive_write_set_options.c",
         "archive_write_set_passphrase.c",
         "filter_fork_posix.c",

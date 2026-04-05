@@ -1,6 +1,6 @@
 use std::ffi::{c_char, c_int, c_void};
 
-use libc::size_t;
+use libc::{size_t, wchar_t};
 
 use crate::common::state::{
     ArchiveCloseCallback, ArchiveFreeCallback, ArchiveOpenCallback, ArchiveWriteCallback,
@@ -53,6 +53,7 @@ unsafe extern "C" {
     pub fn archive_write_set_format_shar_dump(a: *mut archive) -> c_int;
     pub fn archive_write_set_format_ustar(a: *mut archive) -> c_int;
     pub fn archive_write_set_format_v7tar(a: *mut archive) -> c_int;
+    pub fn archive_write_set_format_zip(a: *mut archive) -> c_int;
     pub fn archive_write_set_format_filter_by_ext(
         a: *mut archive,
         filename: *const c_char,
@@ -78,7 +79,11 @@ unsafe extern "C" {
         close_cb: Option<ArchiveCloseCallback>,
         free_cb: Option<ArchiveFreeCallback>,
     ) -> c_int;
+    pub fn archive_write_open_fd(a: *mut archive, fd: c_int) -> c_int;
     pub fn archive_write_open_filename(a: *mut archive, path: *const c_char) -> c_int;
+    pub fn archive_write_open_filename_w(a: *mut archive, path: *const wchar_t) -> c_int;
+    pub fn archive_write_open_file(a: *mut archive, path: *const c_char) -> c_int;
+    pub fn archive_write_open_FILE(a: *mut archive, file: *mut libc::FILE) -> c_int;
     pub fn archive_write_open_memory(
         a: *mut archive,
         buffer: *mut c_void,

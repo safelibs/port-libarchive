@@ -15,6 +15,7 @@ use crate::common::error::{
     ARCHIVE_WRITE_MAGIC,
 };
 use crate::entry::internal::AclState;
+use crate::entry::internal::SparseEntry;
 use crate::ffi::{archive, archive_entry};
 
 #[repr(u32)]
@@ -28,6 +29,16 @@ pub(crate) enum ArchiveKind {
 }
 
 pub(crate) type ArchiveOpenCallback = unsafe extern "C" fn(*mut archive, *mut c_void) -> c_int;
+pub(crate) type ArchiveReadCallback =
+    unsafe extern "C" fn(*mut archive, *mut c_void, *mut *const c_void) -> isize;
+pub(crate) type ArchiveSkipCallback =
+    unsafe extern "C" fn(*mut archive, *mut c_void, i64) -> i64;
+pub(crate) type ArchiveSeekCallback =
+    unsafe extern "C" fn(*mut archive, *mut c_void, i64, c_int) -> i64;
+pub(crate) type ArchiveSwitchCallback =
+    unsafe extern "C" fn(*mut archive, *mut c_void, *mut c_void) -> c_int;
+pub(crate) type ArchivePassphraseCallback =
+    unsafe extern "C" fn(*mut archive, *mut c_void) -> *const c_char;
 pub(crate) type ArchiveWriteCallback =
     unsafe extern "C" fn(*mut archive, *mut c_void, *const c_void, size_t) -> isize;
 pub(crate) type ArchiveCloseCallback = unsafe extern "C" fn(*mut archive, *mut c_void) -> c_int;
@@ -84,6 +95,19 @@ pub(crate) enum ReadSourceConfig {
         path: String,
         block_size: size_t,
     },
+    Memory2 {
+        buffer: *const c_void,
+        size: size_t,
+        read_size: size_t,
+    },
+    Fd {
+        fd: c_int,
+        block_size: size_t,
+    },
+    File {
+        file: *mut libc::FILE,
+    },
+    Callbacks,
 }
 
 #[derive(Clone)]
@@ -124,6 +148,7 @@ pub(crate) enum WriteFormatConfig {
     SharDump,
     Ustar,
     V7tar,
+    Zip,
 }
 
 #[derive(Clone)]
@@ -156,7 +181,10 @@ pub(crate) enum WriteOpenConfig {
         size: size_t,
         used: *mut size_t,
     },
+    Fd(c_int),
     Filename(String),
+    FilenameW(String),
+    File(*mut c_void),
 }
 
 #[derive(Clone, Copy)]
@@ -197,6 +225,10 @@ pub(crate) struct ReadDiskTraversalState {
     pub(crate) current_data_cursor: usize,
     pub(crate) current_data_eof: bool,
     pub(crate) current_data_offset: i64,
+    pub(crate) current_size: i64,
+    pub(crate) current_sparse: Vec<SparseEntry>,
+    pub(crate) current_sparse_index: usize,
+    pub(crate) current_fully_sparse: bool,
     pub(crate) current_can_descend: bool,
     pub(crate) restore_atime: Option<ReadDiskAtimeRestore>,
     pub(crate) current_stat: Option<stat>,
@@ -263,12 +295,28 @@ pub(crate) struct ArchiveBaseHandle {
 }
 
 #[repr(C)]
+pub(crate) struct ReadCallbackNode {
+    pub(crate) owner: *mut archive,
+    pub(crate) client_data: *mut c_void,
+}
+
+#[repr(C)]
 pub(crate) struct ReadArchiveHandle {
     pub(crate) core: ArchiveCore,
     pub(crate) backend: *mut BackendArchive,
     pub(crate) entry: *mut archive_entry,
     pub(crate) current_entry: *mut BackendEntry,
     pub(crate) backend_opened: bool,
+    pub(crate) open_cb: Option<ArchiveOpenCallback>,
+    pub(crate) read_cb: Option<ArchiveReadCallback>,
+    pub(crate) skip_cb: Option<ArchiveSkipCallback>,
+    pub(crate) seek_cb: Option<ArchiveSeekCallback>,
+    pub(crate) close_cb: Option<ArchiveCloseCallback>,
+    pub(crate) switch_cb: Option<ArchiveSwitchCallback>,
+    pub(crate) callback_nodes: Vec<Box<ReadCallbackNode>>,
+    pub(crate) passphrase_cb: Option<ArchivePassphraseCallback>,
+    pub(crate) passphrase_client_data: *mut c_void,
+    pub(crate) placeholder_formats: u32,
     pub(crate) filter_registrations: Vec<ReadFilterRegistration>,
     pub(crate) format_registrations: Vec<ReadFormatRegistration>,
     pub(crate) source: ReadSourceConfig,
@@ -402,6 +450,16 @@ pub(crate) fn alloc_archive(kind: ArchiveKind) -> *mut archive {
             entry: ptr::null_mut(),
             current_entry: ptr::null_mut(),
             backend_opened: false,
+            open_cb: None,
+            read_cb: None,
+            skip_cb: None,
+            seek_cb: None,
+            close_cb: None,
+            switch_cb: None,
+            callback_nodes: Vec::new(),
+            passphrase_cb: None,
+            passphrase_client_data: ptr::null_mut(),
+            placeholder_formats: 0,
             filter_registrations: Vec::new(),
             format_registrations: Vec::new(),
             source: ReadSourceConfig::None,

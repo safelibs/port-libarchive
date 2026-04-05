@@ -27,11 +27,15 @@ use crate::common::state::{
     archive_check_magic, clear_error, read_disk_from_archive, write_disk_from_archive,
     ReadDiskOpenPath, ReadDiskSymlinkMode,
 };
-use crate::entry::internal::{clear_entry, from_raw, SparseEntry, XattrEntry};
+use crate::entry::internal::{clear_entry, from_raw, CachedText, SparseEntry, XattrEntry};
 use crate::ffi::{archive, archive_entry};
 
 fn c_string_opt(value: Option<&str>) -> Option<CString> {
     value.map(|value| CString::new(value).expect("string must not contain NUL"))
+}
+
+fn cached_c_string_opt(value: &CachedText) -> Option<CString> {
+    value.to_cstring()
 }
 
 pub(crate) unsafe fn custom_entry_to_backend(
@@ -44,7 +48,7 @@ pub(crate) unsafe fn custom_entry_to_backend(
     let api = backend_api();
     (api.archive_entry_clear)(dst);
 
-    if let Some(pathname) = c_string_opt(src_data.pathname.get_str()) {
+    if let Some(pathname) = cached_c_string_opt(&src_data.pathname) {
         (api.archive_entry_copy_pathname)(dst, pathname.as_ptr());
     }
     (api.archive_entry_set_mode)(dst, src_data.mode);
@@ -55,16 +59,16 @@ pub(crate) unsafe fn custom_entry_to_backend(
     }
     (api.archive_entry_set_uid)(dst, src_data.uid);
     (api.archive_entry_set_gid)(dst, src_data.gid);
-    if let Some(uname) = c_string_opt(src_data.uname.get_str()) {
+    if let Some(uname) = cached_c_string_opt(&src_data.uname) {
         (api.archive_entry_copy_uname)(dst, uname.as_ptr());
     }
-    if let Some(gname) = c_string_opt(src_data.gname.get_str()) {
+    if let Some(gname) = cached_c_string_opt(&src_data.gname) {
         (api.archive_entry_copy_gname)(dst, gname.as_ptr());
     }
-    if let Some(hardlink) = c_string_opt(src_data.hardlink.get_str()) {
+    if let Some(hardlink) = cached_c_string_opt(&src_data.hardlink) {
         (api.archive_entry_copy_hardlink)(dst, hardlink.as_ptr());
     }
-    if let Some(symlink) = c_string_opt(src_data.symlink.get_str()) {
+    if let Some(symlink) = cached_c_string_opt(&src_data.symlink) {
         (api.archive_entry_copy_symlink)(dst, symlink.as_ptr());
     }
     (api.archive_entry_set_symlink_type)(dst, src_data.symlink_type);
@@ -153,38 +157,38 @@ pub(crate) unsafe fn backend_entry_to_custom(
     dst_data.rdev = (api.archive_entry_rdev)(src);
     dst_data
         .pathname
-        .set((!((api.archive_entry_pathname)(src)).is_null()).then(|| {
+        .set_bytes((!((api.archive_entry_pathname)(src)).is_null()).then(|| {
             CStr::from_ptr((api.archive_entry_pathname)(src))
-                .to_string_lossy()
-                .into_owned()
+                .to_bytes()
+                .to_vec()
         }));
     dst_data
         .uname
-        .set((!((api.archive_entry_uname)(src)).is_null()).then(|| {
+        .set_bytes((!((api.archive_entry_uname)(src)).is_null()).then(|| {
             CStr::from_ptr((api.archive_entry_uname)(src))
-                .to_string_lossy()
-                .into_owned()
+                .to_bytes()
+                .to_vec()
         }));
     dst_data
         .gname
-        .set((!((api.archive_entry_gname)(src)).is_null()).then(|| {
+        .set_bytes((!((api.archive_entry_gname)(src)).is_null()).then(|| {
             CStr::from_ptr((api.archive_entry_gname)(src))
-                .to_string_lossy()
-                .into_owned()
+                .to_bytes()
+                .to_vec()
         }));
     dst_data
         .hardlink
-        .set((!((api.archive_entry_hardlink)(src)).is_null()).then(|| {
+        .set_bytes((!((api.archive_entry_hardlink)(src)).is_null()).then(|| {
             CStr::from_ptr((api.archive_entry_hardlink)(src))
-                .to_string_lossy()
-                .into_owned()
+                .to_bytes()
+                .to_vec()
         }));
     dst_data
         .symlink
-        .set((!((api.archive_entry_symlink)(src)).is_null()).then(|| {
+        .set_bytes((!((api.archive_entry_symlink)(src)).is_null()).then(|| {
             CStr::from_ptr((api.archive_entry_symlink)(src))
-                .to_string_lossy()
-                .into_owned()
+                .to_bytes()
+                .to_vec()
         }));
     dst_data.symlink_type = (api.archive_entry_symlink_type)(src);
     if (api.archive_entry_size_is_set)(src) != 0 {

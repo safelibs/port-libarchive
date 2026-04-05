@@ -14,11 +14,12 @@ use crate::common::state::{
     ReadDiskSymlinkMode, WriteDiskArchiveHandle, WriteDiskCurrentState, WriteDiskPendingFixup,
 };
 use crate::entry::internal::{
-    clear_entry, copy_stat, from_raw as entry_from_raw, AclState, AE_IFDIR, AE_IFIFO, AE_IFLNK,
-    AE_IFMT, AE_IFREG, ARCHIVE_ENTRY_ACL_EXECUTE, ARCHIVE_ENTRY_ACL_GROUP,
-    ARCHIVE_ENTRY_ACL_GROUP_OBJ, ARCHIVE_ENTRY_ACL_MASK, ARCHIVE_ENTRY_ACL_OTHER,
-    ARCHIVE_ENTRY_ACL_READ, ARCHIVE_ENTRY_ACL_TYPE_ACCESS, ARCHIVE_ENTRY_ACL_TYPE_DEFAULT,
-    ARCHIVE_ENTRY_ACL_USER, ARCHIVE_ENTRY_ACL_USER_OBJ, ARCHIVE_ENTRY_ACL_WRITE,
+    add_sparse, clear_entry, copy_stat, from_raw as entry_from_raw, AclState, SparseEntry,
+    AE_IFDIR, AE_IFIFO, AE_IFLNK, AE_IFMT, AE_IFREG, ARCHIVE_ENTRY_ACL_EXECUTE,
+    ARCHIVE_ENTRY_ACL_GROUP, ARCHIVE_ENTRY_ACL_GROUP_OBJ, ARCHIVE_ENTRY_ACL_MASK,
+    ARCHIVE_ENTRY_ACL_OTHER, ARCHIVE_ENTRY_ACL_READ, ARCHIVE_ENTRY_ACL_TYPE_ACCESS,
+    ARCHIVE_ENTRY_ACL_TYPE_DEFAULT, ARCHIVE_ENTRY_ACL_USER, ARCHIVE_ENTRY_ACL_USER_OBJ,
+    ARCHIVE_ENTRY_ACL_WRITE,
 };
 use crate::ffi::archive_entry;
 
@@ -41,6 +42,7 @@ const ARCHIVE_READDISK_RESTORE_ATIME: c_int = 0x0001;
 const ARCHIVE_READDISK_HONOR_NODUMP: c_int = 0x0002;
 const ARCHIVE_READDISK_NO_XATTR: c_int = 0x0010;
 const ARCHIVE_READDISK_NO_ACL: c_int = 0x0020;
+const ARCHIVE_READDISK_NO_SPARSE: c_int = 0x0080;
 
 const ACL_FIRST_ENTRY: c_int = 0;
 const ACL_NEXT_ENTRY: c_int = 1;
@@ -151,6 +153,75 @@ fn reset_read_data(handle: &mut ReadDiskArchiveHandle) {
     handle.traversal.current_data_cursor = 0;
     handle.traversal.current_data_eof = false;
     handle.traversal.current_data_offset = 0;
+    handle.traversal.current_size = 0;
+    handle.traversal.current_sparse.clear();
+    handle.traversal.current_sparse_index = 0;
+    handle.traversal.current_fully_sparse = false;
+}
+
+struct SparseLayout {
+    extents: Vec<SparseEntry>,
+    fully_sparse: bool,
+}
+
+fn load_sparse_layout(path: &Path, size: i64) -> Option<SparseLayout> {
+    if size <= 0 {
+        return Some(SparseLayout {
+            extents: Vec::new(),
+            fully_sparse: false,
+        });
+    }
+
+    let c_path = c_path(path).ok()?;
+    let fd = unsafe { libc::open(c_path.as_ptr(), libc::O_RDONLY | libc::O_CLOEXEC) };
+    if fd < 0 {
+        return None;
+    }
+
+    let mut result = SparseLayout {
+        extents: Vec::new(),
+        fully_sparse: false,
+    };
+    let mut offset = 0i64;
+    while offset < size {
+        let data_offset = unsafe { libc::lseek(fd, offset, libc::SEEK_DATA) };
+        if data_offset < 0 {
+            let errno = last_errno();
+            if errno == libc::ENXIO {
+                result.fully_sparse = offset == 0;
+                break;
+            }
+            unsafe {
+                libc::close(fd);
+            }
+            return None;
+        }
+
+        let data_offset = data_offset.min(size);
+        let hole_offset = unsafe { libc::lseek(fd, data_offset, libc::SEEK_HOLE) };
+        if hole_offset < 0 {
+            unsafe {
+                libc::close(fd);
+            }
+            return None;
+        }
+        let hole_offset = hole_offset.min(size);
+        if hole_offset > data_offset {
+            result.extents.push(SparseEntry {
+                offset: data_offset,
+                length: hole_offset - data_offset,
+            });
+        }
+        if hole_offset <= data_offset {
+            break;
+        }
+        offset = hole_offset;
+    }
+
+    unsafe {
+        libc::close(fd);
+    }
+    Some(result)
 }
 
 fn restore_atime(spec: &ReadDiskAtimeRestore) {
@@ -518,6 +589,17 @@ fn populate_entry_from_path(
     if let Some(gname) = resolve_gname(handle, entry_data.gid) {
         entry_data.gname.set(Some(gname));
     }
+    entry_data.sparse.clear();
+    entry_data.sparse_iter = 0;
+    if filetype_from_mode(effective_stat.st_mode) == AE_IFREG
+        && (handle.behavior_flags & ARCHIVE_READDISK_NO_SPARSE) == 0
+    {
+        if let Some(layout) = load_sparse_layout(&effective_path, effective_stat.st_size) {
+            for extent in layout.extents {
+                add_sparse(entry_data, extent.offset, extent.length);
+            }
+        }
+    }
 
     Ok((
         effective_path,
@@ -651,6 +733,18 @@ pub(crate) unsafe fn read_disk_next_header(
         handle.traversal.current_resolved_path = Some(resolved_path.clone());
         handle.traversal.current_can_descend = can_descend;
         handle.traversal.current_stat = Some(st);
+        handle.traversal.current_size = st.st_size;
+        if let Some(entry_data) = entry_from_raw(entry) {
+            handle.traversal.current_sparse = entry_data.sparse.clone();
+            handle.traversal.current_sparse_index = 0;
+            handle.traversal.current_fully_sparse = st.st_size > 0
+                && filetype_from_mode(st.st_mode) == AE_IFREG
+                && (handle.behavior_flags & ARCHIVE_READDISK_NO_SPARSE) == 0
+                && handle.traversal.current_sparse.is_empty()
+                && load_sparse_layout(&resolved_path, st.st_size)
+                    .map(|layout| layout.fully_sparse)
+                    .unwrap_or(false);
+        }
 
         if !handle.matching.is_null()
             && crate::r#match::api::archive_match_excluded(handle.matching, entry) != 0
@@ -785,6 +879,40 @@ pub(crate) unsafe fn read_disk_data_block(
 ) -> c_int {
     if ensure_current_data(handle).is_err() {
         return ARCHIVE_FATAL;
+    }
+    if handle.traversal.current_sparse_index < handle.traversal.current_sparse.len() {
+        let extent = handle.traversal.current_sparse[handle.traversal.current_sparse_index];
+        handle.traversal.current_sparse_index += 1;
+        if !buffer.is_null() {
+            *buffer = handle
+                .traversal
+                .current_data
+                .as_ptr()
+                .add(extent.offset as usize)
+                .cast();
+        }
+        if !size.is_null() {
+            *size = extent.length as usize;
+        }
+        if !offset.is_null() {
+            *offset = extent.offset;
+        }
+        handle.traversal.current_data_cursor = handle.traversal.current_data.len();
+        return ARCHIVE_OK;
+    }
+    if handle.traversal.current_fully_sparse {
+        handle.traversal.current_fully_sparse = false;
+        handle.traversal.current_data_cursor = handle.traversal.current_data.len();
+        if !buffer.is_null() {
+            *buffer = handle.traversal.current_data.as_ptr().cast();
+        }
+        if !size.is_null() {
+            *size = 0;
+        }
+        if !offset.is_null() {
+            *offset = handle.traversal.current_size;
+        }
+        return ARCHIVE_OK;
     }
     if handle.traversal.current_data_eof
         || handle.traversal.current_data_cursor >= handle.traversal.current_data.len()

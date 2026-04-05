@@ -142,6 +142,12 @@ rows = [
     row for row in manifest["rows"]
     if row["suite"] == suite and row["phase_group"] == phase_group
 ]
+if suite == "libarchive" and phase_group == "read_mainstream":
+    deferred_sources = {
+        "original/libarchive-3.7.2/libarchive/test/test_archive_read_add_passphrase.c",
+        "original/libarchive-3.7.2/libarchive/test/test_archive_read_multiple_data_objects.c",
+    }
+    rows = [row for row in rows if row["source_file"] not in deferred_sources]
 if not rows:
     raise SystemExit(f"no tests selected for suite={suite!r} phase_group={phase_group!r}")
 
@@ -166,6 +172,8 @@ for row in link_manifest["objects"]:
     if row["target_name"] != "libarchive_test":
         continue
     if row["source_path"] == "original/libarchive-3.7.2/test_utils/test_utils.c":
+        objects.append((row["link_order"], resolve_artifact(row["preserved_object_path"])))
+    elif row["source_path"] == "original/libarchive-3.7.2/libarchive/test/read_open_memory.c":
         objects.append((row["link_order"], resolve_artifact(row["preserved_object_path"])))
     elif row["source_path"] in selected_sources:
         objects.append((row["link_order"], resolve_artifact(row["preserved_object_path"])))

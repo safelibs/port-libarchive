@@ -1,4 +1,4 @@
-use std::ffi::{c_char, c_int, c_long, c_uchar, c_ulong, c_void, CString};
+use std::ffi::{c_char, c_int, c_long, c_uchar, c_ulong, c_void, CStr, CString};
 use std::mem;
 use std::ptr;
 
@@ -74,7 +74,9 @@ pub(crate) const ARCHIVE_ENTRY_ACL_STYLE_COMPACT: c_int = 0x0000_0010;
 #[derive(Default)]
 pub(crate) struct CachedText {
     value: Option<String>,
+    bytes: Option<Vec<u8>>,
     c_value: Option<CString>,
+    utf8_c_value: Option<CString>,
     w_value: Option<Vec<wchar_t>>,
 }
 
@@ -82,31 +84,67 @@ impl Clone for CachedText {
     fn clone(&self) -> Self {
         Self {
             value: self.value.clone(),
+            bytes: self.bytes.clone(),
             c_value: None,
+            utf8_c_value: None,
             w_value: None,
         }
     }
 }
 
 impl CachedText {
-    pub(crate) fn set(&mut self, value: Option<String>) {
-        self.value = value;
+    fn clear_cache(&mut self) {
         self.c_value = None;
+        self.utf8_c_value = None;
         self.w_value = None;
+    }
+
+    pub(crate) fn set(&mut self, value: Option<String>) {
+        self.bytes = value.as_ref().map(|value| value.as_bytes().to_vec());
+        self.value = value;
+        self.clear_cache();
+    }
+
+    pub(crate) fn set_bytes(&mut self, value: Option<Vec<u8>>) {
+        self.value = value
+            .as_ref()
+            .map(|value| String::from_utf8_lossy(value).into_owned());
+        self.bytes = value;
+        self.clear_cache();
     }
 
     pub(crate) fn get_str(&self) -> Option<&str> {
         self.value.as_deref()
     }
 
+    pub(crate) fn get_bytes(&self) -> Option<&[u8]> {
+        self.bytes.as_deref()
+    }
+
+    pub(crate) fn to_cstring(&self) -> Option<CString> {
+        self.bytes
+            .as_ref()
+            .map(|value| CString::new(value.as_slice()).expect("text bytes must not contain NUL"))
+    }
+
     pub(crate) fn as_c_ptr(&mut self) -> *const c_char {
-        if self.value.is_none() {
+        if self.bytes.is_none() {
             return ptr::null();
         }
         if self.c_value.is_none() {
-            self.c_value = clone_c_string(self.value.as_deref());
+            self.c_value = self.to_cstring();
         }
         empty_if_none(self.c_value.as_ref())
+    }
+
+    pub(crate) fn as_utf8_c_ptr(&mut self) -> *const c_char {
+        if self.value.is_none() {
+            return ptr::null();
+        }
+        if self.utf8_c_value.is_none() {
+            self.utf8_c_value = clone_c_string(self.value.as_deref());
+        }
+        empty_if_none(self.utf8_c_value.as_ref())
     }
 
     pub(crate) fn as_wide_ptr(&mut self) -> *const wchar_t {
@@ -333,7 +371,7 @@ pub(crate) fn update_text(target: &mut CachedText, value: Option<String>) {
 }
 
 pub(crate) fn update_c_text(target: &mut CachedText, value: *const c_char) {
-    target.set(from_optional_c_str(value));
+    target.set_bytes((!value.is_null()).then(|| unsafe { CStr::from_ptr(value).to_bytes().to_vec() }));
 }
 
 pub(crate) fn update_wide_text(target: &mut CachedText, value: *const wchar_t) {
@@ -363,6 +401,15 @@ pub(crate) fn set_link_target(entry: &mut ArchiveEntryData, value: Option<String
         entry.symlink.set(value);
     } else {
         entry.hardlink.set(value);
+    }
+    entry.strmode_cache = None;
+}
+
+pub(crate) fn set_link_target_bytes(entry: &mut ArchiveEntryData, value: Option<Vec<u8>>) {
+    if entry.symlink.get_bytes().is_some() {
+        entry.symlink.set_bytes(value);
+    } else {
+        entry.hardlink.set_bytes(value);
     }
     entry.strmode_cache = None;
 }
@@ -411,7 +458,7 @@ pub(crate) unsafe fn next_xattr(
         return ARCHIVE_WARN;
     }
 
-    let index = entry.xattrs.len() - 1 - entry.xattr_iter;
+    let index = entry.xattr_iter;
     entry.xattr_iter += 1;
     let xattr = &entry.xattrs[index];
     if !name.is_null() {
@@ -427,12 +474,50 @@ pub(crate) unsafe fn next_xattr(
 }
 
 pub(crate) fn add_sparse(entry: &mut ArchiveEntryData, offset: i64, length: i64) {
+    if offset < 0 || length < 0 {
+        return;
+    }
+    if offset > i64::MAX - length {
+        return;
+    }
+    if entry.size_set && offset + length > entry.size {
+        return;
+    }
+    if let Some(last) = entry.sparse.last_mut() {
+        if last.offset + last.length > offset {
+            return;
+        }
+        if last.offset + last.length == offset {
+            if last.length > i64::MAX - length {
+                return;
+            }
+            last.length += length;
+            return;
+        }
+    }
     entry.sparse.push(SparseEntry { offset, length });
+}
+
+fn normalize_sparse(entry: &mut ArchiveEntryData) {
+    if entry.sparse.len() != 1 {
+        return;
+    }
+    let sparse = entry.sparse[0];
+    let size = if entry.size_set { entry.size } else { 0 };
+    if sparse.offset == 0 && sparse.length >= size {
+        entry.sparse.clear();
+        entry.sparse_iter = 0;
+    }
+}
+
+pub(crate) fn sparse_count(entry: &mut ArchiveEntryData) -> c_int {
+    normalize_sparse(entry);
+    entry.sparse.len() as c_int
 }
 
 pub(crate) fn reset_sparse(entry: &mut ArchiveEntryData) -> c_int {
     entry.sparse_iter = 0;
-    entry.sparse.len() as c_int
+    sparse_count(entry)
 }
 
 pub(crate) unsafe fn next_sparse(
@@ -1368,7 +1453,7 @@ pub(crate) unsafe fn linkify(
                 current.size_set = false;
                 current
                     .hardlink
-                    .set(canonical.pathname.get_str().map(ToString::to_string));
+                    .set_bytes(canonical.pathname.get_bytes().map(|value| value.to_vec()));
             } else {
                 resolver.entries.insert(
                     key,
@@ -1391,7 +1476,7 @@ pub(crate) unsafe fn linkify(
                     previous.size_set = false;
                     previous
                         .hardlink
-                        .set(canonical.pathname.get_str().map(ToString::to_string));
+                        .set_bytes(canonical.pathname.get_bytes().map(|value| value.to_vec()));
                     if link.links > 0 {
                         link.links -= 1;
                     }

@@ -1,4 +1,4 @@
-use std::ffi::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void};
+use std::ffi::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void, CStr};
 use std::ptr;
 
 use libc::{dev_t, mode_t, size_t, stat, wchar_t};
@@ -9,7 +9,8 @@ use crate::entry::internal::{
     add_sparse, add_xattr, clear_acl, clear_entry, clone_entry, copy_stat, entry_has_acl,
     free_linkresolver, free_raw_entry, from_raw, linkify, materialize_stat, new_raw_entry,
     next_sparse, next_xattr, partial_links, reset_sparse, reset_xattrs, set_filetype,
-    set_link_target, set_mode, set_perm, strmode, update_c_text, update_text, update_wide_text,
+    set_link_target, set_link_target_bytes, set_mode, set_perm, sparse_count, strmode,
+    update_c_text, update_text, update_wide_text,
     AclState, ArchiveEntryData, LinkResolverData, AE_IFMT,
     ARCHIVE_ENTRY_ACL_ENTRY_DIRECTORY_INHERIT, ARCHIVE_ENTRY_ACL_ENTRY_FAILED_ACCESS,
     ARCHIVE_ENTRY_ACL_ENTRY_FILE_INHERIT, ARCHIVE_ENTRY_ACL_ENTRY_INHERITED,
@@ -481,6 +482,15 @@ macro_rules! text_getters {
     };
 }
 
+macro_rules! text_utf8_getters {
+    ($name:ident, $field:ident) => {
+        #[no_mangle]
+        pub unsafe extern "C" fn $name(entry: *mut archive_entry) -> *const c_char {
+            from_raw(entry).map_or(ptr::null(), |entry_data| entry_data.$field.as_utf8_c_ptr())
+        }
+    };
+}
+
 macro_rules! text_wide_getters {
     ($name:ident, $field:ident) => {
         #[no_mangle]
@@ -491,16 +501,16 @@ macro_rules! text_wide_getters {
 }
 
 text_getters!(archive_entry_gname, gname);
-text_getters!(archive_entry_gname_utf8, gname);
+text_utf8_getters!(archive_entry_gname_utf8, gname);
 text_getters!(archive_entry_hardlink, hardlink);
-text_getters!(archive_entry_hardlink_utf8, hardlink);
+text_utf8_getters!(archive_entry_hardlink_utf8, hardlink);
 text_getters!(archive_entry_pathname, pathname);
-text_getters!(archive_entry_pathname_utf8, pathname);
+text_utf8_getters!(archive_entry_pathname_utf8, pathname);
 text_getters!(archive_entry_sourcepath, sourcepath);
 text_getters!(archive_entry_symlink, symlink);
-text_getters!(archive_entry_symlink_utf8, symlink);
+text_utf8_getters!(archive_entry_symlink_utf8, symlink);
 text_getters!(archive_entry_uname, uname);
-text_getters!(archive_entry_uname_utf8, uname);
+text_utf8_getters!(archive_entry_uname_utf8, uname);
 
 text_wide_getters!(archive_entry_gname_w, gname);
 text_wide_getters!(archive_entry_hardlink_w, hardlink);
@@ -577,7 +587,10 @@ text_updates!(archive_entry_update_uname_utf8, uname, c);
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_set_link(entry: *mut archive_entry, value: *const c_char) {
     if let Some(entry_data) = from_raw(entry) {
-        set_link_target(entry_data, from_optional_c_str(value));
+        set_link_target_bytes(
+            entry_data,
+            (!value.is_null()).then(|| CStr::from_ptr(value).to_bytes().to_vec()),
+        );
         mark_dirty(entry_data);
     }
 }
@@ -972,7 +985,7 @@ pub unsafe extern "C" fn archive_entry_sparse_add_entry(
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_sparse_count(entry: *mut archive_entry) -> c_int {
-    from_raw(entry).map_or(0, |entry_data| entry_data.sparse.len() as c_int)
+    from_raw(entry).map_or(0, sparse_count)
 }
 
 #[no_mangle]

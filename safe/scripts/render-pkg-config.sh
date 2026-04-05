@@ -88,11 +88,14 @@ for line in original_lines:
         continue
     if "=" in line and ":" not in line.split("=", 1)[0]:
         key, value = line.split("=", 1)
+        fields[key.strip()] = value
     elif ":" in line:
         key, value = line.split(":", 1)
+        if value.startswith(" "):
+            value = value[1:]
+        fields[key.strip()] = value
     else:
         continue
-    fields[key.strip()] = value.strip()
 
 if mode == "build-tree":
     replacements = {

@@ -83,8 +83,8 @@ fn entry_acl_xattr_sparse_and_strmode_cover_foundation_collections() {
     entry.add_xattr("user.beta", b"two");
     assert_eq!(
         vec![
-            (String::from("user.beta"), b"two".to_vec()),
             (String::from("user.alpha"), b"one".to_vec()),
+            (String::from("user.beta"), b"two".to_vec()),
         ],
         entry.xattrs()
     );

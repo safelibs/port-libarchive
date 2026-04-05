@@ -1,11 +1,11 @@
 use std::ffi::{c_char, c_int, c_void, CString};
 use std::ptr;
 
-use libc::size_t;
+use libc::{size_t, wchar_t};
 
 use crate::common::backend::{api as backend_api, BackendArchive, BackendEntry};
 use crate::common::error::{ARCHIVE_FATAL, ARCHIVE_OK, ARCHIVE_STATE_FATAL};
-use crate::common::helpers::from_optional_c_str;
+use crate::common::helpers::{from_optional_c_str, from_optional_wide, to_wide_null};
 use crate::common::panic_boundary::ffi_int;
 use crate::common::state::{
     archive_check_magic, archive_magic, clear_error, set_error_string, sync_backend_core,
@@ -28,6 +28,7 @@ const ARCHIVE_FORMAT_SHAR: c_int = 0x20000;
 const ARCHIVE_FORMAT_SHAR_BASE: c_int = ARCHIVE_FORMAT_SHAR | 1;
 const ARCHIVE_FORMAT_SHAR_DUMP: c_int = ARCHIVE_FORMAT_SHAR | 2;
 const ARCHIVE_FORMAT_TAR: c_int = 0x30000;
+const ARCHIVE_FORMAT_ZIP: c_int = 0x50000;
 const ARCHIVE_FORMAT_TAR_USTAR: c_int = ARCHIVE_FORMAT_TAR | 1;
 const ARCHIVE_FORMAT_TAR_PAX_INTERCHANGE: c_int = ARCHIVE_FORMAT_TAR | 2;
 const ARCHIVE_FORMAT_TAR_PAX_RESTRICTED: c_int = ARCHIVE_FORMAT_TAR | 3;
@@ -99,7 +100,6 @@ unsupported_backend_writer_stub!(backend_archive_write_set_format_iso9660);
 unsupported_backend_writer_stub!(backend_archive_write_set_format_mtree);
 unsupported_backend_writer_stub!(backend_archive_write_set_format_warc);
 unsupported_backend_writer_stub!(backend_archive_write_set_format_xar);
-unsupported_backend_writer_stub!(backend_archive_write_set_format_zip);
 
 fn validate_writer(
     a: *mut archive,
@@ -256,6 +256,7 @@ unsafe fn apply_write_format(
         }
         WriteFormatConfig::Ustar => (backend_api().archive_write_set_format_ustar)(handle.backend),
         WriteFormatConfig::V7tar => (backend_api().archive_write_set_format_v7tar)(handle.backend),
+        WriteFormatConfig::Zip => (backend_api().archive_write_set_format_zip)(handle.backend),
     }
 }
 
@@ -288,6 +289,7 @@ fn resolve_write_format_by_name(
         "shar" => WriteFormatConfig::Shar,
         "shardump" => WriteFormatConfig::SharDump,
         "ustar" => WriteFormatConfig::Ustar,
+        "zip" => WriteFormatConfig::Zip,
         _ => {
             return Err(set_write_format_error(
                 handle,
@@ -316,6 +318,7 @@ fn resolve_write_format_code(
         ARCHIVE_FORMAT_TAR_PAX_INTERCHANGE => WriteFormatConfig::Pax,
         ARCHIVE_FORMAT_TAR_PAX_RESTRICTED => WriteFormatConfig::PaxRestricted,
         ARCHIVE_FORMAT_TAR_USTAR => WriteFormatConfig::Ustar,
+        ARCHIVE_FORMAT_ZIP => WriteFormatConfig::Zip,
         _ => return Err(set_write_format_error(handle, "No such format".to_string())),
     };
     Ok(format)
@@ -339,6 +342,8 @@ fn resolve_write_format_by_ext(
             Some((WriteFormatConfig::PaxRestricted, WriteFilterConfig::Bzip2))
         } else if filename.ends_with(".tar.xz") {
             Some((WriteFormatConfig::PaxRestricted, WriteFilterConfig::Xz))
+        } else if filename.ends_with(".zip") || filename.ends_with(".jar") {
+            Some((WriteFormatConfig::Zip, WriteFilterConfig::None))
         } else {
             None
         }
@@ -529,9 +534,15 @@ unsafe fn ensure_write_backend_open(
         WriteOpenConfig::Memory { buffer, size, used } => {
             (backend_api().archive_write_open_memory)(handle.backend, *buffer, *size, *used)
         }
+        WriteOpenConfig::Fd(fd) => (backend_api().archive_write_open_fd)(handle.backend, *fd),
         WriteOpenConfig::Filename(path) => with_c_string(path, |path| {
             (backend_api().archive_write_open_filename)(handle.backend, path)
         }),
+        WriteOpenConfig::FilenameW(path) => {
+            let path = to_wide_null(path);
+            (backend_api().archive_write_open_filename_w)(handle.backend, path.as_ptr())
+        }
+        WriteOpenConfig::File(file) => (backend_api().archive_write_open_FILE)(handle.backend, *file),
     };
     if status == ARCHIVE_OK {
         handle.backend_opened = true;
@@ -715,6 +726,7 @@ writer_format_call0!(
 );
 writer_format_call0!(archive_write_set_format_ustar, WriteFormatConfig::Ustar);
 writer_format_call0!(archive_write_set_format_v7tar, WriteFormatConfig::V7tar);
+writer_format_call0!(archive_write_set_format_zip, WriteFormatConfig::Zip);
 
 #[no_mangle]
 pub extern "C" fn archive_write_fail(a: *mut archive) -> c_int {
@@ -1023,6 +1035,53 @@ pub extern "C" fn archive_write_open_filename(a: *mut archive, file: *const c_ch
         };
         clear_error(&mut handle.core);
         handle.open_target = WriteOpenConfig::Filename(file);
+        ensure_write_backend_open(handle)
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_write_open_fd(a: *mut archive, fd: c_int) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) = validate_writer(a, "archive_write_open_fd") else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        handle.open_target = WriteOpenConfig::Fd(fd);
+        ensure_write_backend_open(handle)
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_write_open_filename_w(
+    a: *mut archive,
+    file: *const wchar_t,
+) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) = validate_writer(a, "archive_write_open_filename_w") else {
+            return ARCHIVE_FATAL;
+        };
+        let Some(file) = from_optional_wide(file) else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        handle.open_target = WriteOpenConfig::FilenameW(file);
+        ensure_write_backend_open(handle)
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_write_open_file(a: *mut archive, file: *const c_char) -> c_int {
+    archive_write_open_filename(a, file)
+}
+
+#[no_mangle]
+pub extern "C" fn archive_write_open_FILE(a: *mut archive, file: *mut libc::FILE) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) = validate_writer(a, "archive_write_open_FILE") else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        handle.open_target = WriteOpenConfig::File(file.cast());
         ensure_write_backend_open(handle)
     })
 }

@@ -9,5 +9,5 @@ Version: 3.7.2
 Cflags: -I${includedir}
 Cflags.private: -DLIBARCHIVE_STATIC
 Libs: -L${libdir} -larchive
-Libs.private: -lnettle -lacl -llzma -lzstd -llz4 -lbz2 -lz  -lxml2
+Libs.private: -lnettle -lacl -llzma -lzstd -llz4 -lbz2 -lz  -lxml2 
 Requires.private: 

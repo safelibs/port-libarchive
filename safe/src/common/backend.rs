@@ -17,6 +17,16 @@ pub type LaSsize = isize;
 
 pub type BackendOpenCallback =
     Option<unsafe extern "C" fn(*mut BackendArchive, *mut c_void) -> c_int>;
+pub type BackendReadCallback =
+    Option<unsafe extern "C" fn(*mut BackendArchive, *mut c_void, *mut *const c_void) -> LaSsize>;
+pub type BackendSkipCallback =
+    Option<unsafe extern "C" fn(*mut BackendArchive, *mut c_void, LaInt64) -> LaInt64>;
+pub type BackendSeekCallback =
+    Option<unsafe extern "C" fn(*mut BackendArchive, *mut c_void, LaInt64, c_int) -> LaInt64>;
+pub type BackendSwitchCallback =
+    Option<unsafe extern "C" fn(*mut BackendArchive, *mut c_void, *mut c_void) -> c_int>;
+pub type BackendPassphraseCallback =
+    Option<unsafe extern "C" fn(*mut BackendArchive, *mut c_void) -> *const c_char>;
 pub type BackendWriteCallback = Option<
     unsafe extern "C" fn(*mut BackendArchive, *mut c_void, *const c_void, size_t) -> LaSsize,
 >;
@@ -35,6 +45,7 @@ pub type BackendWriteDiskCleanupCallback = Option<unsafe extern "C" fn(*mut c_vo
 
 pub struct Api {
     pub(crate) _library: *mut c_void,
+    pub archive_clear_error: unsafe extern "C" fn(*mut BackendArchive),
     pub archive_errno: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_error_string: unsafe extern "C" fn(*mut BackendArchive) -> *const c_char,
     pub archive_file_count: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
@@ -164,6 +175,47 @@ pub struct Api {
     pub archive_read_new: unsafe extern "C" fn() -> *mut BackendArchive,
     pub archive_read_free: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_close: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
+    pub archive_read_open: unsafe extern "C" fn(
+        *mut BackendArchive,
+        *mut c_void,
+        BackendOpenCallback,
+        BackendReadCallback,
+        BackendCloseCallback,
+    ) -> c_int,
+    pub archive_read_open2: unsafe extern "C" fn(
+        *mut BackendArchive,
+        *mut c_void,
+        BackendOpenCallback,
+        BackendReadCallback,
+        BackendSkipCallback,
+        BackendCloseCallback,
+    ) -> c_int,
+    pub archive_read_open1: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
+    pub archive_read_set_open_callback:
+        unsafe extern "C" fn(*mut BackendArchive, BackendOpenCallback) -> c_int,
+    pub archive_read_set_read_callback:
+        unsafe extern "C" fn(*mut BackendArchive, BackendReadCallback) -> c_int,
+    pub archive_read_set_seek_callback:
+        unsafe extern "C" fn(*mut BackendArchive, BackendSeekCallback) -> c_int,
+    pub archive_read_set_skip_callback:
+        unsafe extern "C" fn(*mut BackendArchive, BackendSkipCallback) -> c_int,
+    pub archive_read_set_close_callback:
+        unsafe extern "C" fn(*mut BackendArchive, BackendCloseCallback) -> c_int,
+    pub archive_read_set_switch_callback:
+        unsafe extern "C" fn(*mut BackendArchive, BackendSwitchCallback) -> c_int,
+    pub archive_read_set_callback_data:
+        unsafe extern "C" fn(*mut BackendArchive, *mut c_void) -> c_int,
+    pub archive_read_set_callback_data2:
+        unsafe extern "C" fn(*mut BackendArchive, *mut c_void, c_uint) -> c_int,
+    pub archive_read_add_callback_data:
+        unsafe extern "C" fn(*mut BackendArchive, *mut c_void, c_uint) -> c_int,
+    pub archive_read_append_callback_data:
+        unsafe extern "C" fn(*mut BackendArchive, *mut c_void) -> c_int,
+    pub archive_read_prepend_callback_data:
+        unsafe extern "C" fn(*mut BackendArchive, *mut c_void) -> c_int,
+    pub archive_read_support_filter_all: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
+    pub archive_read_support_filter_by_code:
+        unsafe extern "C" fn(*mut BackendArchive, c_int) -> c_int,
     pub archive_read_support_filter_none: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_support_filter_bzip2: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_support_filter_compress: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
@@ -174,31 +226,89 @@ pub struct Api {
     pub archive_read_support_filter_lzip: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_support_filter_lzma: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_support_filter_lzop: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
+    pub archive_read_support_filter_program:
+        unsafe extern "C" fn(*mut BackendArchive, *const c_char) -> c_int,
+    pub archive_read_support_filter_program_signature:
+        unsafe extern "C" fn(*mut BackendArchive, *const c_char, *const c_void, size_t) -> c_int,
+    pub archive_read_support_filter_rpm: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_support_filter_uu: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_support_filter_xz: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_support_filter_zstd: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_support_format_ar: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_support_format_cpio: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_support_format_empty: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
+    pub archive_read_support_format_gnutar: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_support_format_raw: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_support_format_tar: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
+    pub archive_read_set_format:
+        unsafe extern "C" fn(*mut BackendArchive, c_int) -> c_int,
+    pub archive_read_append_filter:
+        unsafe extern "C" fn(*mut BackendArchive, c_int) -> c_int,
+    pub archive_read_append_filter_program:
+        unsafe extern "C" fn(*mut BackendArchive, *const c_char) -> c_int,
+    pub archive_read_append_filter_program_signature:
+        unsafe extern "C" fn(*mut BackendArchive, *const c_char, *const c_void, size_t) -> c_int,
     pub archive_read_open_memory:
         unsafe extern "C" fn(*mut BackendArchive, *const c_void, size_t) -> c_int,
+    pub archive_read_open_memory2:
+        unsafe extern "C" fn(*mut BackendArchive, *const c_void, size_t, size_t) -> c_int,
     pub archive_read_open_filename:
         unsafe extern "C" fn(*mut BackendArchive, *const c_char, size_t) -> c_int,
+    pub archive_read_open_filenames:
+        unsafe extern "C" fn(*mut BackendArchive, *const *const c_char, size_t) -> c_int,
     pub archive_read_open_filename_w:
         unsafe extern "C" fn(*mut BackendArchive, *const wchar_t, size_t) -> c_int,
+    pub archive_read_open_fd:
+        unsafe extern "C" fn(*mut BackendArchive, c_int, size_t) -> c_int,
+    pub archive_read_open_file:
+        unsafe extern "C" fn(*mut BackendArchive, *const c_char, size_t) -> c_int,
+    pub archive_read_open_FILE:
+        unsafe extern "C" fn(*mut BackendArchive, *mut c_void) -> c_int,
     pub archive_read_next_header:
         unsafe extern "C" fn(*mut BackendArchive, *mut *mut BackendEntry) -> c_int,
     pub archive_read_next_header2:
         unsafe extern "C" fn(*mut BackendArchive, *mut BackendEntry) -> c_int,
+    pub archive_read_header_position: unsafe extern "C" fn(*mut BackendArchive) -> LaInt64,
+    pub archive_read_has_encrypted_entries: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
+    pub archive_read_format_capabilities: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_data:
         unsafe extern "C" fn(*mut BackendArchive, *mut c_void, size_t) -> LaSsize,
+    pub archive_seek_data:
+        unsafe extern "C" fn(*mut BackendArchive, LaInt64, c_int) -> LaInt64,
     pub archive_read_data_block: unsafe extern "C" fn(
         *mut BackendArchive,
         *mut *const c_void,
         *mut size_t,
         *mut LaInt64,
+    ) -> c_int,
+    pub archive_read_data_skip: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
+    pub archive_read_data_into_fd: unsafe extern "C" fn(*mut BackendArchive, c_int) -> c_int,
+    pub archive_read_set_format_option: unsafe extern "C" fn(
+        *mut BackendArchive,
+        *const c_char,
+        *const c_char,
+        *const c_char,
+    ) -> c_int,
+    pub archive_read_set_filter_option: unsafe extern "C" fn(
+        *mut BackendArchive,
+        *const c_char,
+        *const c_char,
+        *const c_char,
+    ) -> c_int,
+    pub archive_read_set_option: unsafe extern "C" fn(
+        *mut BackendArchive,
+        *const c_char,
+        *const c_char,
+        *const c_char,
+    ) -> c_int,
+    pub archive_read_set_options:
+        unsafe extern "C" fn(*mut BackendArchive, *const c_char) -> c_int,
+    pub archive_read_add_passphrase:
+        unsafe extern "C" fn(*mut BackendArchive, *const c_char) -> c_int,
+    pub archive_read_set_passphrase_callback: unsafe extern "C" fn(
+        *mut BackendArchive,
+        *mut c_void,
+        BackendPassphraseCallback,
     ) -> c_int,
 
     pub archive_write_new: unsafe extern "C" fn() -> *mut BackendArchive,
@@ -246,6 +356,7 @@ pub struct Api {
     pub archive_write_set_format_shar_dump: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_write_set_format_ustar: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_write_set_format_v7tar: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
+    pub archive_write_set_format_zip: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_write_open: unsafe extern "C" fn(
         *mut BackendArchive,
         *mut c_void,
@@ -261,8 +372,15 @@ pub struct Api {
         BackendCloseCallback,
         BackendFreeCallback,
     ) -> c_int,
+    pub archive_write_open_fd: unsafe extern "C" fn(*mut BackendArchive, c_int) -> c_int,
     pub archive_write_open_filename:
         unsafe extern "C" fn(*mut BackendArchive, *const c_char) -> c_int,
+    pub archive_write_open_filename_w:
+        unsafe extern "C" fn(*mut BackendArchive, *const wchar_t) -> c_int,
+    pub archive_write_open_file:
+        unsafe extern "C" fn(*mut BackendArchive, *const c_char) -> c_int,
+    pub archive_write_open_FILE:
+        unsafe extern "C" fn(*mut BackendArchive, *mut c_void) -> c_int,
     pub archive_write_open_memory:
         unsafe extern "C" fn(*mut BackendArchive, *mut c_void, size_t, *mut size_t) -> c_int,
     pub archive_write_header: unsafe extern "C" fn(*mut BackendArchive, *mut BackendEntry) -> c_int,
