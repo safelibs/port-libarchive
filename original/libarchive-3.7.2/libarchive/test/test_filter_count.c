@@ -28,6 +28,32 @@ __FBSDID("$FreeBSD: head/lib/libarchive/test/test_read_file_nonexistent.c 189473
 static void read_test(const char *name);
 static void write_test(void);
 
+#if defined(__clang__)
+#define SUPPRESS_DEPRECATED_DECLS_START \
+	_Pragma("clang diagnostic push") \
+	_Pragma("clang diagnostic ignored \"-Wdeprecated-declarations\"")
+#define SUPPRESS_DEPRECATED_DECLS_END \
+	_Pragma("clang diagnostic pop")
+#elif defined(__GNUC__)
+#define SUPPRESS_DEPRECATED_DECLS_START \
+	_Pragma("GCC diagnostic push") \
+	_Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"")
+#define SUPPRESS_DEPRECATED_DECLS_END \
+	_Pragma("GCC diagnostic pop")
+#else
+#define SUPPRESS_DEPRECATED_DECLS_START
+#define SUPPRESS_DEPRECATED_DECLS_END
+#endif
+
+SUPPRESS_DEPRECATED_DECLS_START
+static void
+assert_legacy_compression_api(struct archive *a, int code, const char *name)
+{
+	assertEqualInt(code, archive_compression(a));
+	assertEqualString(name, archive_compression_name(a));
+}
+SUPPRESS_DEPRECATED_DECLS_END
+
 static void
 read_test(const char *name)
 {
@@ -47,8 +73,7 @@ read_test(const char *name)
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a, name, 2));
 	/* bzip2 and none */
 	assertEqualInt(2, archive_filter_count(a));
-	assertEqualInt(ARCHIVE_FILTER_BZIP2, archive_compression(a));
-	assertEqualString("bzip2", archive_compression_name(a));
+	assert_legacy_compression_api(a, ARCHIVE_FILTER_BZIP2, "bzip2");
 
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
@@ -74,8 +99,7 @@ write_test(void)
 	assertEqualIntA(a, ARCHIVE_OK,
 	    archive_write_open_memory(a, buff, sizeof(buff), &used));
 	assertEqualInt(1, archive_filter_count(a));
-	assertEqualInt(ARCHIVE_FILTER_NONE, archive_compression(a));
-	assertEqualString(NULL, archive_compression_name(a));
+	assert_legacy_compression_api(a, ARCHIVE_FILTER_NONE, NULL);
 	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	assert((a = archive_write_new()) != NULL);
@@ -94,8 +118,7 @@ write_test(void)
 	    archive_write_open_memory(a, buff, sizeof(buff), &used));
 	/* bzip2 and none */
 	assertEqualInt(2, archive_filter_count(a));
-	assertEqualInt(ARCHIVE_FILTER_BZIP2, archive_compression(a));
-	assertEqualString("bzip2", archive_compression_name(a));
+	assert_legacy_compression_api(a, ARCHIVE_FILTER_BZIP2, "bzip2");
 	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 }
 
