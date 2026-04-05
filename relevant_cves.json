@@ -1,38 +1,56 @@
 {
   "library": "libarchive",
   "source_dataset": "/home/yans/code/safelibs/ported/libarchive/all_cves.json",
-  "generated_at_utc": "2026-04-05T05:31:22Z",
-  "analysis_scope": "Non-memory-corruption CVEs that may still affect a Rust reimplementation of libarchive",
+  "generated_at_utc": "2026-04-05T05:39:45Z",
+  "analysis_scope": "CVEs whose underlying bug class may still affect a Rust reimplementation of libarchive, with emphasis on non-memory-corruption issues and numeric-validation bugs that remain relevant even when Rust removes the original C memory-unsafety impact",
   "selection_policy": {
     "included_issue_classes": [
       "parser bugs that break forward progress or permit unbounded work",
       "filesystem extraction bugs involving path resolution, link handling, permissions, or sandbox escape",
-      "numeric-validation bugs where unchecked arithmetic or allocation math can still cause incorrect behavior or denial of service in safe Rust"
+      "numeric-validation bugs where unchecked arithmetic, signedness, or allocation math can still cause incorrect behavior, panic, denial of service, or invalid archive handling in safe Rust"
     ],
     "excluded_issue_classes": [
-      "heap or stack overflows, out-of-bounds reads or writes, use-after-free, double-free, and similar memory-corruption issues",
+      "heap or stack overflows, out-of-bounds reads or writes, use-after-free, double-free, and similar memory-corruption issues when the underlying bug does not also expose a Rust-relevant validation or arithmetic invariant",
       "straight NULL-dereference cases that are largely artifacts of C allocation and pointer handling",
       "tool-only presentation bugs that do not materially change core library or extraction semantics"
     ],
     "notes": [
       "Some selected CVEs were triggered through bsdtar or bsdcpio, but were kept when the underlying issue maps to parser or extraction semantics that a Rust port would still need to preserve safely.",
-      "Selection is intentionally conservative: when a CVE primarily describes memory corruption, it was excluded even if the root cause involved integer math."
+      "Numeric-validation CVEs are retained when the root cause is unchecked arithmetic, signedness, or size validation that a Rust port must still handle explicitly, even if the original C impact escalated into memory corruption."
     ]
   },
   "summary": {
     "source_record_count": 87,
-    "selected_record_count": 17,
+    "selected_record_count": 24,
     "selected_by_confidence": {
       "high": 12,
-      "medium": 5
+      "medium": 12
     },
     "selected_by_category": {
       "parser_progress_and_bounded_work": 7,
       "filesystem_extraction_semantics": 5,
-      "numeric_validation_and_checked_arithmetic": 5
+      "numeric_validation_and_checked_arithmetic": 12
     }
   },
   "records": [
+    {
+      "cve_id": "CVE-2026-5121",
+      "category": "numeric_validation_and_checked_arithmetic",
+      "component_scope": "32-bit zisofs block-pointer allocation in the ISO9660 reader",
+      "relevance_confidence": "medium",
+      "rust_port_relevance": "The original C impact was a heap overflow, but the bug class that carries into Rust is unchecked allocation arithmetic on attacker-controlled block counts, especially on 32-bit targets.",
+      "required_controls": [
+        "use checked multiplication and addition when sizing zisofs block-pointer tables",
+        "reject images whose derived allocation exceeds the target architecture's addressable size",
+        "test 32-bit builds explicitly for size and count overflow behavior"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-190"
+        ],
+        "description": "A flaw was found in libarchive. On 32-bit systems, an integer overflow vulnerability exists in the zisofs block pointer allocation logic. A remote attacker can exploit this by providing a specially crafted ISO9660 image, which can lead to a heap buffer overflow. This could potentially allow for arbitrary code execution on the affected system."
+      }
+    },
     {
       "cve_id": "CVE-2026-4426",
       "category": "numeric_validation_and_checked_arithmetic",
@@ -67,6 +85,42 @@
           "CWE-835"
         ],
         "description": "A flaw was identified in the RAR5 archive decompression logic of the libarchive library, specifically within the archive_read_data() processing path. When a specially crafted RAR5 archive is processed, the decompression routine may enter a state where internal logic prevents forward progress. This condition results in an infinite loop that continuously consumes CPU resources. Because the archive passes checksum validation and appears structurally valid, affected applications cannot detect the issue before processing. This can allow attackers to cause persistent denial-of-service conditions in services that automatically process archives."
+      }
+    },
+    {
+      "cve_id": "CVE-2025-5916",
+      "category": "numeric_validation_and_checked_arithmetic",
+      "component_scope": "WARC content-length handling",
+      "relevance_confidence": "medium",
+      "rust_port_relevance": "A Rust port still needs explicit overflow checks on very large advertised content lengths. Without them, the likely Rust manifestation is panic, invalid allocation sizing, excessive skipping, or denial of service rather than raw memory corruption.",
+      "required_controls": [
+        "reject WARC content lengths that exceed representable internal limits",
+        "use checked arithmetic when adding framing overhead to claimed body sizes",
+        "cap read, skip, and allocation paths derived from WARC length metadata"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-190"
+        ],
+        "description": "A vulnerability has been identified in the libarchive library. This flaw involves an integer overflow that can be triggered when processing a Web Archive (WARC) file that claims to have more than INT64_MAX - 4 content bytes. An attacker could craft a malicious WARC archive to induce this overflow, potentially leading to unpredictable program behavior, memory corruption, or a denial-of-service condition within applications that process such archives using libarchive. This bug affects libarchive versions prior to 3.8.0."
+      }
+    },
+    {
+      "cve_id": "CVE-2025-5914",
+      "category": "numeric_validation_and_checked_arithmetic",
+      "component_scope": "RAR seek-data position tracking",
+      "relevance_confidence": "medium",
+      "rust_port_relevance": "The original exploit chain ended in a double-free, but the Rust-relevant carryover is unchecked seek or cursor arithmetic in attacker-controlled RAR metadata. That still needs validation to avoid invalid state transitions and denial of service.",
+      "required_controls": [
+        "use checked arithmetic for seek offsets and compressed-data extents",
+        "reject entries whose derived seek positions wrap or move backward unexpectedly",
+        "keep reader state transitions single-owner and monotonic across seek calculations"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-190"
+        ],
+        "description": "A vulnerability has been identified in the libarchive library, specifically within the archive_read_format_rar_seek_data() function. This flaw involves an integer overflow that can ultimately lead to a double-free condition. Exploiting a double-free vulnerability can result in memory corruption, enabling an attacker to execute arbitrary code or cause a denial-of-service condition."
       }
     },
     {
@@ -178,6 +232,24 @@
       }
     },
     {
+      "cve_id": "CVE-2016-6250",
+      "category": "numeric_validation_and_checked_arithmetic",
+      "component_scope": "ISO9660 writer filename-length accounting",
+      "relevance_confidence": "medium",
+      "rust_port_relevance": "If the Rust port includes archive writing, filename-length verification is still a numeric-validation problem. Rust removes the buffer overflow primitive, but not incorrect width calculations or impossible output layouts.",
+      "required_controls": [
+        "use checked length accounting for ISO9660 path components and directory records",
+        "reject filenames whose encoded size exceeds format limits before buffer or record construction",
+        "avoid lossy conversions between host lengths and on-disk field widths"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-190"
+        ],
+        "description": "Integer overflow in the ISO9660 writer in libarchive before 3.2.1 allows remote attackers to cause a denial of service (application crash) or execute arbitrary code via vectors related to verifying filename lengths when writing an ISO9660 archive, which trigger a buffer overflow."
+      }
+    },
+    {
       "cve_id": "CVE-2016-5418",
       "category": "filesystem_extraction_semantics",
       "component_scope": "sandboxed extraction of hardlink entries with data",
@@ -212,6 +284,42 @@
           "CWE-190"
         ],
         "description": "Integer overflow in the ISO parser in libarchive before 3.2.1 allows remote attackers to cause a denial of service (application crash) via a crafted ISO file."
+      }
+    },
+    {
+      "cve_id": "CVE-2016-4300",
+      "category": "numeric_validation_and_checked_arithmetic",
+      "component_scope": "7zip substream count handling",
+      "relevance_confidence": "medium",
+      "rust_port_relevance": "Large attacker-controlled substream counts still require checked multiplication and bounded allocation strategy in Rust. Otherwise the port can panic, mis-size vectors, or accept impossible 7zip metadata.",
+      "required_controls": [
+        "cap the number of substreams permitted by a single folder or entry",
+        "use checked multiplication when sizing per-substream tables",
+        "reject metadata whose aggregate decoded structure cannot fit in memory or the input model"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-190"
+        ],
+        "description": "Integer overflow in the read_SubStreamsInfo function in archive_read_support_format_7zip.c in libarchive before 3.2.1 allows remote attackers to execute arbitrary code via a 7zip file with a large number of substreams, which triggers a heap-based buffer overflow."
+      }
+    },
+    {
+      "cve_id": "CVE-2015-8933",
+      "category": "numeric_validation_and_checked_arithmetic",
+      "component_scope": "tar stream-skip arithmetic",
+      "relevance_confidence": "medium",
+      "rust_port_relevance": "Skipping through tar payloads still depends on checked size arithmetic and monotonic cursor movement. In Rust the likely failure mode is panic or a malformed-stream denial of service, but the invariant is the same.",
+      "required_controls": [
+        "use checked arithmetic for skip amounts and block alignment calculations",
+        "reject tar entries whose claimed size would wrap or exceed the remaining stream",
+        "preserve monotonic reader-position invariants across skip operations"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-190"
+        ],
+        "description": "Integer overflow in the archive_read_format_tar_skip function in archive_read_support_format_tar.c in libarchive before 3.2.0 allows remote attackers to cause a denial of service (crash) via a crafted tar file."
       }
     },
     {
@@ -302,6 +410,24 @@
           "CWE-22"
         ],
         "description": "Absolute path traversal vulnerability in bsdcpio in libarchive 3.1.2 and earlier allows remote attackers to write to arbitrary files via a full pathname in an archive."
+      }
+    },
+    {
+      "cve_id": "CVE-2013-0211",
+      "category": "numeric_validation_and_checked_arithmetic",
+      "component_scope": "ZIP writer signed and unsigned size conversion",
+      "relevance_confidence": "medium",
+      "rust_port_relevance": "Cross-width size conversion bugs still matter in Rust, especially when translating `usize` or `u64` host sizes into ZIP format fields with narrower signed or unsigned representations.",
+      "required_controls": [
+        "use checked conversions when writing ZIP field sizes and offsets",
+        "reject host-side lengths that cannot be represented in the target ZIP encoding",
+        "test writer behavior on both 32-bit and 64-bit platforms"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-189"
+        ],
+        "description": "Integer signedness error in the archive_write_zip_data function in archive_write_set_format_zip.c in libarchive 3.1.2 and earlier, when running on 64-bit machines, allows context-dependent attackers to cause a denial of service (crash) via unspecified vectors, which triggers an improper conversion between unsigned and signed types, leading to a buffer overflow."
       }
     },
     {
