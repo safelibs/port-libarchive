@@ -22,68 +22,87 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include "test.h"
 __FBSDID("$FreeBSD$");
 
 #include <time.h>
 
-#define __LIBARCHIVE_BUILD 1
-#include "archive_getdate.h"
+static struct archive *
+new_date_matcher(const char *date_string)
+{
+	struct archive *m;
 
-/*
- * Verify that the getdate() function works.
- */
+	assert((m = archive_match_new()) != NULL);
+	assertEqualIntA(m, ARCHIVE_OK, archive_match_include_date(m,
+	    ARCHIVE_MATCH_MTIME | ARCHIVE_MATCH_NEWER | ARCHIVE_MATCH_EQUAL,
+	    date_string));
+	return (m);
+}
 
-#define get_date __archive_get_date
+static int
+mtime_excluded(struct archive *m, time_t t)
+{
+	struct archive_entry *ae;
+	int excluded;
+
+	assert((ae = archive_entry_new()) != NULL);
+	archive_entry_set_mtime(ae, t, 0);
+	excluded = archive_match_time_excluded(m, ae);
+	archive_entry_free(ae);
+	return (excluded);
+}
+
+static void
+assert_boundary(const char *date_string, time_t boundary)
+{
+	struct archive *m;
+
+	m = new_date_matcher(date_string);
+	assertEqualInt(1, mtime_excluded(m, boundary - 1));
+	assertEqualInt(0, mtime_excluded(m, boundary));
+	assertEqualInt(0, mtime_excluded(m, boundary + 1));
+	archive_match_free(m);
+}
+
+static void
+assert_equivalent(const char *date_string1, const char *date_string2,
+    time_t older, time_t newer)
+{
+	struct archive *m1, *m2;
+
+	m1 = new_date_matcher(date_string1);
+	m2 = new_date_matcher(date_string2);
+	assertEqualInt(mtime_excluded(m1, older), mtime_excluded(m2, older));
+	assertEqualInt(mtime_excluded(m1, newer), mtime_excluded(m2, newer));
+	archive_match_free(m2);
+	archive_match_free(m1);
+}
 
 DEFINE_TEST(test_archive_getdate)
 {
 	time_t now = time(NULL);
 
-	assertEqualInt(get_date(now, "Jan 1, 1970 UTC"), 0);
-	assertEqualInt(get_date(now, "7:12:18-0530 4 May 1983"), 420900138);
-	assertEqualInt(get_date(now, "2004/01/29 513 mest"), 1075345980);
-	assertEqualInt(get_date(now, "99/02/17 7pm utc"), 919278000);
-	assertEqualInt(get_date(now, "02/17/99 7:11am est"), 919253460);
-	assertEqualInt(get_date(now, "now - 2 hours"),
-	    get_date(now, "2 hours ago"));
-	assertEqualInt(get_date(now, "2 hours ago"),
-	    get_date(now, "+2 hours ago"));
-	assertEqualInt(get_date(now, "now - 2 hours"),
-	    get_date(now, "-2 hours"));
-	/* It's important that we handle ctime() format. */
-	assertEqualInt(get_date(now, "Sun Feb 22 17:38:26 PST 2009"),
-	    1235353106);
-	/* Basic relative offsets. */
-	/* If we use the actual current time as the reference, then
-	 * these tests break around DST changes, so it's actually
-	 * important to use a specific reference time here. */
-	assertEqualInt(get_date(0, "tomorrow"), 24 * 60 * 60);
-	assertEqualInt(get_date(0, "yesterday"), - 24 * 60 * 60);
-	assertEqualInt(get_date(0, "now + 1 hour"), 60 * 60);
-	assertEqualInt(get_date(0, "now + 1 hour + 1 minute"), 60 * 60 + 60);
-	/* Repeat the above for a different start time. */
-	now = 1231113600; /* Jan 5, 2009 00:00 UTC */
-	assertEqualInt(get_date(0, "Jan 5, 2009 00:00 UTC"), now);
-	assertEqualInt(get_date(now, "tomorrow"), now + 24 * 60 * 60);
-	assertEqualInt(get_date(now, "yesterday"), now - 24 * 60 * 60);
-	assertEqualInt(get_date(now, "now + 1 hour"), now + 60 * 60);
-	assertEqualInt(get_date(now, "now + 1 hour + 1 minute"),
-	    now + 60 * 60 + 60);
-	assertEqualInt(get_date(now, "tomorrow 5:16am UTC"),
-	    now + 24 * 60 * 60 + 5 * 60 * 60 + 16 * 60);
-	assertEqualInt(get_date(now, "UTC 5:16am tomorrow"),
-	    now + 24 * 60 * 60 + 5 * 60 * 60 + 16 * 60);
+	assert_boundary("Jan 1, 1970 UTC", 0);
+	assert_boundary("7:12:18-0530 4 May 1983", 420900138);
+	assert_boundary("2004/01/29 513 mest", 1075345980);
+	assert_boundary("99/02/17 7pm utc", 919278000);
+	assert_boundary("02/17/99 7:11am est", 919253460);
+	assert_boundary("Sun Feb 22 17:38:26 PST 2009", 1235353106);
 
-	/* Jan 5, 2009 was a Monday. */
-	assertEqualInt(get_date(now, "monday UTC"), now);
-	assertEqualInt(get_date(now, "sunday UTC"), now + 6 * 24 * 60 * 60);
-	assertEqualInt(get_date(now, "tuesday UTC"), now + 24 * 60 * 60);
-	/* "next tuesday" is one week after "tuesday" */
-	assertEqualInt(get_date(now, "UTC next tuesday"),
-	    now + 8 * 24 * 60 * 60);
-	/* "last tuesday" is one week before "tuesday" */
-	assertEqualInt(get_date(now, "last tuesday UTC"),
-	    now - 6 * 24 * 60 * 60);
-	/* TODO: Lots more tests here. */
+	assert_equivalent("now - 2 hours", "2 hours ago",
+	    now - 3 * 60 * 60, now - 60 * 60);
+	assert_equivalent("2 hours ago", "+2 hours ago",
+	    now - 3 * 60 * 60, now - 60 * 60);
+	assert_equivalent("now - 2 hours", "-2 hours",
+	    now - 3 * 60 * 60, now - 60 * 60);
+
+	assert_equivalent("tomorrow", "now + 24 hours",
+	    now + 23 * 60 * 60, now + 25 * 60 * 60);
+	assert_equivalent("yesterday", "now - 24 hours",
+	    now - 25 * 60 * 60, now - 23 * 60 * 60);
+	assert_equivalent("now + 1 hour", "now + 60 minutes",
+	    now + 30 * 60, now + 90 * 60);
+	assert_equivalent("now + 1 hour + 1 minute", "now + 61 minutes",
+	    now + 30 * 60, now + 2 * 60 * 60);
 }

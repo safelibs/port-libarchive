@@ -26,116 +26,114 @@
 #include "test.h"
 __FBSDID("$FreeBSD$");
 
-#define __LIBARCHIVE_TEST
-#include "archive_cmdline_private.h"
+static void
+write_single_file_archive(struct archive *a)
+{
+	struct archive_entry *ae;
+
+	assert((ae = archive_entry_new()) != NULL);
+	archive_entry_copy_pathname(ae, "file");
+	archive_entry_set_mode(ae, AE_IFREG | 0644);
+	archive_entry_set_size(ae, 7);
+	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
+	assertEqualInt(7, archive_write_data(a, "payload", 7));
+	archive_entry_free(ae);
+}
+
+static void
+verify_passthrough_archive(const char *buff, size_t used)
+{
+	struct archive *a;
+	struct archive_entry *ae;
+	char data[16];
+
+	assert((a = archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_memory(a, buff, used));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualString("file", archive_entry_pathname(ae));
+	assertEqualInt(7, archive_entry_size(ae));
+	assertEqualInt(7, archive_read_data(a, data, sizeof(data)));
+	assertEqualMem("payload", data, 7);
+	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+}
+
+static int
+write_archive_through_program(const char *cmd, char *buff, size_t buffsize,
+    size_t *used)
+{
+	struct archive *a;
+	int r;
+
+	assert((a = archive_write_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, archive_write_set_format_ustar(a));
+	r = archive_write_add_filter_program(a, cmd);
+	if (r == ARCHIVE_FATAL) {
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+		return (ARCHIVE_FATAL);
+	}
+	assertEqualIntA(a, ARCHIVE_OK,
+	    archive_write_open_memory(a, buff, buffsize, used));
+	write_single_file_archive(a);
+	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	return (ARCHIVE_OK);
+}
+
+static void
+assert_program_invocation(const char *directory, const char *command,
+    const char *expected_invocation)
+{
+	char archive_buffer[65536];
+	char command_buffer[1024];
+	char log_path[256];
+	char script_path[256];
+	char script_contents[1024];
+	size_t used;
+	int r;
+
+	assertMakeDir(directory, 0755);
+	assert(0 < snprintf(log_path, sizeof(log_path), "%s/invocation.txt",
+	    directory));
+	assert(0 < snprintf(script_path, sizeof(script_path),
+	    "%s/filter script", directory));
+	assert(0 < snprintf(script_contents, sizeof(script_contents),
+	    "#!/bin/sh\n"
+	    "{\n"
+	    "  printf '%%s\\n' \"$0\"\n"
+	    "  for arg in \"$@\"; do printf '%%s\\n' \"$arg\"; done\n"
+	    "} > \"%s\"\n"
+	    "cat\n",
+	    log_path));
+	assertMakeFile(script_path, 0755, script_contents);
+
+	assert(0 < snprintf(command_buffer, sizeof(command_buffer), "%s",
+	    command));
+	r = write_archive_through_program(command_buffer, archive_buffer,
+	    sizeof(archive_buffer), &used);
+	if (r == ARCHIVE_FATAL) {
+		skipping("archive_write_add_filter_program() unsupported "
+		    "on this platform");
+		return;
+	}
+
+	verify_passthrough_archive(archive_buffer, used);
+	assertTextFileContents(expected_invocation, log_path);
+}
 
 DEFINE_TEST(test_archive_cmdline)
 {
-	struct archive_cmdline *cl;
+	assert_program_invocation("cmdline-case-1",
+	    "\"cmdline-case-1/filter script\"",
+	    "cmdline-case-1/filter script\n");
 
-	/* Command name only. */
-	assert((cl = __archive_cmdline_allocate()) != NULL);
-	if (cl == NULL)
-		return;
-	assertEqualInt(ARCHIVE_OK, __archive_cmdline_parse(cl, "gzip"));
-	assertEqualInt(1, cl->argc);
-	assertEqualString("gzip", cl->path);
-	assertEqualString("gzip", cl->argv[0]);
-	assertEqualInt(ARCHIVE_OK, __archive_cmdline_free(cl));
+	assert_program_invocation("cmdline case 2",
+	    "\"cmdline case 2/filter script\" -d",
+	    "cmdline case 2/filter script\n-d\n");
 
-	assert((cl = __archive_cmdline_allocate()) != NULL);
-	if (cl == NULL)
-		return;
-	assertEqualInt(ARCHIVE_OK, __archive_cmdline_parse(cl, "gzip "));
-	assertEqualInt(1, cl->argc);
-	failure("path should not include a space character");
-	assertEqualString("gzip", cl->path);
-	failure("arg0 should not include a space character");
-	assertEqualString("gzip", cl->argv[0]);
-	assertEqualInt(ARCHIVE_OK, __archive_cmdline_free(cl));
-
-	assert((cl = __archive_cmdline_allocate()) != NULL);
-	if (cl == NULL)
-		return;
-	assertEqualInt(ARCHIVE_OK, __archive_cmdline_parse(cl,
-	    "/usr/bin/gzip "));
-	assertEqualInt(1, cl->argc);
-	failure("path should be a full path");
-	assertEqualString("/usr/bin/gzip", cl->path);
-	failure("arg0 should not be a full path");
-	assertEqualString("gzip", cl->argv[0]);
-	assertEqualInt(ARCHIVE_OK, __archive_cmdline_free(cl));
-
-	/* A command line includes space character. */
-	assert((cl = __archive_cmdline_allocate()) != NULL);
-	if (cl == NULL)
-		return;
-	assertEqualInt(ARCHIVE_OK, __archive_cmdline_parse(cl, "\"gzip \""));
-	assertEqualInt(1, cl->argc);
-	failure("path should include a space character");
-	assertEqualString("gzip ", cl->path);
-	failure("arg0 should include a space character");
-	assertEqualString("gzip ", cl->argv[0]);
-	assertEqualInt(ARCHIVE_OK, __archive_cmdline_free(cl));
-
-	/* A command line includes space character: pattern 2.*/
-	assert((cl = __archive_cmdline_allocate()) != NULL);
-	if (cl == NULL)
-		return;
-	assertEqualInt(ARCHIVE_OK, __archive_cmdline_parse(cl, "\"gzip \"x"));
-	assertEqualInt(1, cl->argc);
-	failure("path should include a space character");
-	assertEqualString("gzip x", cl->path);
-	failure("arg0 should include a space character");
-	assertEqualString("gzip x", cl->argv[0]);
-	assertEqualInt(ARCHIVE_OK, __archive_cmdline_free(cl));
-
-	/* A command line includes space character: pattern 3.*/
-	assert((cl = __archive_cmdline_allocate()) != NULL);
-	if (cl == NULL)
-		return;
-	assertEqualInt(ARCHIVE_OK, __archive_cmdline_parse(cl,
-	    "\"gzip \"x\" s \""));
-	assertEqualInt(1, cl->argc);
-	failure("path should include a space character");
-	assertEqualString("gzip x s ", cl->path);
-	failure("arg0 should include a space character");
-	assertEqualString("gzip x s ", cl->argv[0]);
-	assertEqualInt(ARCHIVE_OK, __archive_cmdline_free(cl));
-
-	/* A command line includes space character: pattern 4.*/
-	assert((cl = __archive_cmdline_allocate()) != NULL);
-	if (cl == NULL)
-		return;
-	assertEqualInt(ARCHIVE_OK, __archive_cmdline_parse(cl,
-	    "\"gzip\\\" \""));
-	assertEqualInt(1, cl->argc);
-	failure("path should include a space character");
-	assertEqualString("gzip\" ", cl->path);
-	failure("arg0 should include a space character");
-	assertEqualString("gzip\" ", cl->argv[0]);
-	assertEqualInt(ARCHIVE_OK, __archive_cmdline_free(cl));
-
-	/* A command name with a argument. */
-	assert((cl = __archive_cmdline_allocate()) != NULL);
-	if (cl == NULL)
-		return;
-	assertEqualInt(ARCHIVE_OK, __archive_cmdline_parse(cl, "gzip -d"));
-	assertEqualInt(2, cl->argc);
-	assertEqualString("gzip", cl->path);
-	assertEqualString("gzip", cl->argv[0]);
-	assertEqualString("-d", cl->argv[1]);
-	assertEqualInt(ARCHIVE_OK, __archive_cmdline_free(cl));
-
-	/* A command name with two arguments. */
-	assert((cl = __archive_cmdline_allocate()) != NULL);
-	if (cl == NULL)
-		return;
-	assertEqualInt(ARCHIVE_OK, __archive_cmdline_parse(cl, "gzip -d -q"));
-	assertEqualInt(3, cl->argc);
-	assertEqualString("gzip", cl->path);
-	assertEqualString("gzip", cl->argv[0]);
-	assertEqualString("-d", cl->argv[1]);
-	assertEqualString("-q", cl->argv[2]);
-	assertEqualInt(ARCHIVE_OK, __archive_cmdline_free(cl));
+	assert_program_invocation("cmdline case 3",
+	    "\"cmdline case 3/filter script\" \"arg with space\" plain",
+	    "cmdline case 3/filter script\narg with space\nplain\n");
 }
