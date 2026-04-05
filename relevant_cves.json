@@ -1,0 +1,344 @@
+{
+  "library": "libarchive",
+  "source_dataset": "/home/yans/code/safelibs/ported/libarchive/all_cves.json",
+  "generated_at_utc": "2026-04-05T05:31:22Z",
+  "analysis_scope": "Non-memory-corruption CVEs that may still affect a Rust reimplementation of libarchive",
+  "selection_policy": {
+    "included_issue_classes": [
+      "parser bugs that break forward progress or permit unbounded work",
+      "filesystem extraction bugs involving path resolution, link handling, permissions, or sandbox escape",
+      "numeric-validation bugs where unchecked arithmetic or allocation math can still cause incorrect behavior or denial of service in safe Rust"
+    ],
+    "excluded_issue_classes": [
+      "heap or stack overflows, out-of-bounds reads or writes, use-after-free, double-free, and similar memory-corruption issues",
+      "straight NULL-dereference cases that are largely artifacts of C allocation and pointer handling",
+      "tool-only presentation bugs that do not materially change core library or extraction semantics"
+    ],
+    "notes": [
+      "Some selected CVEs were triggered through bsdtar or bsdcpio, but were kept when the underlying issue maps to parser or extraction semantics that a Rust port would still need to preserve safely.",
+      "Selection is intentionally conservative: when a CVE primarily describes memory corruption, it was excluded even if the root cause involved integer math."
+    ]
+  },
+  "summary": {
+    "source_record_count": 87,
+    "selected_record_count": 17,
+    "selected_by_confidence": {
+      "high": 12,
+      "medium": 5
+    },
+    "selected_by_category": {
+      "parser_progress_and_bounded_work": 7,
+      "filesystem_extraction_semantics": 5,
+      "numeric_validation_and_checked_arithmetic": 5
+    }
+  },
+  "records": [
+    {
+      "cve_id": "CVE-2026-4426",
+      "category": "numeric_validation_and_checked_arithmetic",
+      "component_scope": "zisofs decompression in the ISO9660 reader",
+      "relevance_confidence": "medium",
+      "rust_port_relevance": "Rust memory safety does not validate archive-controlled numeric fields. The port still needs checked validation of `pz_log2_bs` and bounded allocation math to avoid denial of service or panic paths.",
+      "required_controls": [
+        "validate `pz_log2_bs` against the format's legal range",
+        "use checked shift and size computations for block sizing",
+        "cap allocation requests derived from archive metadata"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-1335"
+        ],
+        "description": "A flaw was found in libarchive. An Undefined Behavior vulnerability exists in the zisofs decompression logic, caused by improper validation of a field (`pz_log2_bs`) read from ISO9660 Rock Ridge extensions. A remote attacker can exploit this by supplying a specially crafted ISO file. This can lead to incorrect memory allocation and potential application crashes, resulting in a denial-of-service (DoS) condition."
+      }
+    },
+    {
+      "cve_id": "CVE-2026-4111",
+      "category": "parser_progress_and_bounded_work",
+      "component_scope": "RAR5 decompression during `archive_read_data()`",
+      "relevance_confidence": "high",
+      "rust_port_relevance": "Rust does not guarantee forward progress. A decompressor state machine can still spin forever unless the port explicitly detects no-progress iterations and rejects hostile inputs.",
+      "required_controls": [
+        "detect iterations that consume no input and produce no output",
+        "bound decompressor work relative to consumed bytes",
+        "treat checksum-valid archives as still untrusted for progress guarantees"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-835"
+        ],
+        "description": "A flaw was identified in the RAR5 archive decompression logic of the libarchive library, specifically within the archive_read_data() processing path. When a specially crafted RAR5 archive is processed, the decompression routine may enter a state where internal logic prevents forward progress. This condition results in an infinite loop that continuously consumes CPU resources. Because the archive passes checksum validation and appears structurally valid, affected applications cannot detect the issue before processing. This can allow attackers to cause persistent denial-of-service conditions in services that automatically process archives."
+      }
+    },
+    {
+      "cve_id": "CVE-2023-30571",
+      "category": "filesystem_extraction_semantics",
+      "component_scope": "write-to-disk path handling and permission application",
+      "relevance_confidence": "high",
+      "rust_port_relevance": "This is a process-global state bug, not a pointer bug. A Rust port can still recreate it if it mutates `umask()` while extracting or relies on ambient process state instead of explicit permissions.",
+      "required_controls": [
+        "avoid temporary process-wide `umask()` changes during extraction",
+        "create directories with explicit modes and repair permissions without global side effects",
+        "document or enforce thread-safety expectations for disk-write APIs"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-362"
+        ],
+        "description": "Libarchive through 3.6.2 can cause directories to have world-writable permissions. The umask() call inside archive_write_disk_posix.c changes the umask of the whole process for a very short period of time; a race condition with another thread can lead to a permanent umask 0 setting. Such a race condition could lead to implicit directory creation with permissions 0777 (without the sticky bit), which means that any low-privileged local user can delete and rename files inside those directories."
+      }
+    },
+    {
+      "cve_id": "CVE-2021-31566",
+      "category": "filesystem_extraction_semantics",
+      "component_scope": "link resolution while applying metadata during extraction",
+      "relevance_confidence": "high",
+      "rust_port_relevance": "A safe language does not solve TOCTOU or symlink-target confusion. The extraction engine still needs descriptor-based updates and strict containment checks so metadata changes cannot escape the extraction root.",
+      "required_controls": [
+        "apply metadata to opened file descriptors instead of re-resolving paths",
+        "re-check containment after filesystem mutations",
+        "refuse symlink and hardlink targets that escape the extraction root"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-59"
+        ],
+        "description": "An improper link resolution flaw can occur while extracting an archive leading to changing modes, times, access control lists, and flags of a file outside of the archive. An attacker may provide a malicious archive to a victim user, who would trigger this flaw when trying to extract the archive. A local attacker may use this flaw to gain more privileges in a system."
+      }
+    },
+    {
+      "cve_id": "CVE-2021-23177",
+      "category": "filesystem_extraction_semantics",
+      "component_scope": "ACL application during extraction",
+      "relevance_confidence": "high",
+      "rust_port_relevance": "ACL handling has the same containment problem as mode and timestamp updates: the port must not follow links or re-resolve paths in a way that lets attacker-controlled archive entries retarget privilege changes.",
+      "required_controls": [
+        "treat ACL application as a privileged metadata operation requiring containment checks",
+        "avoid following links when setting ACLs",
+        "bind ACL updates to the extracted object rather than a later pathname lookup"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-59"
+        ],
+        "description": "An improper link resolution flaw while extracting an archive can lead to changing the access control list (ACL) of the target of the link. An attacker may provide a malicious archive to a victim user, who would trigger this flaw when trying to extract the archive. A local attacker may use this flaw to change the ACL of a file on the system and gain more privileges."
+      }
+    },
+    {
+      "cve_id": "CVE-2019-1000020",
+      "category": "parser_progress_and_bounded_work",
+      "component_scope": "ISO9660 Rock Ridge continuation parsing",
+      "relevance_confidence": "high",
+      "rust_port_relevance": "This is a parser-state termination bug. A Rust port still needs explicit loop invariants and cycle or repetition detection when following continuation records.",
+      "required_controls": [
+        "track visited continuation locations or bound the chain length",
+        "guarantee progress on every Rock Ridge parsing step",
+        "fail closed when a continuation record repeats or regresses"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-835"
+        ],
+        "description": "libarchive version commit 5a98dcf8a86364b3c2c469c85b93647dfb139961 onwards (version v2.8.0 onwards) contains a CWE-835: Loop with Unreachable Exit Condition ('Infinite Loop') vulnerability in ISO9660 parser, archive_read_support_format_iso9660.c, read_CE()/parse_rockridge() that can result in DoS by infinite loop. This attack appears to be exploitable via the victim opening a specially crafted ISO9660 file."
+      }
+    },
+    {
+      "cve_id": "CVE-2018-1000880",
+      "category": "parser_progress_and_bounded_work",
+      "component_scope": "WARC parser record and body handling",
+      "relevance_confidence": "high",
+      "rust_port_relevance": "Rust does not prevent decompression bombs or tiny-input huge-output abuse. The WARC reader still needs explicit caps on claimed lengths, emitted data, and work performed per record.",
+      "required_controls": [
+        "cap WARC record sizes and output growth",
+        "reject implausible body lengths before streaming work begins",
+        "budget CPU and disk work for records that expand attacker-controlled content"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-119"
+        ],
+        "description": "libarchive version commit 9693801580c0cf7c70e862d305270a16b52826a7 onwards (release v3.2.0 onwards) contains a CWE-20: Improper Input Validation vulnerability in WARC parser - libarchive/archive_read_support_format_warc.c, _warc_read() that can result in DoS - quasi-infinite run time and disk usage from tiny file. This attack appear to be exploitable via the victim must open a specially crafted WARC file."
+      }
+    },
+    {
+      "cve_id": "CVE-2016-7166",
+      "category": "parser_progress_and_bounded_work",
+      "component_scope": "recursive decompression filter handling",
+      "relevance_confidence": "high",
+      "rust_port_relevance": "Recursion and expansion limits are semantic resource controls. A Rust port can still be vulnerable to nested-filter bombs unless it enforces depth and output budgets.",
+      "required_controls": [
+        "limit recursive filter nesting depth",
+        "cap total decompressed output and intermediate expansion",
+        "surface hard failure instead of continuing after budget exhaustion"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-399"
+        ],
+        "description": "libarchive before 3.2.0 does not limit the number of recursive decompressions, which allows remote attackers to cause a denial of service (memory consumption and application crash) via a crafted gzip file."
+      }
+    },
+    {
+      "cve_id": "CVE-2016-5418",
+      "category": "filesystem_extraction_semantics",
+      "component_scope": "sandboxed extraction of hardlink entries with data",
+      "relevance_confidence": "high",
+      "rust_port_relevance": "This is an extraction-policy bug. Even in Rust, hardlink handling can break sandboxing if link targets, data writes, and containment checks are not modeled explicitly.",
+      "required_controls": [
+        "treat hardlink entries with data as security-sensitive special cases",
+        "never allow sandbox escape through link target resolution",
+        "perform path containment and overwrite policy checks before any data write"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-19",
+          "CWE-20"
+        ],
+        "description": "The sandboxing code in libarchive 3.2.0 and earlier mishandles hardlink archive entries of non-zero data size, which might allow remote attackers to write to arbitrary files via a crafted archive file."
+      }
+    },
+    {
+      "cve_id": "CVE-2016-5844",
+      "category": "numeric_validation_and_checked_arithmetic",
+      "component_scope": "ISO parser offset and length calculations",
+      "relevance_confidence": "medium",
+      "rust_port_relevance": "Rust still needs checked integer arithmetic for archive-controlled lengths and offsets. Without that, the port can panic, mis-parse, or accept impossible structures even if it never corrupts memory.",
+      "required_controls": [
+        "use checked add, mul, and shift operations for ISO offsets and sizes",
+        "reject records whose claimed layout cannot fit within the input",
+        "treat arithmetic overflow as a parse error, not a recoverable condition"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-190"
+        ],
+        "description": "Integer overflow in the ISO parser in libarchive before 3.2.1 allows remote attackers to cause a denial of service (application crash) via a crafted ISO file."
+      }
+    },
+    {
+      "cve_id": "CVE-2015-8932",
+      "category": "numeric_validation_and_checked_arithmetic",
+      "component_scope": "compressed-input bidder initialization",
+      "relevance_confidence": "medium",
+      "rust_port_relevance": "Shift-count and bit-width validation remain necessary in Rust. A hostile archive can still drive panic or misclassification if the filter setup trusts invalid bit parameters.",
+      "required_controls": [
+        "validate shift counts before any bit operation",
+        "bound compression parameters to the format's legal range",
+        "convert malformed bidder state into an early parse error"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-20"
+        ],
+        "description": "The compress_bidder_init function in archive_read_support_filter_compress.c in libarchive before 3.2.0 allows remote attackers to cause a denial of service (crash) via a crafted tar file, which triggers an invalid left shift."
+      }
+    },
+    {
+      "cve_id": "CVE-2015-8931",
+      "category": "numeric_validation_and_checked_arithmetic",
+      "component_scope": "mtree timestamp bound calculations",
+      "relevance_confidence": "medium",
+      "rust_port_relevance": "Timestamp conversions and boundary helpers are still vulnerable to arithmetic mistakes in safe Rust. The port must explicitly reject out-of-range time values instead of relying on ambient integer behavior.",
+      "required_controls": [
+        "use checked conversions between archive timestamps and host time types",
+        "reject mtree values outside representable bounds",
+        "keep min and max helper logic free of wraparound assumptions"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-190"
+        ],
+        "description": "Multiple integer overflows in the (1) get_time_t_max and (2) get_time_t_min functions in archive_read_support_format_mtree.c in libarchive before 3.2.0 allow remote attackers to have unspecified impact via a crafted mtree file, which triggers undefined behavior."
+      }
+    },
+    {
+      "cve_id": "CVE-2015-8930",
+      "category": "parser_progress_and_bounded_work",
+      "component_scope": "ISO directory traversal surfaced through bsdtar",
+      "relevance_confidence": "high",
+      "rust_port_relevance": "The issue is a logical cycle in archive graph traversal. A Rust port still needs visited-node tracking or depth guards when walking directory relationships reconstructed from archive metadata.",
+      "required_controls": [
+        "detect self-referential and cyclic directory structures",
+        "bound directory walk depth and node revisits",
+        "fail closed when parent-child relationships are inconsistent"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-20"
+        ],
+        "description": "bsdtar in libarchive before 3.2.0 allows remote attackers to cause a denial of service (infinite loop) via an ISO with a directory that is a member of itself."
+      }
+    },
+    {
+      "cve_id": "CVE-2015-8923",
+      "category": "numeric_validation_and_checked_arithmetic",
+      "component_scope": "ZIP extra-field offset handling",
+      "relevance_confidence": "medium",
+      "rust_port_relevance": "Signed and unsigned offset math is still a correctness hazard in Rust. The port needs explicit range checks so hostile metadata cannot create invalid cursor movement or panic conditions.",
+      "required_controls": [
+        "normalize signed versus unsigned lengths before offset arithmetic",
+        "check every cursor advance against the available buffer",
+        "reject malformed ZIP extra fields before partial parsing mutates state"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-20"
+        ],
+        "description": "The process_extra function in libarchive before 3.2.0 uses the size field and a signed number in an offset, which allows remote attackers to cause a denial of service (crash) via a crafted zip file."
+      }
+    },
+    {
+      "cve_id": "CVE-2015-2304",
+      "category": "filesystem_extraction_semantics",
+      "component_scope": "absolute-path handling during extraction",
+      "relevance_confidence": "high",
+      "rust_port_relevance": "Path traversal is independent of implementation language. Any Rust extraction helper must sanitize absolute paths and enforce an extraction root before touching the filesystem.",
+      "required_controls": [
+        "reject absolute paths unless an explicit unsafe mode is enabled",
+        "canonicalize and enforce extraction-root containment for every entry",
+        "separate archive path semantics from host filesystem path joins"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-22"
+        ],
+        "description": "Absolute path traversal vulnerability in bsdcpio in libarchive 3.1.2 and earlier allows remote attackers to write to arbitrary files via a full pathname in an archive."
+      }
+    },
+    {
+      "cve_id": "CVE-2007-3644",
+      "category": "parser_progress_and_bounded_work",
+      "component_scope": "PAX extended-header parsing",
+      "relevance_confidence": "high",
+      "rust_port_relevance": "Malformed-header handling still needs a strict progress rule. A Rust parser can loop forever on EOF or invalid length records unless every iteration either consumes input or returns an error.",
+      "required_controls": [
+        "ensure PAX parsing advances the cursor or aborts",
+        "treat EOF inside an extended header as a hard parse failure",
+        "bound the number of malformed-record recovery attempts"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "NVD-CWE-Other"
+        ],
+        "description": "archive_read_support_format_tar.c in libarchive before 2.2.4 allows user-assisted remote attackers to cause a denial of service (infinite loop) via (1) an end-of-file condition within a pax extension header or (2) a malformed pax extension header in an (a) PAX or a (b) TAR archive."
+      }
+    },
+    {
+      "cve_id": "CVE-2006-5680",
+      "category": "parser_progress_and_bounded_work",
+      "component_scope": "generic skip logic near physical end of archive",
+      "relevance_confidence": "high",
+      "rust_port_relevance": "Skipping and streaming APIs need explicit EOF invariants. Rust will not prevent an implementation from repeatedly requesting impossible skips and spinning on empty reads.",
+      "required_controls": [
+        "reject skip requests that extend past known physical EOF",
+        "treat repeated zero-byte reads during a skip as fatal",
+        "maintain monotonic stream-position invariants in the reader core"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "NVD-CWE-Other"
+        ],
+        "description": "The libarchive library in FreeBSD 6-STABLE after 2006-09-05 and before 2006-11-08 allows context-dependent attackers to cause a denial of service (CPU consumption) via a malformed archive that causes libarchive to skip a region past the actual end of the archive, which triggers an infinite loop that attempts to read more data."
+      }
+    }
+  ]
+}
