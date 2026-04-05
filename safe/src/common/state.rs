@@ -204,7 +204,7 @@ pub(crate) struct ReadDiskTraversalState {
 }
 
 pub(crate) struct WriteDiskPendingFixup {
-    pub(crate) path: PathBuf,
+    pub(crate) display_path: PathBuf,
     pub(crate) mode: mode_t,
     pub(crate) uid: i64,
     pub(crate) gid: i64,
@@ -214,11 +214,18 @@ pub(crate) struct WriteDiskPendingFixup {
     pub(crate) apply_owner: bool,
     pub(crate) apply_time: bool,
     pub(crate) xattrs: Vec<(CString, Vec<u8>)>,
+    pub(crate) target_fd: c_int,
+    pub(crate) parent_fd: c_int,
+    pub(crate) name: Option<CString>,
+    pub(crate) follow: bool,
 }
 
 pub(crate) struct WriteDiskCurrentState {
-    pub(crate) path: PathBuf,
-    pub(crate) final_path: Option<PathBuf>,
+    pub(crate) display_path: PathBuf,
+    pub(crate) current_parent_fd: c_int,
+    pub(crate) current_name: Option<CString>,
+    pub(crate) final_parent_fd: Option<c_int>,
+    pub(crate) final_name: Option<CString>,
     pub(crate) fd: c_int,
     pub(crate) size_limit: Option<i64>,
     pub(crate) written: i64,
@@ -229,7 +236,9 @@ pub(crate) struct WriteDiskCurrentState {
 
 #[derive(Default)]
 pub(crate) struct WriteDiskExtractionState {
-    pub(crate) cwd_root: Option<PathBuf>,
+    pub(crate) cwd_root_fd: Option<c_int>,
+    pub(crate) absolute_root_fd: Option<c_int>,
+    pub(crate) temp_counter: u64,
     pub(crate) current: Option<WriteDiskCurrentState>,
     pub(crate) deferred_dirs: Vec<WriteDiskPendingFixup>,
     pub(crate) last_header_failed: bool,

@@ -1,9 +1,7 @@
 use std::ffi::{c_char, c_int, c_void, CStr, CString};
-use std::fs::{self, File, OpenOptions};
+use std::fs::{self, File};
 use std::io::Read;
-use std::os::fd::IntoRawFd;
 use std::os::unix::ffi::OsStrExt;
-use std::os::unix::fs::{MetadataExt, OpenOptionsExt, PermissionsExt, symlink};
 use std::path::{Component, Path, PathBuf};
 use std::ptr;
 
@@ -718,163 +716,237 @@ fn process_umask() -> mode_t {
         .unwrap_or(0o022) as mode_t
 }
 
-fn effective_root(handle: &mut WriteDiskArchiveHandle) -> Result<PathBuf, c_int> {
-    if let Some(root) = handle.extraction.cwd_root.clone() {
-        return Ok(root);
-    }
-    let root = std::env::current_dir().map_err(|error| {
-        record_error(
-            &mut handle.core,
-            error.raw_os_error().unwrap_or(libc::EINVAL),
-            "failed to capture current directory",
-        )
-    })?;
-    handle.extraction.cwd_root = Some(root.clone());
-    Ok(root)
-}
-
 fn has_dotdot(path: &Path) -> bool {
     path.components().any(|component| matches!(component, Component::ParentDir))
 }
 
-fn maybe_remove(path: &Path) -> Result<(), c_int> {
-    match fs::symlink_metadata(path) {
-        Ok(meta) => {
-            if meta.is_dir() && !meta.file_type().is_symlink() {
-                fs::remove_dir_all(path).map_err(|error| error.raw_os_error().unwrap_or(libc::EINVAL))?;
-            } else {
-                fs::remove_file(path).map_err(|error| error.raw_os_error().unwrap_or(libc::EINVAL))?;
-            }
-            Ok(())
+struct WriteDiskResolvedTarget {
+    parent_fd: c_int,
+    name: CString,
+    display_path: PathBuf,
+}
+
+fn close_fd_if_valid(fd: c_int) {
+    if fd >= 0 {
+        unsafe {
+            libc::close(fd);
         }
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
-        Err(error) => Err(error.raw_os_error().unwrap_or(libc::EINVAL)),
     }
 }
 
-fn lexical_parent(path: &Path) -> Option<PathBuf> {
-    path.parent().map(Path::to_path_buf)
+fn dup_fd(fd: c_int) -> Result<c_int, c_int> {
+    let duplicated = unsafe { libc::fcntl(fd, libc::F_DUPFD_CLOEXEC, 0) };
+    if duplicated >= 0 {
+        Ok(duplicated)
+    } else {
+        Err(last_errno())
+    }
 }
 
-fn ensure_intermediate_dirs(
-    handle: &mut WriteDiskArchiveHandle,
-    full_path: &Path,
-) -> Result<(), c_int> {
-    let mut current = if full_path.is_absolute() {
-        PathBuf::from("/")
+fn open_root_fd(handle: &mut WriteDiskArchiveHandle, absolute: bool) -> Result<c_int, c_int> {
+    let slot = if absolute {
+        &mut handle.extraction.absolute_root_fd
     } else {
-        effective_root(handle)?
+        &mut handle.extraction.cwd_root_fd
     };
-    let mut components = full_path.components().peekable();
-    while let Some(component) = components.next() {
-        match component {
-            Component::RootDir => {
-                current = PathBuf::from("/");
+    if let Some(fd) = *slot {
+        return Ok(fd);
+    }
+    let base = if absolute { b"/\0" } else { b".\0" };
+    let fd = unsafe {
+        libc::open(
+            base.as_ptr().cast(),
+            libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC,
+        )
+    };
+    if fd < 0 {
+        Err(last_errno())
+    } else {
+        *slot = Some(fd);
+        Ok(fd)
+    }
+}
+
+fn open_dir_at(dir_fd: c_int, name: &CStr, nofollow: bool) -> Result<c_int, c_int> {
+    let mut flags = libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC;
+    if nofollow {
+        flags |= libc::O_NOFOLLOW;
+    }
+    let fd = unsafe { libc::openat(dir_fd, name.as_ptr(), flags, 0) };
+    if fd >= 0 {
+        Ok(fd)
+    } else {
+        Err(last_errno())
+    }
+}
+
+fn stat_at(dir_fd: c_int, name: &CStr, flags: c_int) -> Result<stat, c_int> {
+    let mut st = unsafe { std::mem::zeroed::<stat>() };
+    let rc = unsafe { libc::fstatat(dir_fd, name.as_ptr(), &mut st, flags) };
+    if rc == 0 {
+        Ok(st)
+    } else {
+        Err(last_errno())
+    }
+}
+
+fn unlink_entry_at(dir_fd: c_int, name: &CStr, flags: c_int) -> Result<(), c_int> {
+    let rc = unsafe { libc::unlinkat(dir_fd, name.as_ptr(), flags) };
+    if rc == 0 {
+        Ok(())
+    } else {
+        Err(last_errno())
+    }
+}
+
+fn remove_entry_at(dir_fd: c_int, name: &CStr) -> Result<(), c_int> {
+    let st = match stat_at(dir_fd, name, libc::AT_SYMLINK_NOFOLLOW) {
+        Ok(st) => st,
+        Err(errno) if errno == libc::ENOENT => return Ok(()),
+        Err(errno) => return Err(errno),
+    };
+    if filetype_from_mode(st.st_mode) != AE_IFDIR {
+        return match unlink_entry_at(dir_fd, name, 0) {
+            Ok(()) => Ok(()),
+            Err(errno) if errno == libc::ENOENT => Ok(()),
+            Err(errno) => Err(errno),
+        };
+    }
+
+    let child_fd = open_dir_at(dir_fd, name, true)?;
+    let iter_fd = dup_fd(child_fd)?;
+    let dir = unsafe { libc::fdopendir(iter_fd) };
+    if dir.is_null() {
+        close_fd_if_valid(iter_fd);
+        close_fd_if_valid(child_fd);
+        return Err(last_errno());
+    }
+
+    let mut walk_error = None;
+    loop {
+        unsafe {
+            *libc::__errno_location() = 0;
+        }
+        let entry = unsafe { libc::readdir(dir) };
+        if entry.is_null() {
+            let errno = last_errno();
+            if errno != 0 {
+                walk_error = Some(errno);
             }
-            Component::CurDir => {}
-            Component::ParentDir => {
-                if (handle.options & ARCHIVE_EXTRACT_SECURE_NODOTDOT) != 0 {
-                    return Err(record_error(
-                        &mut handle.core,
-                        libc::EINVAL,
-                        "path contains '..' and secure nodotdot is enabled",
-                    ));
-                }
-                if let Some(parent) = lexical_parent(&current) {
-                    current = parent;
-                }
-            }
-            Component::Normal(name) => {
-                if components.peek().is_none() {
-                    break;
-                }
-                current.push(name);
-                match fs::symlink_metadata(&current) {
-                    Ok(meta) if meta.file_type().is_symlink() => {
-                        if (handle.options & ARCHIVE_EXTRACT_SECURE_SYMLINKS) != 0 {
-                            if (handle.options & ARCHIVE_EXTRACT_UNLINK) == 0 {
-                                return Err(record_error(
-                                    &mut handle.core,
-                                    libc::ELOOP,
-                                    format!("path traverses an existing symlink: {}", current.display()),
-                                ));
-                            }
-                            maybe_remove(&current)?;
-                            fs::create_dir(&current).map_err(|error| {
-                                record_error(
-                                    &mut handle.core,
-                                    error.raw_os_error().unwrap_or(libc::EINVAL),
-                                    format!("failed to create directory {}", current.display()),
-                                )
-                            })?;
-                        } else if let Ok(target) = fs::canonicalize(&current) {
-                            current = target;
-                        } else if (handle.options & ARCHIVE_EXTRACT_UNLINK) != 0 {
-                            maybe_remove(&current)?;
-                            fs::create_dir(&current).map_err(|error| {
-                                record_error(
-                                    &mut handle.core,
-                                    error.raw_os_error().unwrap_or(libc::EINVAL),
-                                    format!("failed to create directory {}", current.display()),
-                                )
-                            })?;
-                        } else {
-                            return Err(record_error(
-                                &mut handle.core,
-                                libc::ENOENT,
-                                format!("broken symlink in path {}", current.display()),
-                            ));
-                        }
-                    }
-                    Ok(meta) if meta.is_dir() => {}
-                    Ok(_) => {
-                        if (handle.options & ARCHIVE_EXTRACT_UNLINK) != 0 {
-                            maybe_remove(&current)?;
-                            fs::create_dir(&current).map_err(|error| {
-                                record_error(
-                                    &mut handle.core,
-                                    error.raw_os_error().unwrap_or(libc::EINVAL),
-                                    format!("failed to create directory {}", current.display()),
-                                )
-                            })?;
-                        } else {
-                            return Err(record_error(
-                                &mut handle.core,
-                                libc::ENOTDIR,
-                                format!("path component is not a directory: {}", current.display()),
-                            ));
-                        }
-                    }
-                    Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-                        fs::create_dir(&current).map_err(|create_error| {
-                            record_error(
-                                &mut handle.core,
-                                create_error.raw_os_error().unwrap_or(libc::EINVAL),
-                                format!("failed to create directory {}", current.display()),
-                            )
-                        })?;
-                        let mode = (0o777 & !process_umask()) as u32;
-                        let _ = fs::set_permissions(&current, fs::Permissions::from_mode(mode));
-                    }
-                    Err(error) => {
+            break;
+        }
+        let name = unsafe { CStr::from_ptr((*entry).d_name.as_ptr()) };
+        let bytes = name.to_bytes();
+        if bytes == b"." || bytes == b".." {
+            continue;
+        }
+        if let Err(errno) = remove_entry_at(child_fd, name) {
+            walk_error = Some(errno);
+            break;
+        }
+    }
+
+    unsafe {
+        libc::closedir(dir);
+    }
+    close_fd_if_valid(child_fd);
+
+    if let Some(errno) = walk_error {
+        return Err(errno);
+    }
+    unlink_entry_at(dir_fd, name, libc::AT_REMOVEDIR)
+}
+
+fn advance_parent_fd(
+    handle: &mut WriteDiskArchiveHandle,
+    current_fd: c_int,
+    component: &CStr,
+    create_intermediate: bool,
+    display_path: &Path,
+) -> Result<c_int, c_int> {
+    let nofollow = (handle.options & ARCHIVE_EXTRACT_SECURE_SYMLINKS) != 0;
+    match open_dir_at(current_fd, component, nofollow) {
+        Ok(fd) => Ok(fd),
+        Err(errno) if errno == libc::ENOENT => {
+            if !create_intermediate || (handle.options & ARCHIVE_EXTRACT_NO_AUTODIR) != 0 {
+                Err(record_error(
+                    &mut handle.core,
+                    errno,
+                    format!("missing parent directory for {}", display_path.display()),
+                ))
+            } else {
+                let mode = 0o777 & !process_umask();
+                let created = unsafe { libc::mkdirat(current_fd, component.as_ptr(), mode) };
+                if created != 0 {
+                    let create_errno = last_errno();
+                    if create_errno != libc::EEXIST {
                         return Err(record_error(
                             &mut handle.core,
-                            error.raw_os_error().unwrap_or(libc::EINVAL),
-                            format!("failed to inspect {}", current.display()),
+                            create_errno,
+                            format!("failed to create directory for {}", display_path.display()),
                         ));
                     }
                 }
+                open_dir_at(current_fd, component, true).map_err(|open_errno| {
+                    record_error(
+                        &mut handle.core,
+                        open_errno,
+                        format!("failed to open directory for {}", display_path.display()),
+                    )
+                })
             }
-            Component::Prefix(_) => {}
         }
+        Err(errno) if errno == libc::ELOOP && (handle.options & ARCHIVE_EXTRACT_UNLINK) == 0 => {
+            Err(record_error(
+                &mut handle.core,
+                errno,
+                format!(
+                    "path traverses an existing symlink: {}",
+                    display_path.display()
+                ),
+            ))
+        }
+        Err(errno)
+            if create_intermediate
+                && (handle.options & ARCHIVE_EXTRACT_UNLINK) != 0
+                && matches!(errno, libc::ELOOP | libc::ENOTDIR | libc::ENOENT) =>
+        {
+            remove_entry_at(current_fd, component).map_err(|remove_errno| {
+                record_error(
+                    &mut handle.core,
+                    remove_errno,
+                    format!("failed to replace path component for {}", display_path.display()),
+                )
+            })?;
+            let mode = 0o777 & !process_umask();
+            if unsafe { libc::mkdirat(current_fd, component.as_ptr(), mode) } != 0 {
+                return Err(record_error(
+                    &mut handle.core,
+                    last_errno(),
+                    format!("failed to create directory for {}", display_path.display()),
+                ));
+            }
+            open_dir_at(current_fd, component, true).map_err(|open_errno| {
+                record_error(
+                    &mut handle.core,
+                    open_errno,
+                    format!("failed to open directory for {}", display_path.display()),
+                )
+            })
+        }
+        Err(errno) => Err(record_error(
+            &mut handle.core,
+            errno,
+            format!("path component is not a directory: {}", display_path.display()),
+        )),
     }
-    Ok(())
 }
 
-fn resolve_final_path(
+fn resolve_write_target(
     handle: &mut WriteDiskArchiveHandle,
     raw_path: &Path,
-) -> Result<PathBuf, c_int> {
+    create_intermediate: bool,
+) -> Result<WriteDiskResolvedTarget, c_int> {
     if (handle.options & ARCHIVE_EXTRACT_SECURE_NOABSOLUTEPATHS) != 0 && raw_path.is_absolute() {
         return Err(record_error(
             &mut handle.core,
@@ -889,11 +961,97 @@ fn resolve_final_path(
             "path contains '..' and secure nodotdot is enabled",
         ));
     }
-    if raw_path.is_absolute() {
-        Ok(raw_path.to_path_buf())
-    } else {
-        Ok(effective_root(handle)?.join(raw_path))
+
+    let Some(file_name) = raw_path.file_name() else {
+        return Err(record_error(
+            &mut handle.core,
+            libc::EINVAL,
+            format!("entry path has no final component: {}", raw_path.display()),
+        ));
+    };
+    let name = CString::new(file_name.as_bytes()).map_err(|_| {
+        record_error(
+            &mut handle.core,
+            libc::EINVAL,
+            format!("entry path contains NUL bytes: {}", raw_path.display()),
+        )
+    })?;
+
+    let base_fd = open_root_fd(handle, raw_path.is_absolute()).map_err(|errno| {
+        record_error(
+            &mut handle.core,
+            errno,
+            format!("failed to open extraction root for {}", raw_path.display()),
+        )
+    })?;
+    let mut current_fd = dup_fd(base_fd).map_err(|errno| {
+        record_error(
+            &mut handle.core,
+            errno,
+            format!("failed to duplicate extraction root for {}", raw_path.display()),
+        )
+    })?;
+
+    let mut components = raw_path.components().peekable();
+    while let Some(component) = components.next() {
+        match component {
+            Component::RootDir => {
+                close_fd_if_valid(current_fd);
+                current_fd = dup_fd(base_fd).map_err(|errno| {
+                    record_error(
+                        &mut handle.core,
+                        errno,
+                        format!("failed to duplicate extraction root for {}", raw_path.display()),
+                    )
+                })?;
+            }
+            Component::CurDir => {}
+            Component::ParentDir => {
+                let parent = unsafe {
+                    libc::openat(
+                        current_fd,
+                        b"..\0".as_ptr().cast(),
+                        libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC,
+                        0,
+                    )
+                };
+                if parent < 0 {
+                    close_fd_if_valid(current_fd);
+                    return Err(record_error(
+                        &mut handle.core,
+                        last_errno(),
+                        format!("failed to traverse parent directory for {}", raw_path.display()),
+                    ));
+                }
+                close_fd_if_valid(current_fd);
+                current_fd = parent;
+            }
+            Component::Normal(component_name) => {
+                if components.peek().is_none() {
+                    break;
+                }
+                let component = CString::new(component_name.as_bytes()).map_err(|_| {
+                    close_fd_if_valid(current_fd);
+                    record_error(
+                        &mut handle.core,
+                        libc::EINVAL,
+                        format!("entry path contains NUL bytes: {}", raw_path.display()),
+                    )
+                })?;
+                let next_fd =
+                    advance_parent_fd(handle, current_fd, component.as_c_str(), create_intermediate, raw_path)?;
+                close_fd_if_valid(current_fd);
+                current_fd = next_fd;
+            }
+            Component::Prefix(_) => {}
+        }
     }
+
+    Ok(WriteDiskResolvedTarget {
+        parent_fd: current_fd,
+        name,
+        display_path: raw_path.to_path_buf(),
+    })
 }
 
 fn entry_uid(handle: &WriteDiskArchiveHandle, entry: &crate::entry::internal::ArchiveEntryData) -> i64 {
@@ -967,13 +1125,17 @@ fn desired_file_mode(handle: &WriteDiskArchiveHandle, mode: mode_t, uid: i64, gi
 
 fn make_fixup(
     handle: &WriteDiskArchiveHandle,
-    path: PathBuf,
+    display_path: PathBuf,
     entry: &crate::entry::internal::ArchiveEntryData,
+    target_fd: c_int,
+    parent_fd: c_int,
+    name: Option<CString>,
+    follow: bool,
 ) -> WriteDiskPendingFixup {
     let uid = entry_uid(handle, entry);
     let gid = entry_gid(handle, entry);
     WriteDiskPendingFixup {
-        path,
+        display_path,
         mode: desired_file_mode(handle, entry.mode, uid, gid),
         uid,
         gid,
@@ -987,31 +1149,40 @@ fn make_fixup(
             .iter()
             .map(|xattr| (xattr.name.clone(), xattr.value.clone()))
             .collect(),
+        target_fd,
+        parent_fd,
+        name,
+        follow,
     }
 }
 
-fn apply_fixup(handle: &mut WriteDiskArchiveHandle, fixup: &WriteDiskPendingFixup) -> c_int {
+fn close_fixup(fixup: &mut WriteDiskPendingFixup) {
+    if fixup.target_fd >= 0 {
+        close_fd_if_valid(fixup.target_fd);
+        fixup.target_fd = -1;
+    }
+    if fixup.parent_fd >= 0 {
+        close_fd_if_valid(fixup.parent_fd);
+        fixup.parent_fd = -1;
+    }
+}
+
+fn apply_fixup(handle: &mut WriteDiskArchiveHandle, mut fixup: WriteDiskPendingFixup) -> c_int {
     let mut status = ARCHIVE_OK;
-    let follow = filetype_from_mode(fixup.mode) != AE_IFLNK;
-    let Ok(c_path) = c_path(&fixup.path) else {
-        return ARCHIVE_WARN;
-    };
-    let fd = unsafe {
-        libc::open(
-            c_path.as_ptr(),
-            if follow {
-                libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW
-            } else {
-                libc::O_RDONLY | libc::O_CLOEXEC
-            },
-        )
-    };
     if fixup.apply_owner {
         let rc = unsafe {
-            if fd >= 0 && follow {
-                libc::fchown(fd, fixup.uid as _, fixup.gid as _)
+            if fixup.target_fd >= 0 && fixup.follow {
+                libc::fchown(fixup.target_fd, fixup.uid as _, fixup.gid as _)
+            } else if let Some(name) = fixup.name.as_ref() {
+                libc::fchownat(
+                    fixup.parent_fd,
+                    name.as_ptr(),
+                    fixup.uid as _,
+                    fixup.gid as _,
+                    libc::AT_SYMLINK_NOFOLLOW,
+                )
             } else {
-                libc::lchown(c_path.as_ptr(), fixup.uid as _, fixup.gid as _)
+                -1
             }
         };
         if rc != 0 {
@@ -1020,10 +1191,10 @@ fn apply_fixup(handle: &mut WriteDiskArchiveHandle, fixup: &WriteDiskPendingFixu
     }
     if fixup.apply_perm {
         let rc = unsafe {
-            if fd >= 0 && follow {
-                libc::fchmod(fd, fixup.mode & 0o7777)
+            if fixup.target_fd >= 0 && fixup.follow {
+                libc::fchmod(fixup.target_fd, fixup.mode & 0o7777)
             } else {
-                libc::chmod(c_path.as_ptr(), fixup.mode & 0o7777)
+                -1
             }
         };
         if rc != 0 {
@@ -1044,12 +1215,18 @@ fn apply_fixup(handle: &mut WriteDiskArchiveHandle, fixup: &WriteDiskPendingFixu
             },
         ];
         let rc = unsafe {
-            libc::utimensat(
-                libc::AT_FDCWD,
-                c_path.as_ptr(),
-                times.as_ptr(),
-                if follow { 0 } else { libc::AT_SYMLINK_NOFOLLOW },
-            )
+            if fixup.target_fd >= 0 && fixup.follow {
+                libc::futimens(fixup.target_fd, times.as_ptr())
+            } else if let Some(name) = fixup.name.as_ref() {
+                libc::utimensat(
+                    fixup.parent_fd,
+                    name.as_ptr(),
+                    times.as_ptr(),
+                    libc::AT_SYMLINK_NOFOLLOW,
+                )
+            } else {
+                -1
+            }
         };
         if rc != 0 {
             status = ARCHIVE_WARN;
@@ -1058,22 +1235,16 @@ fn apply_fixup(handle: &mut WriteDiskArchiveHandle, fixup: &WriteDiskPendingFixu
     if (handle.options & ARCHIVE_EXTRACT_XATTR) != 0 {
         for (name, value) in &fixup.xattrs {
             let rc = unsafe {
-                if follow {
-                    libc::setxattr(
-                        c_path.as_ptr(),
+                if fixup.target_fd >= 0 {
+                    libc::fsetxattr(
+                        fixup.target_fd,
                         name.as_ptr(),
                         value.as_ptr().cast(),
                         value.len(),
                         0,
                     )
                 } else {
-                    libc::lsetxattr(
-                        c_path.as_ptr(),
-                        name.as_ptr(),
-                        value.as_ptr().cast(),
-                        value.len(),
-                        0,
-                    )
+                    -1
                 }
             };
             if rc != 0 {
@@ -1081,20 +1252,220 @@ fn apply_fixup(handle: &mut WriteDiskArchiveHandle, fixup: &WriteDiskPendingFixu
             }
         }
     }
-    if fd >= 0 {
-        unsafe {
-            libc::close(fd);
-        }
-    }
+    close_fixup(&mut fixup);
     status
 }
 
-fn close_current_file(current: &mut WriteDiskCurrentState) {
+fn close_current_state(current: &mut WriteDiskCurrentState) {
     if current.close_fd_on_finish && current.fd >= 0 {
-        unsafe {
-            libc::close(current.fd);
-        }
+        close_fd_if_valid(current.fd);
         current.fd = -1;
+    }
+    if current.current_parent_fd >= 0 {
+        close_fd_if_valid(current.current_parent_fd);
+        current.current_parent_fd = -1;
+    }
+    if let Some(fd) = current.final_parent_fd.take() {
+        close_fd_if_valid(fd);
+    }
+}
+
+fn skip_current_state(display_path: PathBuf) -> WriteDiskCurrentState {
+    WriteDiskCurrentState {
+        display_path,
+        current_parent_fd: -1,
+        current_name: None,
+        final_parent_fd: None,
+        final_name: None,
+        fd: -1,
+        size_limit: Some(0),
+        written: 0,
+        accept_data: false,
+        close_fd_on_finish: false,
+        fixup: None,
+    }
+}
+
+fn target_exists(parent_fd: c_int, name: &CStr) -> bool {
+    stat_at(parent_fd, name, libc::AT_SYMLINK_NOFOLLOW).is_ok()
+}
+
+fn open_created_file_at(parent_fd: c_int, name: &CStr) -> Result<c_int, c_int> {
+    let fd = unsafe {
+        libc::openat(
+            parent_fd,
+            name.as_ptr(),
+            libc::O_WRONLY | libc::O_CREAT | libc::O_EXCL | libc::O_CLOEXEC | libc::O_NOFOLLOW,
+            0o600,
+        )
+    };
+    if fd >= 0 {
+        Ok(fd)
+    } else {
+        Err(last_errno())
+    }
+}
+
+fn next_safe_temp_name(
+    handle: &mut WriteDiskArchiveHandle,
+    name: &CStr,
+) -> Result<CString, c_int> {
+    handle.extraction.temp_counter = handle.extraction.temp_counter.wrapping_add(1);
+    CString::new(format!(
+        ".{}.safe-tmp-{}",
+        String::from_utf8_lossy(name.to_bytes()),
+        handle.extraction.temp_counter
+    ))
+    .map_err(|_| libc::EINVAL)
+}
+
+fn prepare_directory_fixup(
+    handle: &mut WriteDiskArchiveHandle,
+    target: &WriteDiskResolvedTarget,
+    entry_data: &crate::entry::internal::ArchiveEntryData,
+) -> Result<WriteDiskPendingFixup, c_int> {
+    match stat_at(target.parent_fd, target.name.as_c_str(), libc::AT_SYMLINK_NOFOLLOW) {
+        Ok(st) if filetype_from_mode(st.st_mode) == AE_IFDIR => {
+            let fd = open_dir_at(target.parent_fd, target.name.as_c_str(), true).map_err(|errno| {
+                record_error(
+                    &mut handle.core,
+                    errno,
+                    format!("failed to open directory {}", target.display_path.display()),
+                )
+            })?;
+            Ok(make_fixup(
+                handle,
+                target.display_path.clone(),
+                entry_data,
+                fd,
+                -1,
+                None,
+                true,
+            ))
+        }
+        Ok(st) if filetype_from_mode(st.st_mode) == AE_IFLNK => {
+            if (handle.options & ARCHIVE_EXTRACT_SECURE_SYMLINKS) == 0 {
+                let fd =
+                    open_dir_at(target.parent_fd, target.name.as_c_str(), false).map_err(|errno| {
+                        record_error(
+                            &mut handle.core,
+                            errno,
+                            format!("failed to open directory {}", target.display_path.display()),
+                        )
+                    })?;
+                return Ok(make_fixup(
+                    handle,
+                    target.display_path.clone(),
+                    entry_data,
+                    fd,
+                    -1,
+                    None,
+                    true,
+                ));
+            }
+            remove_entry_at(target.parent_fd, target.name.as_c_str()).map_err(|errno| {
+                record_error(
+                    &mut handle.core,
+                    errno,
+                    format!("failed to replace {}", target.display_path.display()),
+                )
+            })?;
+            let mode = 0o777 & !process_umask();
+            if unsafe { libc::mkdirat(target.parent_fd, target.name.as_ptr(), mode) } != 0 {
+                return Err(record_error(
+                    &mut handle.core,
+                    last_errno(),
+                    format!("failed to create directory {}", target.display_path.display()),
+                ));
+            }
+            let fd = open_dir_at(target.parent_fd, target.name.as_c_str(), true).map_err(|errno| {
+                record_error(
+                    &mut handle.core,
+                    errno,
+                    format!("failed to open directory {}", target.display_path.display()),
+                )
+            })?;
+            Ok(make_fixup(
+                handle,
+                target.display_path.clone(),
+                entry_data,
+                fd,
+                -1,
+                None,
+                true,
+            ))
+        }
+        Ok(_) => {
+            if (handle.options & ARCHIVE_EXTRACT_UNLINK) == 0 {
+                return Err(record_error(
+                    &mut handle.core,
+                    libc::EEXIST,
+                    format!("failed to create directory {}", target.display_path.display()),
+                ));
+            }
+            remove_entry_at(target.parent_fd, target.name.as_c_str()).map_err(|errno| {
+                record_error(
+                    &mut handle.core,
+                    errno,
+                    format!("failed to replace {}", target.display_path.display()),
+                )
+            })?;
+            let mode = 0o777 & !process_umask();
+            if unsafe { libc::mkdirat(target.parent_fd, target.name.as_ptr(), mode) } != 0 {
+                return Err(record_error(
+                    &mut handle.core,
+                    last_errno(),
+                    format!("failed to create directory {}", target.display_path.display()),
+                ));
+            }
+            let fd = open_dir_at(target.parent_fd, target.name.as_c_str(), true).map_err(|errno| {
+                record_error(
+                    &mut handle.core,
+                    errno,
+                    format!("failed to open directory {}", target.display_path.display()),
+                )
+            })?;
+            Ok(make_fixup(
+                handle,
+                target.display_path.clone(),
+                entry_data,
+                fd,
+                -1,
+                None,
+                true,
+            ))
+        }
+        Err(errno) if errno == libc::ENOENT => {
+            let mode = 0o777 & !process_umask();
+            if unsafe { libc::mkdirat(target.parent_fd, target.name.as_ptr(), mode) } != 0 {
+                return Err(record_error(
+                    &mut handle.core,
+                    last_errno(),
+                    format!("failed to create directory {}", target.display_path.display()),
+                ));
+            }
+            let fd = open_dir_at(target.parent_fd, target.name.as_c_str(), true).map_err(|errno| {
+                record_error(
+                    &mut handle.core,
+                    errno,
+                    format!("failed to open directory {}", target.display_path.display()),
+                )
+            })?;
+            Ok(make_fixup(
+                handle,
+                target.display_path.clone(),
+                entry_data,
+                fd,
+                -1,
+                None,
+                true,
+            ))
+        }
+        Err(errno) => Err(record_error(
+            &mut handle.core,
+            errno,
+            format!("failed to inspect {}", target.display_path.display()),
+        )),
     }
 }
 
@@ -1111,280 +1482,295 @@ pub(crate) unsafe fn write_disk_header(
         return record_error(&mut handle.core, libc::EINVAL, "entry pathname is missing");
     };
     let raw_path = Path::new(pathname);
-    let full_path = match resolve_final_path(handle, raw_path) {
-        Ok(path) => path,
+    let target = match resolve_write_target(handle, raw_path, true) {
+        Ok(target) => target,
         Err(status) => {
             handle.extraction.last_header_failed = true;
             return status;
         }
     };
+
     if let Some((skip_dev, skip_ino)) = handle.skip_file {
-        if let Ok(st) = path_stat(&full_path, false) {
+        if let Ok(st) = stat_at(target.parent_fd, target.name.as_c_str(), libc::AT_SYMLINK_NOFOLLOW) {
             if st.st_dev == skip_dev as _ && st.st_ino == skip_ino as _ {
+                close_fd_if_valid(target.parent_fd);
                 handle.extraction.last_header_failed = true;
-                return record_error(&mut handle.core, libc::EEXIST, "refusing to overwrite skipped file");
+                return record_error(
+                    &mut handle.core,
+                    libc::EEXIST,
+                    "refusing to overwrite skipped file",
+                );
             }
         }
     }
-    if ensure_intermediate_dirs(handle, raw_path).is_err() {
-        handle.extraction.last_header_failed = true;
-        return ARCHIVE_FAILED;
-    }
 
     let filetype = filetype_from_mode(entry_data.mode);
-    if (handle.options & ARCHIVE_EXTRACT_NO_OVERWRITE) != 0 && fs::symlink_metadata(&full_path).is_ok() {
-        handle.extraction.current = Some(WriteDiskCurrentState {
-            path: full_path,
-            final_path: None,
-            fd: -1,
-            size_limit: Some(0),
-            written: 0,
-            accept_data: false,
-            close_fd_on_finish: false,
-            fixup: None,
-        });
+    if (handle.options & ARCHIVE_EXTRACT_NO_OVERWRITE) != 0
+        && target_exists(target.parent_fd, target.name.as_c_str())
+    {
+        handle.extraction.current = Some(skip_current_state(target.display_path.clone()));
+        close_fd_if_valid(target.parent_fd);
         return ARCHIVE_OK;
     }
     if (handle.options & ARCHIVE_EXTRACT_NO_OVERWRITE_NEWER) != 0 {
-        if let (Ok(existing), true) = (fs::metadata(&full_path), entry_data.mtime.set) {
-            if existing.mtime() > entry_data.mtime.sec {
-                handle.extraction.current = Some(WriteDiskCurrentState {
-                    path: full_path,
-                    final_path: None,
-                    fd: -1,
-                    size_limit: Some(0),
-                    written: 0,
-                    accept_data: false,
-                    close_fd_on_finish: false,
-                    fixup: None,
-                });
+        if let (Ok(existing), true) = (stat_at(target.parent_fd, target.name.as_c_str(), 0), entry_data.mtime.set)
+        {
+            if existing.st_mtime > entry_data.mtime.sec {
+                handle.extraction.current = Some(skip_current_state(target.display_path.clone()));
+                close_fd_if_valid(target.parent_fd);
                 return ARCHIVE_OK;
             }
         }
     }
 
     if filetype == AE_IFDIR {
-        match fs::symlink_metadata(&full_path) {
-            Ok(meta) if meta.file_type().is_symlink() => {
-                if let Ok(target_meta) = fs::metadata(&full_path) {
-                    if target_meta.is_dir() && (handle.options & ARCHIVE_EXTRACT_SECURE_SYMLINKS) == 0 {
-                        handle.extraction.current = Some(WriteDiskCurrentState {
-                            path: full_path.clone(),
-                            final_path: None,
-                            fd: -1,
-                            size_limit: None,
-                            written: 0,
-                            accept_data: false,
-                            close_fd_on_finish: false,
-                            fixup: Some(make_fixup(handle, full_path, entry_data)),
-                        });
-                        return ARCHIVE_OK;
-                    }
-                }
-                maybe_remove(&full_path).map_err(|errno| {
-                    record_error(
-                        &mut handle.core,
-                        errno,
-                        format!("failed to replace {}", full_path.display()),
-                    )
-                }).ok();
+        let fixup = match prepare_directory_fixup(handle, &target, entry_data) {
+            Ok(fixup) => fixup,
+            Err(status) => {
+                close_fd_if_valid(target.parent_fd);
+                handle.extraction.last_header_failed = true;
+                return status;
             }
-            Ok(meta) if meta.is_dir() => {}
-            Ok(_) => {
-                if (handle.options & ARCHIVE_EXTRACT_UNLINK) != 0 {
-                    let _ = maybe_remove(&full_path);
-                }
-            }
-            Err(_) => {}
-        }
-        if fs::symlink_metadata(&full_path).is_err() {
-            fs::create_dir_all(&full_path).map_err(|error| {
-                record_error(
-                    &mut handle.core,
-                    error.raw_os_error().unwrap_or(libc::EINVAL),
-                    format!("failed to create directory {}", full_path.display()),
-                )
-            }).ok();
-        }
+        };
+        close_fd_if_valid(target.parent_fd);
         handle.extraction.current = Some(WriteDiskCurrentState {
-            path: full_path.clone(),
-            final_path: None,
+            display_path: target.display_path.clone(),
+            current_parent_fd: -1,
+            current_name: None,
+            final_parent_fd: None,
+            final_name: None,
             fd: -1,
             size_limit: None,
             written: 0,
             accept_data: false,
             close_fd_on_finish: false,
-            fixup: Some(make_fixup(handle, full_path, entry_data)),
+            fixup: Some(fixup),
         });
         return ARCHIVE_OK;
     }
 
     if filetype == AE_IFLNK {
-        if let Some(target) = entry_data.symlink.get_str() {
-            if fs::symlink_metadata(&full_path).is_ok() {
-                let _ = maybe_remove(&full_path);
-            }
-            symlink(target, &full_path).map_err(|error| {
+        let link_target = match entry_data.symlink.get_str() {
+            Some(target_value) => CString::new(target_value).map_err(|_| {
                 record_error(
                     &mut handle.core,
-                    error.raw_os_error().unwrap_or(libc::EINVAL),
-                    format!("failed to create symlink {}", full_path.display()),
+                    libc::EINVAL,
+                    format!("invalid symlink target {}", target.display_path.display()),
                 )
-            }).ok();
-            handle.extraction.current = Some(WriteDiskCurrentState {
-                path: full_path.clone(),
-                final_path: None,
-                fd: -1,
-                size_limit: None,
-                written: 0,
-                accept_data: false,
-                close_fd_on_finish: false,
-                fixup: Some(make_fixup(handle, full_path, entry_data)),
-            });
-            return ARCHIVE_OK;
+            }),
+            None => Err(record_error(
+                &mut handle.core,
+                libc::EINVAL,
+                format!("symlink target is missing for {}", target.display_path.display()),
+            )),
+        };
+        let Ok(link_target) = link_target else {
+            close_fd_if_valid(target.parent_fd);
+            handle.extraction.last_header_failed = true;
+            return ARCHIVE_FAILED;
+        };
+        if target_exists(target.parent_fd, target.name.as_c_str()) {
+            let _ = remove_entry_at(target.parent_fd, target.name.as_c_str());
         }
+        if libc::symlinkat(link_target.as_ptr(), target.parent_fd, target.name.as_ptr()) != 0 {
+            close_fd_if_valid(target.parent_fd);
+            handle.extraction.last_header_failed = true;
+            return record_error(
+                &mut handle.core,
+                last_errno(),
+                format!("failed to create symlink {}", target.display_path.display()),
+            );
+        }
+        handle.extraction.current = Some(WriteDiskCurrentState {
+            display_path: target.display_path.clone(),
+            current_parent_fd: -1,
+            current_name: None,
+            final_parent_fd: None,
+            final_name: None,
+            fd: -1,
+            size_limit: None,
+            written: 0,
+            accept_data: false,
+            close_fd_on_finish: false,
+            fixup: Some(make_fixup(
+                handle,
+                target.display_path.clone(),
+                entry_data,
+                -1,
+                target.parent_fd,
+                Some(target.name.clone()),
+                false,
+            )),
+        });
+        return ARCHIVE_OK;
     }
 
-    if let Some(target) = entry_data.hardlink.get_str() {
-        let target_raw = Path::new(target);
-        let target_full = match resolve_final_path(handle, target_raw) {
-            Ok(path) => path,
+    if let Some(link_target) = entry_data.hardlink.get_str() {
+        let hardlink_target = match resolve_write_target(handle, Path::new(link_target), false) {
+            Ok(target_value) => target_value,
             Err(status) => {
+                close_fd_if_valid(target.parent_fd);
                 handle.extraction.last_header_failed = true;
                 return status;
             }
         };
-        if (handle.options & ARCHIVE_EXTRACT_SECURE_NODOTDOT) != 0 && has_dotdot(target_raw) {
+        if target_exists(target.parent_fd, target.name.as_c_str()) {
+            let _ = remove_entry_at(target.parent_fd, target.name.as_c_str());
+        }
+        if libc::linkat(
+            hardlink_target.parent_fd,
+            hardlink_target.name.as_ptr(),
+            target.parent_fd,
+            target.name.as_ptr(),
+            0,
+        ) != 0
+        {
+            close_fd_if_valid(hardlink_target.parent_fd);
+            close_fd_if_valid(target.parent_fd);
             handle.extraction.last_header_failed = true;
             return record_error(
                 &mut handle.core,
-                libc::EINVAL,
-                "hardlink target contains '..' and secure nodotdot is enabled",
+                last_errno(),
+                format!("failed to create hardlink {}", target.display_path.display()),
             );
         }
-        if (handle.options & ARCHIVE_EXTRACT_SECURE_SYMLINKS) != 0 {
-            let mut cursor = target_full.as_path();
-            while let Some(parent) = cursor.parent() {
-                if let Ok(meta) = fs::symlink_metadata(parent) {
-                    if meta.file_type().is_symlink() {
-                        handle.extraction.last_header_failed = true;
-                        return record_error(
-                            &mut handle.core,
-                            libc::ELOOP,
-                            "hardlink target traverses an existing symlink",
-                        );
-                    }
-                }
-                if parent == cursor {
-                    break;
-                }
-                cursor = parent;
-            }
-        }
-        if fs::symlink_metadata(&full_path).is_ok() {
-            let _ = maybe_remove(&full_path);
-        }
-        if let Err(error) = fs::hard_link(&target_full, &full_path) {
-            handle.extraction.last_header_failed = true;
-            return record_error(
-                &mut handle.core,
-                error.raw_os_error().unwrap_or(libc::EINVAL),
-                format!("failed to create hardlink {}", full_path.display()),
-            );
-        }
+        close_fd_if_valid(hardlink_target.parent_fd);
+
         let authoritative = entry_data.size_set && entry_data.size > 0;
         let fd = if authoritative {
-            let options = OpenOptions::new()
-                .write(true)
-                .truncate(true)
-                .custom_flags(libc::O_CLOEXEC)
-                .open(&full_path);
-            match options {
-                Ok(file) => {
-                    let fd = file.into_raw_fd();
-                    fd
-                }
-                Err(error) => {
-                    handle.extraction.last_header_failed = true;
-                    return record_error(
-                        &mut handle.core,
-                        error.raw_os_error().unwrap_or(libc::EINVAL),
-                        format!("failed to open {}", full_path.display()),
-                    );
-                }
+            let fd = libc::openat(
+                target.parent_fd,
+                target.name.as_ptr(),
+                libc::O_WRONLY | libc::O_TRUNC | libc::O_CLOEXEC | libc::O_NOFOLLOW,
+                0,
+            );
+            if fd < 0 {
+                close_fd_if_valid(target.parent_fd);
+                handle.extraction.last_header_failed = true;
+                return record_error(
+                    &mut handle.core,
+                    last_errno(),
+                    format!("failed to open {}", target.display_path.display()),
+                );
             }
+            fd
         } else {
             -1
         };
+        if !authoritative {
+            close_fd_if_valid(target.parent_fd);
+        }
         handle.extraction.current = Some(WriteDiskCurrentState {
-            path: full_path.clone(),
-            final_path: None,
+            display_path: target.display_path.clone(),
+            current_parent_fd: -1,
+            current_name: None,
+            final_parent_fd: None,
+            final_name: None,
             fd,
             size_limit: entry_data.size_set.then_some(entry_data.size),
             written: 0,
             accept_data: authoritative,
             close_fd_on_finish: fd >= 0,
-            fixup: authoritative.then(|| make_fixup(handle, full_path, entry_data)),
+            fixup: authoritative.then(|| {
+                make_fixup(
+                    handle,
+                    target.display_path.clone(),
+                    entry_data,
+                    fd,
+                    -1,
+                    None,
+                    true,
+                )
+            }),
         });
         return ARCHIVE_OK;
     }
 
-    if (handle.options & ARCHIVE_EXTRACT_SECURE_SYMLINKS) != 0 {
-        let mut cursor = full_path.as_path();
-        while let Some(parent) = cursor.parent() {
-            if let Ok(meta) = fs::symlink_metadata(parent) {
-                if meta.file_type().is_symlink() {
-                    if (handle.options & ARCHIVE_EXTRACT_UNLINK) == 0 {
-                        handle.extraction.last_header_failed = true;
-                        return record_error(
-                            &mut handle.core,
-                            libc::ELOOP,
-                            format!("path traverses an existing symlink: {}", parent.display()),
-                        );
-                    }
-                    let _ = maybe_remove(parent);
-                    let _ = fs::create_dir_all(parent);
+    let use_safe_writes = (handle.options & ARCHIVE_EXTRACT_SAFE_WRITES) != 0;
+    let (fd, current_name, final_name) = if use_safe_writes {
+        let mut opened = None;
+        let mut temp_name = None;
+        for _ in 0..128 {
+            let candidate = match next_safe_temp_name(handle, target.name.as_c_str()) {
+                Ok(name) => name,
+                Err(errno) => {
+                    close_fd_if_valid(target.parent_fd);
+                    handle.extraction.last_header_failed = true;
+                    return record_error(
+                        &mut handle.core,
+                        errno,
+                        format!("failed to create temp name for {}", target.display_path.display()),
+                    );
+                }
+            };
+            match open_created_file_at(target.parent_fd, candidate.as_c_str()) {
+                Ok(fd) => {
+                    opened = Some(fd);
+                    temp_name = Some(candidate);
+                    break;
+                }
+                Err(errno) if errno == libc::EEXIST => continue,
+                Err(errno) => {
+                    close_fd_if_valid(target.parent_fd);
+                    handle.extraction.last_header_failed = true;
+                    return record_error(
+                        &mut handle.core,
+                        errno,
+                        format!("failed to open {}", target.display_path.display()),
+                    );
                 }
             }
-            if parent == cursor {
-                break;
-            }
-            cursor = parent;
         }
-    }
-
-    let path_to_open = if (handle.options & ARCHIVE_EXTRACT_SAFE_WRITES) != 0 {
-        let temp_path = full_path.with_extension("safe-tmp");
-        let _ = maybe_remove(&temp_path);
-        temp_path
-    } else {
-        full_path.clone()
-    };
-    if fs::symlink_metadata(&path_to_open).is_ok() {
-        let _ = maybe_remove(&path_to_open);
-    }
-    let mut options = OpenOptions::new();
-    options.write(true).create(true).truncate(true).mode(0o600).custom_flags(libc::O_CLOEXEC);
-    let file = match options.open(&path_to_open) {
-        Ok(file) => file,
-        Err(error) => {
+        let Some(fd) = opened else {
+            close_fd_if_valid(target.parent_fd);
             handle.extraction.last_header_failed = true;
             return record_error(
                 &mut handle.core,
-                error.raw_os_error().unwrap_or(libc::EINVAL),
-                format!("failed to open {}", path_to_open.display()),
+                libc::EEXIST,
+                format!("failed to allocate temp name for {}", target.display_path.display()),
             );
+        };
+        (fd, temp_name, Some(target.name.clone()))
+    } else {
+        if target_exists(target.parent_fd, target.name.as_c_str()) {
+            let _ = remove_entry_at(target.parent_fd, target.name.as_c_str());
         }
+        let fd = match open_created_file_at(target.parent_fd, target.name.as_c_str()) {
+            Ok(fd) => fd,
+            Err(errno) => {
+                close_fd_if_valid(target.parent_fd);
+                handle.extraction.last_header_failed = true;
+                return record_error(
+                    &mut handle.core,
+                    errno,
+                    format!("failed to open {}", target.display_path.display()),
+                );
+            }
+        };
+        close_fd_if_valid(target.parent_fd);
+        (fd, None, None)
     };
+
     handle.extraction.current = Some(WriteDiskCurrentState {
-        path: path_to_open,
-        final_path: ((handle.options & ARCHIVE_EXTRACT_SAFE_WRITES) != 0).then_some(full_path.clone()),
-        fd: file.into_raw_fd(),
+        display_path: target.display_path.clone(),
+        current_parent_fd: if use_safe_writes { target.parent_fd } else { -1 },
+        current_name,
+        final_parent_fd: None,
+        final_name,
+        fd,
         size_limit: entry_data.size_set.then_some(entry_data.size),
         written: 0,
         accept_data: true,
         close_fd_on_finish: true,
-        fixup: Some(make_fixup(handle, full_path, entry_data)),
+        fixup: Some(make_fixup(
+            handle,
+            target.display_path.clone(),
+            entry_data,
+            fd,
+            -1,
+            None,
+            true,
+        )),
     });
     ARCHIVE_OK
 }
@@ -1448,33 +1834,61 @@ pub(crate) unsafe fn write_disk_data_block(
 
 pub(crate) fn write_disk_finish_entry(handle: &mut WriteDiskArchiveHandle) -> c_int {
     let Some(mut current) = handle.extraction.current.take() else {
-        return if handle.extraction.last_header_failed {
-            ARCHIVE_OK
-        } else {
-            ARCHIVE_OK
-        };
+        return ARCHIVE_OK;
     };
 
-    close_current_file(&mut current);
+    let fixup = current.fixup.take();
+    if let Some(ref entry_fixup) = fixup {
+        if entry_fixup.target_fd >= 0 && entry_fixup.target_fd == current.fd {
+            current.fd = -1;
+        }
+    }
+
     let mut status = ARCHIVE_OK;
-    if let Some(final_path) = &current.final_path {
-        let _ = maybe_remove(final_path);
-        if let Err(error) = fs::rename(&current.path, final_path) {
+    if let Some(final_name) = current.final_name.as_ref() {
+        let Some(current_name) = current.current_name.as_ref() else {
+            if let Some(mut fixup) = fixup {
+                close_fixup(&mut fixup);
+            }
+            close_current_state(&mut current);
             return record_error(
                 &mut handle.core,
-                error.raw_os_error().unwrap_or(libc::EINVAL),
-                format!("failed to rename {} to {}", current.path.display(), final_path.display()),
+                libc::EINVAL,
+                format!("missing temporary name for {}", current.display_path.display()),
+            );
+        };
+        if target_exists(current.current_parent_fd, final_name.as_c_str()) {
+            let _ = remove_entry_at(current.current_parent_fd, final_name.as_c_str());
+        }
+        let final_parent_fd = current.final_parent_fd.unwrap_or(current.current_parent_fd);
+        if unsafe {
+            libc::renameat(
+                current.current_parent_fd,
+                current_name.as_ptr(),
+                final_parent_fd,
+                final_name.as_ptr(),
+            )
+        } != 0
+        {
+            if let Some(mut fixup) = fixup {
+                close_fixup(&mut fixup);
+            }
+            close_current_state(&mut current);
+            return record_error(
+                &mut handle.core,
+                last_errno(),
+                format!("failed to rename into {}", current.display_path.display()),
             );
         }
-        current.path = final_path.clone();
     }
-    if let Some(fixup) = current.fixup.take() {
+    if let Some(fixup) = fixup {
         if filetype_from_mode(fixup.mode) == AE_IFDIR {
             handle.extraction.deferred_dirs.push(fixup);
         } else {
-            status = apply_fixup(handle, &fixup);
+            status = apply_fixup(handle, fixup);
         }
     }
+    close_current_state(&mut current);
     status
 }
 
@@ -1484,10 +1898,17 @@ pub(crate) fn write_disk_close(handle: &mut WriteDiskArchiveHandle) -> c_int {
         status = write_disk_finish_entry(handle);
     }
     while let Some(fixup) = handle.extraction.deferred_dirs.pop() {
-        if apply_fixup(handle, &fixup) != ARCHIVE_OK {
+        if apply_fixup(handle, fixup) != ARCHIVE_OK {
             status = ARCHIVE_WARN;
         }
     }
+    if let Some(fd) = handle.extraction.cwd_root_fd.take() {
+        close_fd_if_valid(fd);
+    }
+    if let Some(fd) = handle.extraction.absolute_root_fd.take() {
+        close_fd_if_valid(fd);
+    }
+    handle.extraction.temp_counter = 0;
     if handle.core.state == crate::common::error::ARCHIVE_STATE_FATAL {
         ARCHIVE_FATAL
     } else {
