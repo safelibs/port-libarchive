@@ -1,0 +1,125 @@
+Description: Preserve the natural order in ISO9660 archives for linked files (#1974)
+ When an ISO9660 archive contains hard links or sym links, the order of
+ the files in the output of 'bsdtar -tf filename' is not the natural
+ order.
+ .
+ With an extension to the key (while still supporting ISO files up to 2^48
+ bytes) the sorting order is guaranteed for ISO files that contain linked
+ files for up to 2^16 files in total.
+ .
+ Co-authored-by: Martin Matuska <martin@matuska.de>
+Bug-Debian: https://bugs.debian.org/1051322
+Origin: upstream, https://github.com/libarchive/libarchive/commit/67a20ce8f0ba22f06fb74119b4459ac69ade643b
+Author: Roland Clobus <rclobus@rclobus.nl>
+Last-Update: 2023-10-14
+
+--- a/libarchive/archive_read_support_format_iso9660.c
++++ b/libarchive/archive_read_support_format_iso9660.c
+@@ -3015,6 +3015,11 @@
+ 	uint64_t file_key, parent_key;
+ 	int hole, parent;
+ 
++	/* Reserve 16 bits for possible key collisions (needed for linked items) */
++	/* For ISO files with more than 65535 entries, reordering will still occur */
++	key <<= 16;
++	key += heap->used & 0xFFFF;
++
+ 	/* Expand our pending files list as necessary. */
+ 	if (heap->used >= heap->allocated) {
+ 		struct file_info **new_pending_files;
+--- a/libarchive/test/test_read_format_isojoliet_long.c
++++ b/libarchive/test/test_read_format_isojoliet_long.c
+@@ -115,7 +115,7 @@
+ 	pathname[102] = '3';
+ 	pathname[103] = '\0';
+ 	assertEqualInt(0, archive_read_next_header(a, &ae));
+-	assertEqualString("hardlink", archive_entry_pathname(ae));
++	assertEqualString(pathname, archive_entry_pathname(ae));
+ 	assertEqualInt(AE_IFREG, archive_entry_filetype(ae));
+ 	assert(archive_entry_hardlink(ae) == NULL);
+ 	assertEqualInt(6, archive_entry_size(ae));
+@@ -129,9 +129,9 @@
+ 	/* Second name for the same regular file (this happens to be
+ 	 * returned second, so does get marked as a hardlink). */
+ 	assertEqualInt(0, archive_read_next_header(a, &ae));
+-	assertEqualString(pathname, archive_entry_pathname(ae));
++	assertEqualString("hardlink", archive_entry_pathname(ae));
+ 	assertEqualInt(AE_IFREG, archive_entry_filetype(ae));
+-	assertEqualString("hardlink", archive_entry_hardlink(ae));
++	assertEqualString(pathname, archive_entry_hardlink(ae));
+ 	assert(!archive_entry_size_is_set(ae));
+ 	assertEqualInt(archive_entry_is_encrypted(ae), 0);
+ 	assertEqualIntA(a, archive_read_has_encrypted_entries(a), ARCHIVE_READ_FORMAT_ENCRYPTION_UNSUPPORTED);
+--- a/libarchive/test/test_write_format_iso9660.c
++++ b/libarchive/test/test_write_format_iso9660.c
+@@ -385,14 +385,14 @@
+ 	assertEqualInt(2048, archive_entry_size(ae));
+ 
+ 	/*
+-	 * Read "hardlnk"
++	 * Read "file"
+ 	 */
+ 	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
+ 	assertEqualInt(2, archive_entry_atime(ae));
+ 	assertEqualInt(3, archive_entry_birthtime(ae));
+ 	assertEqualInt(4, archive_entry_ctime(ae));
+ 	assertEqualInt(5, archive_entry_mtime(ae));
+-	assertEqualString("hardlnk", archive_entry_pathname(ae));
++	assertEqualString("file", archive_entry_pathname(ae));
+ 	assert((AE_IFREG | 0555) == archive_entry_mode(ae));
+ 	assertEqualInt(2, archive_entry_nlink(ae));
+ 	assertEqualInt(8, archive_entry_size(ae));
+@@ -400,15 +400,15 @@
+ 	assertEqualMem(buff2, "12345678", 8);
+ 
+ 	/*
+-	 * Read "file"
++	 * Read "hardlnk"
+ 	 */
+ 	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
+ 	assertEqualInt(2, archive_entry_atime(ae));
+ 	assertEqualInt(3, archive_entry_birthtime(ae));
+ 	assertEqualInt(4, archive_entry_ctime(ae));
+ 	assertEqualInt(5, archive_entry_mtime(ae));
+-	assertEqualString("file", archive_entry_pathname(ae));
+-	assertEqualString("hardlnk", archive_entry_hardlink(ae));
++	assertEqualString("hardlnk", archive_entry_pathname(ae));
++	assertEqualString("file", archive_entry_hardlink(ae));
+ 	assert((AE_IFREG | 0555) == archive_entry_mode(ae));
+ 	assertEqualInt(2, archive_entry_nlink(ae));
+ 	assertEqualInt(0, archive_entry_size(ae));
+@@ -982,13 +982,13 @@
+ 	assertEqualInt(2048, archive_entry_size(ae));
+ 
+ 	/*
+-	 * Read "hardlink"
++	 * Read "file"
+ 	 */
+ 	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
+ 	assertEqualInt(5, archive_entry_atime(ae));
+ 	assertEqualInt(5, archive_entry_ctime(ae));
+ 	assertEqualInt(5, archive_entry_mtime(ae));
+-	assertEqualString("HARDLNK", archive_entry_pathname(ae));
++	assertEqualString("FILE", archive_entry_pathname(ae));
+ 	assertEqualString(NULL, archive_entry_hardlink(ae));
+ 	assert((AE_IFREG | 0400) == archive_entry_mode(ae));
+ 	assertEqualInt(8, archive_entry_size(ae));
+@@ -996,15 +996,15 @@
+ 	assertEqualMem(buff2, "12345678", 8);
+ 
+ 	/*
+-	 * Read "file"
++	 * Read "hardlnk"
+ 	 */
+ 	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
+ 	assertEqualInt(5, archive_entry_atime(ae));
+ 	assertEqualInt(0, archive_entry_birthtime(ae));
+ 	assertEqualInt(5, archive_entry_ctime(ae));
+ 	assertEqualInt(5, archive_entry_mtime(ae));
+-	assertEqualString("FILE", archive_entry_pathname(ae));
+-	assertEqualString("HARDLNK", archive_entry_hardlink(ae));
++	assertEqualString("HARDLNK", archive_entry_pathname(ae));
++	assertEqualString("FILE", archive_entry_hardlink(ae));
+ 	assert((AE_IFREG | 0400) == archive_entry_mode(ae));
+ 	assertEqualInt(2, archive_entry_nlink(ae));
+ 	assertEqualInt(0, archive_entry_size(ae));

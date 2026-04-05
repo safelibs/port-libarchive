@@ -1,0 +1,17 @@
+typos.patch
+iso9660-hash.patch
+test-zstd-32bit.patch
+robust-error-reporting.patch
+CVE-2024-26256.patch
+CVE-2024-48957.patch
+CVE-2024-48958.patch
+CVE-2024-20696.patch
+CVE-2025-1632_25724.patch
+CVE-2025-5914.patch
+CVE-2025-5915.patch
+CVE-2025-5916.patch
+CVE-2025-5917.patch
+CVE-2025-5918-1.patch
+CVE-2025-5918-2.patch
+CVE-2025-60753.patch
+CVE-2026-4111.patch

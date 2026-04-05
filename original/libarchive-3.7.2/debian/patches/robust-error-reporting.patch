@@ -1,0 +1,20 @@
+Description: tar: make error reporting more robust and use correct errno
+Debian-Bug: https://bugs.debian.org/1068047
+Origin: upstream, https://github.com/libarchive/libarchive/commit/6110e9c82d8ba830c3440f36b990483ceaaea52c
+Author: Ed Maste <emaste@freebsd.org>
+Last-Update: 2024-03-30
+
+--- a/tar/read.c
++++ b/tar/read.c
+@@ -372,8 +372,9 @@
+ 			if (r != ARCHIVE_OK) {
+ 				if (!bsdtar->verbose)
+ 					safe_fprintf(stderr, "%s", archive_entry_pathname(entry));
+-				fprintf(stderr, ": %s: ", archive_error_string(a));
+-				fprintf(stderr, "%s", strerror(errno));
++				safe_fprintf(stderr, ": %s: %s",
++				    archive_error_string(a),
++				    strerror(archive_errno(a)));
+ 				if (!bsdtar->verbose)
+ 					fprintf(stderr, "\n");
+ 				bsdtar->return_value = 1;
