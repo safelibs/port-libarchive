@@ -1,11 +1,10 @@
 use std::ffi::{c_char, c_int, c_void, CString};
-use std::path::{Component, Path, PathBuf};
 use std::ptr;
 
 use libc::size_t;
 
 use crate::common::backend::{api as backend_api, BackendArchive, BackendEntry};
-use crate::common::error::{ARCHIVE_FAILED, ARCHIVE_FATAL, ARCHIVE_OK};
+use crate::common::error::{ARCHIVE_FATAL, ARCHIVE_OK, ARCHIVE_STATE_FATAL};
 use crate::common::helpers::from_optional_c_str;
 use crate::common::panic_boundary::ffi_int;
 use crate::common::state::{
@@ -14,14 +13,26 @@ use crate::common::state::{
     ArchiveOpenCallback, ArchiveWriteCallback, WriteFilterConfig, WriteFormatConfig,
     WriteOpenConfig, WriteOptionConfig,
 };
-use crate::disk::custom_entry_to_backend;
-use crate::entry::internal::{from_raw as entry_from_raw, AE_IFLNK, AE_IFMT};
+use crate::disk::{
+    custom_entry_to_backend, native_write_disk_data, native_write_disk_data_block,
+    native_write_disk_finish_entry, native_write_disk_header,
+};
 use crate::ffi::{archive, archive_entry};
 
-const ARCHIVE_EXTRACT_UNLINK: c_int = 0x0010;
-const ARCHIVE_EXTRACT_SECURE_SYMLINKS: c_int = 0x0100;
-const ARCHIVE_EXTRACT_SECURE_NODOTDOT: c_int = 0x0200;
-const ARCHIVE_EXTRACT_SECURE_NOABSOLUTEPATHS: c_int = 0x10000;
+const ARCHIVE_FORMAT_CPIO: c_int = 0x10000;
+const ARCHIVE_FORMAT_CPIO_POSIX: c_int = ARCHIVE_FORMAT_CPIO | 1;
+const ARCHIVE_FORMAT_CPIO_BIN_LE: c_int = ARCHIVE_FORMAT_CPIO | 2;
+const ARCHIVE_FORMAT_CPIO_SVR4_NOCRC: c_int = ARCHIVE_FORMAT_CPIO | 4;
+const ARCHIVE_FORMAT_CPIO_PWB: c_int = ARCHIVE_FORMAT_CPIO | 7;
+const ARCHIVE_FORMAT_SHAR: c_int = 0x20000;
+const ARCHIVE_FORMAT_SHAR_BASE: c_int = ARCHIVE_FORMAT_SHAR | 1;
+const ARCHIVE_FORMAT_SHAR_DUMP: c_int = ARCHIVE_FORMAT_SHAR | 2;
+const ARCHIVE_FORMAT_TAR: c_int = 0x30000;
+const ARCHIVE_FORMAT_TAR_USTAR: c_int = ARCHIVE_FORMAT_TAR | 1;
+const ARCHIVE_FORMAT_TAR_PAX_INTERCHANGE: c_int = ARCHIVE_FORMAT_TAR | 2;
+const ARCHIVE_FORMAT_TAR_PAX_RESTRICTED: c_int = ARCHIVE_FORMAT_TAR | 3;
+const ARCHIVE_FORMAT_TAR_GNUTAR: c_int = ARCHIVE_FORMAT_TAR | 4;
+const ARCHIVE_FORMAT_RAW: c_int = 0x90000;
 
 enum WriteLike<'a> {
     Archive(&'a mut crate::common::state::WriteArchiveHandle),
@@ -73,6 +84,22 @@ impl<'a> WriteLike<'a> {
         }
     }
 }
+
+macro_rules! unsupported_backend_writer_stub {
+    ($name:ident) => {
+        #[no_mangle]
+        pub extern "C" fn $name(_a: *mut BackendArchive) -> c_int {
+            ARCHIVE_FATAL
+        }
+    };
+}
+
+unsupported_backend_writer_stub!(backend_archive_write_set_format_7zip);
+unsupported_backend_writer_stub!(backend_archive_write_set_format_iso9660);
+unsupported_backend_writer_stub!(backend_archive_write_set_format_mtree);
+unsupported_backend_writer_stub!(backend_archive_write_set_format_warc);
+unsupported_backend_writer_stub!(backend_archive_write_set_format_xar);
+unsupported_backend_writer_stub!(backend_archive_write_set_format_zip);
 
 fn validate_writer(
     a: *mut archive,
@@ -148,12 +175,6 @@ unsafe extern "C" fn free_callback_shim(
     })
 }
 
-fn string_ptr(value: Option<&str>) -> *const c_char {
-    value
-        .map(|value| CString::new(value).expect("config string").into_raw().cast_const())
-        .unwrap_or(ptr::null())
-}
-
 unsafe fn with_c_string<F>(value: &str, f: F) -> c_int
 where
     F: FnOnce(*const c_char) -> c_int,
@@ -202,32 +223,6 @@ unsafe fn apply_write_format(
     format: &WriteFormatConfig,
 ) -> c_int {
     match format {
-        WriteFormatConfig::Code(code) => (backend_api().archive_write_set_format)(handle.backend, *code),
-        WriteFormatConfig::Name(name) => with_c_string(name, |name| {
-            (backend_api().archive_write_set_format_by_name)(handle.backend, name)
-        }),
-        WriteFormatConfig::ByExt {
-            filename,
-            default_ext,
-        } => {
-            let filename = CString::new(filename.as_str()).expect("filename");
-            match default_ext {
-                Some(default_ext) => {
-                    let default_ext = CString::new(default_ext.as_str()).expect("default ext");
-                    (backend_api().archive_write_set_format_filter_by_ext_def)(
-                        handle.backend,
-                        filename.as_ptr(),
-                        default_ext.as_ptr(),
-                    )
-                }
-                None => {
-                    (backend_api().archive_write_set_format_filter_by_ext)(
-                        handle.backend,
-                        filename.as_ptr(),
-                    )
-                }
-            }
-        }
         WriteFormatConfig::ArBsd => (backend_api().archive_write_set_format_ar_bsd)(handle.backend),
         WriteFormatConfig::ArSvr4 => {
             (backend_api().archive_write_set_format_ar_svr4)(handle.backend)
@@ -260,6 +255,105 @@ unsafe fn apply_write_format(
         WriteFormatConfig::Ustar => (backend_api().archive_write_set_format_ustar)(handle.backend),
         WriteFormatConfig::V7tar => (backend_api().archive_write_set_format_v7tar)(handle.backend),
     }
+}
+
+fn set_write_format_error(
+    handle: &mut crate::common::state::WriteArchiveHandle,
+    message: String,
+) -> c_int {
+    set_error_string(&mut handle.core, libc::EINVAL, message);
+    handle.core.state = ARCHIVE_STATE_FATAL;
+    ARCHIVE_FATAL
+}
+
+fn resolve_write_format_by_name(
+    handle: &mut crate::common::state::WriteArchiveHandle,
+    name: &str,
+) -> Result<WriteFormatConfig, c_int> {
+    let format = match name {
+        "ar" | "arbsd" => WriteFormatConfig::ArBsd,
+        "argnu" | "arsvr4" => WriteFormatConfig::ArSvr4,
+        "bin" => WriteFormatConfig::CpioBin,
+        "bsdtar" | "paxr" | "rpax" => WriteFormatConfig::PaxRestricted,
+        "cpio" => WriteFormatConfig::Cpio,
+        "gnutar" => WriteFormatConfig::Gnutar,
+        "newc" => WriteFormatConfig::CpioNewc,
+        "odc" => WriteFormatConfig::CpioOdc,
+        "oldtar" | "v7" | "v7tar" => WriteFormatConfig::V7tar,
+        "pax" | "posix" => WriteFormatConfig::Pax,
+        "pwb" => WriteFormatConfig::CpioPwb,
+        "raw" => WriteFormatConfig::Raw,
+        "shar" => WriteFormatConfig::Shar,
+        "shardump" => WriteFormatConfig::SharDump,
+        "ustar" => WriteFormatConfig::Ustar,
+        _ => {
+            return Err(set_write_format_error(
+                handle,
+                format!("No such format '{name}'"),
+            ));
+        }
+    };
+    Ok(format)
+}
+
+fn resolve_write_format_code(
+    handle: &mut crate::common::state::WriteArchiveHandle,
+    code: c_int,
+) -> Result<WriteFormatConfig, c_int> {
+    let format = match code {
+        ARCHIVE_FORMAT_CPIO => WriteFormatConfig::Cpio,
+        ARCHIVE_FORMAT_CPIO_BIN_LE => WriteFormatConfig::CpioBin,
+        ARCHIVE_FORMAT_CPIO_PWB => WriteFormatConfig::CpioPwb,
+        ARCHIVE_FORMAT_CPIO_POSIX => WriteFormatConfig::CpioOdc,
+        ARCHIVE_FORMAT_CPIO_SVR4_NOCRC => WriteFormatConfig::CpioNewc,
+        ARCHIVE_FORMAT_RAW => WriteFormatConfig::Raw,
+        ARCHIVE_FORMAT_SHAR | ARCHIVE_FORMAT_SHAR_BASE => WriteFormatConfig::Shar,
+        ARCHIVE_FORMAT_SHAR_DUMP => WriteFormatConfig::SharDump,
+        ARCHIVE_FORMAT_TAR => WriteFormatConfig::PaxRestricted,
+        ARCHIVE_FORMAT_TAR_GNUTAR => WriteFormatConfig::Gnutar,
+        ARCHIVE_FORMAT_TAR_PAX_INTERCHANGE => WriteFormatConfig::Pax,
+        ARCHIVE_FORMAT_TAR_PAX_RESTRICTED => WriteFormatConfig::PaxRestricted,
+        ARCHIVE_FORMAT_TAR_USTAR => WriteFormatConfig::Ustar,
+        _ => return Err(set_write_format_error(handle, "No such format".to_string())),
+    };
+    Ok(format)
+}
+
+fn resolve_write_format_by_ext(
+    handle: &mut crate::common::state::WriteArchiveHandle,
+    filename: &str,
+    default_ext: Option<&str>,
+) -> Result<(WriteFormatConfig, WriteFilterConfig), c_int> {
+    fn mapping(filename: &str) -> Option<(WriteFormatConfig, WriteFilterConfig)> {
+        if filename.ends_with(".cpio") {
+            Some((WriteFormatConfig::Cpio, WriteFilterConfig::None))
+        } else if filename.ends_with(".a") || filename.ends_with(".ar") {
+            Some((WriteFormatConfig::ArSvr4, WriteFilterConfig::None))
+        } else if filename.ends_with(".tar") {
+            Some((WriteFormatConfig::PaxRestricted, WriteFilterConfig::None))
+        } else if filename.ends_with(".tgz") || filename.ends_with(".tar.gz") {
+            Some((WriteFormatConfig::PaxRestricted, WriteFilterConfig::Gzip))
+        } else if filename.ends_with(".tar.bz2") {
+            Some((WriteFormatConfig::PaxRestricted, WriteFilterConfig::Bzip2))
+        } else if filename.ends_with(".tar.xz") {
+            Some((WriteFormatConfig::PaxRestricted, WriteFilterConfig::Xz))
+        } else {
+            None
+        }
+    }
+
+    if let Some(config) = mapping(filename) {
+        return Ok(config);
+    }
+    if let Some(default_ext) = default_ext {
+        if let Some(config) = mapping(default_ext) {
+            return Ok(config);
+        }
+    }
+    Err(set_write_format_error(
+        handle,
+        format!("No such format '{filename}'"),
+    ))
 }
 
 unsafe fn apply_write_option(
@@ -436,111 +530,6 @@ unsafe fn ensure_write_backend_open(
         handle.backend_opened = true;
     }
     status
-}
-
-unsafe fn ensure_write_disk_backend(
-    handle: &mut crate::common::state::WriteDiskArchiveHandle,
-) -> c_int {
-    if handle.backend.is_null() {
-        handle.backend = (backend_api().archive_write_disk_new)();
-        if handle.backend.is_null() {
-            set_error_string(
-                &mut handle.core,
-                libc::ENOMEM,
-                "failed to create write-disk backend".to_string(),
-            );
-            return ARCHIVE_FATAL;
-        }
-        let mut status = (backend_api().archive_write_disk_set_options)(handle.backend, handle.options);
-        if status != ARCHIVE_OK {
-            return status;
-        }
-        if let Some((dev, ino)) = handle.skip_file {
-            status = (backend_api().archive_write_disk_set_skip_file)(handle.backend, dev, ino);
-            if status != ARCHIVE_OK {
-                return status;
-            }
-        }
-    }
-    ARCHIVE_OK
-}
-
-fn is_symlink(metadata: &std::fs::Metadata) -> bool {
-    metadata.file_type().is_symlink()
-}
-
-fn path_has_dotdot(path: &Path) -> bool {
-    path.components().any(|component| matches!(component, Component::ParentDir))
-}
-
-fn check_secure_symlink_path(path: &Path, allow_unlink: bool) -> Result<(), &'static str> {
-    let mut current = PathBuf::new();
-    let mut components = path.components().peekable();
-    while let Some(component) = components.next() {
-        match component {
-            Component::CurDir => {}
-            Component::RootDir | Component::Prefix(_) => current.push(component.as_os_str()),
-            Component::Normal(part) => {
-                current.push(part);
-                let is_final = components.peek().is_none();
-                if let Ok(metadata) = std::fs::symlink_metadata(&current) {
-                    if is_symlink(&metadata) {
-                        if allow_unlink && is_final {
-                            continue;
-                        }
-                        return Err("path traverses an existing symlink");
-                    }
-                }
-            }
-            Component::ParentDir => {}
-        }
-    }
-    Ok(())
-}
-
-unsafe fn prevalidate_disk_path(
-    handle: &mut crate::common::state::WriteDiskArchiveHandle,
-    entry: *mut archive_entry,
-) -> c_int {
-    let Some(entry_data) = entry_from_raw(entry) else {
-        return ARCHIVE_FATAL;
-    };
-    let Some(pathname) = entry_data.pathname.get_str() else {
-        set_error_string(&mut handle.core, libc::EINVAL, "entry pathname is missing".to_string());
-        return ARCHIVE_FATAL;
-    };
-    let path = Path::new(pathname);
-
-    if (handle.options & ARCHIVE_EXTRACT_SECURE_NOABSOLUTEPATHS) != 0 && path.is_absolute() {
-        set_error_string(&mut handle.core, libc::EINVAL, "absolute paths are not permitted".to_string());
-        return ARCHIVE_FAILED;
-    }
-    if (handle.options & ARCHIVE_EXTRACT_SECURE_NODOTDOT) != 0 && path_has_dotdot(path) {
-        set_error_string(
-            &mut handle.core,
-            libc::EINVAL,
-            "path contains '..' and secure nodotdot is enabled".to_string(),
-        );
-        return ARCHIVE_FAILED;
-    }
-    if (handle.options & ARCHIVE_EXTRACT_SECURE_SYMLINKS) != 0 {
-        let allow_unlink = (handle.options & ARCHIVE_EXTRACT_UNLINK) != 0;
-        let mut check_path = PathBuf::new();
-        if path.is_absolute() {
-            check_path.push(path);
-        } else {
-            check_path.push(path);
-        }
-        if let Err(message) = check_secure_symlink_path(&check_path, allow_unlink) {
-            let is_symlink_entry = (entry_data.mode & AE_IFMT) == AE_IFLNK;
-            if !is_symlink_entry || !allow_unlink {
-                set_error_string(&mut handle.core, libc::ELOOP, message.to_string());
-                return ARCHIVE_FAILED;
-            }
-        }
-    }
-
-    ARCHIVE_OK
 }
 
 fn push_or_apply_filter(
@@ -860,7 +849,10 @@ pub extern "C" fn archive_write_set_format(a: *mut archive, format_code: c_int) 
             return ARCHIVE_FATAL;
         };
         clear_error(&mut handle.core);
-        let status = set_or_apply_format(handle, WriteFormatConfig::Code(format_code));
+        let Ok(format) = resolve_write_format_code(handle, format_code) else {
+            return ARCHIVE_FATAL;
+        };
+        let status = set_or_apply_format(handle, format);
         sync_backend_core(a);
         status
     })
@@ -879,7 +871,10 @@ pub extern "C" fn archive_write_set_format_by_name(
             return ARCHIVE_FATAL;
         };
         clear_error(&mut handle.core);
-        let status = set_or_apply_format(handle, WriteFormatConfig::Name(format_name));
+        let Ok(format) = resolve_write_format_by_name(handle, &format_name) else {
+            return ARCHIVE_FATAL;
+        };
+        let status = set_or_apply_format(handle, format);
         sync_backend_core(a);
         status
     })
@@ -897,13 +892,16 @@ pub extern "C" fn archive_write_set_format_filter_by_ext(
         let Some(filename) = from_optional_c_str(filename) else {
             return ARCHIVE_FATAL;
         };
-        let status = set_or_apply_format(
-            handle,
-            WriteFormatConfig::ByExt {
-                filename,
-                default_ext: None,
-            },
-        );
+        clear_error(&mut handle.core);
+        let Ok((format, filter)) = resolve_write_format_by_ext(handle, &filename, None) else {
+            return ARCHIVE_FATAL;
+        };
+        let status = set_or_apply_format(handle, format);
+        let status = if status == ARCHIVE_OK {
+            push_or_apply_filter(handle, filter)
+        } else {
+            status
+        };
         sync_backend_core(a);
         status
     })
@@ -922,13 +920,19 @@ pub extern "C" fn archive_write_set_format_filter_by_ext_def(
         let Some(filename) = from_optional_c_str(filename) else {
             return ARCHIVE_FATAL;
         };
-        let status = set_or_apply_format(
-            handle,
-            WriteFormatConfig::ByExt {
-                filename,
-                default_ext: from_optional_c_str(default_ext),
-            },
-        );
+        clear_error(&mut handle.core);
+        let default_ext = from_optional_c_str(default_ext);
+        let Ok((format, filter)) =
+            resolve_write_format_by_ext(handle, &filename, default_ext.as_deref())
+        else {
+            return ARCHIVE_FATAL;
+        };
+        let status = set_or_apply_format(handle, format);
+        let status = if status == ARCHIVE_OK {
+            push_or_apply_filter(handle, filter)
+        } else {
+            status
+        };
         sync_backend_core(a);
         status
     })
@@ -1039,31 +1043,29 @@ pub extern "C" fn archive_write_header(a: *mut archive, entry: *mut archive_entr
 
         let status = match &mut handle {
             WriteLike::Archive(handle) => ensure_write_backend_open(handle),
-            WriteLike::Disk(handle) => {
-                let status = prevalidate_disk_path(handle, entry);
-                if status != ARCHIVE_OK {
-                    status
-                } else {
-                    ensure_write_disk_backend(handle)
-                }
-            }
+            WriteLike::Disk(handle) => native_write_disk_header(handle, entry),
         };
         if status != ARCHIVE_OK {
             return status;
         }
 
-        let backend_entry = (backend_api().archive_entry_new)();
-        if backend_entry.is_null() {
-            return ARCHIVE_FATAL;
+        match &mut handle {
+            WriteLike::Archive(writer) => {
+                let backend_entry = (backend_api().archive_entry_new)();
+                if backend_entry.is_null() {
+                    return ARCHIVE_FATAL;
+                }
+                let result = if custom_entry_to_backend(entry, backend_entry) != ARCHIVE_OK {
+                    ARCHIVE_FATAL
+                } else {
+                    (backend_api().archive_write_header)(writer.backend, backend_entry)
+                };
+                (backend_api().archive_entry_free)(backend_entry);
+                sync_backend_core(a);
+                result
+            }
+            WriteLike::Disk(_) => status,
         }
-        let result = if custom_entry_to_backend(entry, backend_entry) != ARCHIVE_OK {
-            ARCHIVE_FATAL
-        } else {
-            (backend_api().archive_write_header)(handle.backend(), backend_entry)
-        };
-        (backend_api().archive_entry_free)(backend_entry);
-        sync_backend_core(a);
-        result
     })
 }
 
@@ -1078,22 +1080,17 @@ pub extern "C" fn archive_write_data(
             return ARCHIVE_FATAL as isize;
         };
         match &mut handle {
-            WriteLike::Archive(handle) => {
-                let status = ensure_write_backend_open(handle);
+            WriteLike::Archive(writer) => {
+                let status = ensure_write_backend_open(writer);
                 if status != ARCHIVE_OK {
                     return status as isize;
                 }
+                let status = (backend_api().archive_write_data)(writer.backend, buffer, size);
+                sync_backend_core(a);
+                status
             }
-            WriteLike::Disk(handle) => {
-                let status = ensure_write_disk_backend(handle);
-                if status != ARCHIVE_OK {
-                    return status as isize;
-                }
-            }
+            WriteLike::Disk(writer) => native_write_disk_data(writer, buffer, size),
         }
-        let status = (backend_api().archive_write_data)(handle.backend(), buffer, size);
-        sync_backend_core(a);
-        status
     }
 }
 
@@ -1109,23 +1106,18 @@ pub extern "C" fn archive_write_data_block(
             return ARCHIVE_FATAL as isize;
         };
         match &mut handle {
-            WriteLike::Archive(handle) => {
-                let status = ensure_write_backend_open(handle);
+            WriteLike::Archive(writer) => {
+                let status = ensure_write_backend_open(writer);
                 if status != ARCHIVE_OK {
                     return status as isize;
                 }
+                let status =
+                    (backend_api().archive_write_data_block)(writer.backend, buffer, size, offset);
+                sync_backend_core(a);
+                status
             }
-            WriteLike::Disk(handle) => {
-                let status = ensure_write_disk_backend(handle);
-                if status != ARCHIVE_OK {
-                    return status as isize;
-                }
-            }
+            WriteLike::Disk(writer) => native_write_disk_data_block(writer, buffer, size, offset),
         }
-        let status =
-            (backend_api().archive_write_data_block)(handle.backend(), buffer, size, offset);
-        sync_backend_core(a);
-        status
     }
 }
 
@@ -1136,22 +1128,17 @@ pub extern "C" fn archive_write_finish_entry(a: *mut archive) -> c_int {
             return ARCHIVE_FATAL;
         };
         match &mut handle {
-            WriteLike::Archive(handle) => {
-                let status = ensure_write_backend_open(handle);
+            WriteLike::Archive(writer) => {
+                let status = ensure_write_backend_open(writer);
                 if status != ARCHIVE_OK {
                     return status;
                 }
+                let status = (backend_api().archive_write_finish_entry)(writer.backend);
+                sync_backend_core(a);
+                status
             }
-            WriteLike::Disk(handle) => {
-                let status = ensure_write_disk_backend(handle);
-                if status != ARCHIVE_OK {
-                    return status;
-                }
-            }
+            WriteLike::Disk(writer) => native_write_disk_finish_entry(writer),
         }
-        let status = (backend_api().archive_write_finish_entry)(handle.backend());
-        sync_backend_core(a);
-        status
     })
 }
 

@@ -1,23 +1,36 @@
-use std::ffi::{c_char, c_int, c_long, c_void, CStr, CString};
+mod native;
+pub(crate) use native::{
+    read_disk_can_descend as native_read_disk_can_descend,
+    read_disk_close as native_read_disk_close,
+    read_disk_data as native_read_disk_data,
+    read_disk_data_block as native_read_disk_data_block,
+    read_disk_descend as native_read_disk_descend,
+    read_disk_entry_from_file as native_read_disk_entry_from_file,
+    read_disk_next_header as native_read_disk_next_header,
+    read_disk_open_path as native_read_disk_open_path,
+    write_disk_close as native_write_disk_close,
+    write_disk_data as native_write_disk_data,
+    write_disk_data_block as native_write_disk_data_block,
+    write_disk_finish_entry as native_write_disk_finish_entry,
+    write_disk_header as native_write_disk_header,
+};
+
+use std::ffi::{c_char, c_int, c_void, CStr, CString};
 use std::ptr;
 use std::slice;
 
-use libc::{mode_t, size_t, stat, wchar_t};
+use libc::{stat, wchar_t};
 
 use crate::common::backend::{api as backend_api, BackendArchive, BackendEntry};
 use crate::common::error::{ARCHIVE_EOF, ARCHIVE_FATAL, ARCHIVE_OK};
-use crate::common::helpers::{from_optional_c_str, from_optional_wide, to_wide_null};
+use crate::common::helpers::{from_optional_c_str, from_optional_wide};
 use crate::common::panic_boundary::{ffi_const_ptr, ffi_int};
 use crate::common::state::{
-    archive_check_magic, archive_magic, clear_error, read_disk_from_archive, read_from_archive,
-    set_error_string, sync_backend_core, write_disk_from_archive, ReadDiskOpenPath,
-    ReadDiskSymlinkMode,
+    archive_check_magic, clear_error, read_disk_from_archive, write_disk_from_archive,
+    ReadDiskOpenPath, ReadDiskSymlinkMode,
 };
-use crate::entry::internal::{
-    clear_entry, from_raw, AclEntry, AclState, ArchiveEntryData, SparseEntry, XattrEntry,
-};
+use crate::entry::internal::{clear_entry, from_raw, SparseEntry, XattrEntry};
 use crate::ffi::{archive, archive_entry};
-use crate::r#match::internal::{from_archive as match_from_archive, MatchArchive};
 
 fn c_string_opt(value: Option<&str>) -> Option<CString> {
     value.map(|value| CString::new(value).expect("string must not contain NUL"))
@@ -290,124 +303,6 @@ pub(crate) unsafe fn backend_entry_to_custom(
     ARCHIVE_OK
 }
 
-unsafe fn clone_match_to_backend(matching: *mut archive) -> *mut BackendArchive {
-    let Some(source) = match_from_archive(matching) else {
-        return ptr::null_mut();
-    };
-    let api = backend_api();
-    let backend = (api.archive_match_new)();
-    if backend.is_null() {
-        return ptr::null_mut();
-    }
-
-    let _ =
-        (api.archive_match_set_inclusion_recursion)(backend, i32::from(source.recursive_include));
-    for pattern in &source.exclusions.patterns {
-        let text = CString::new(pattern.text.as_str()).expect("pattern");
-        let _ = (api.archive_match_exclude_pattern)(backend, text.as_ptr());
-    }
-    for pattern in &source.inclusions.patterns {
-        let text = CString::new(pattern.text.as_str()).expect("pattern");
-        let _ = (api.archive_match_include_pattern)(backend, text.as_ptr());
-    }
-    if let Some(filter) = source.newer_mtime {
-        let _ = (api.archive_match_include_time)(
-            backend,
-            filter.flag,
-            filter.sec,
-            filter.nsec as c_long,
-        );
-    }
-    if let Some(filter) = source.older_mtime {
-        let _ = (api.archive_match_include_time)(
-            backend,
-            filter.flag,
-            filter.sec,
-            filter.nsec as c_long,
-        );
-    }
-    if let Some(filter) = source.newer_ctime {
-        let _ = (api.archive_match_include_time)(
-            backend,
-            filter.flag,
-            filter.sec,
-            filter.nsec as c_long,
-        );
-    }
-    if let Some(filter) = source.older_ctime {
-        let _ = (api.archive_match_include_time)(
-            backend,
-            filter.flag,
-            filter.sec,
-            filter.nsec as c_long,
-        );
-    }
-    for uid in &source.inclusion_uids {
-        let _ = (api.archive_match_include_uid)(backend, *uid);
-    }
-    for gid in &source.inclusion_gids {
-        let _ = (api.archive_match_include_gid)(backend, *gid);
-    }
-    for uname in &source.inclusion_unames {
-        let text = CString::new(uname.text.as_str()).expect("uname");
-        let _ = (api.archive_match_include_uname)(backend, text.as_ptr());
-    }
-    for gname in &source.inclusion_gnames {
-        let text = CString::new(gname.text.as_str()).expect("gname");
-        let _ = (api.archive_match_include_gname)(backend, text.as_ptr());
-    }
-    backend
-}
-
-unsafe extern "C" fn excluded_callback_shim(
-    _backend: *mut BackendArchive,
-    client_data: *mut c_void,
-    entry: *mut BackendEntry,
-) {
-    let handle = &mut *(client_data as *mut crate::common::state::ReadDiskArchiveHandle);
-    let Some(callback) = handle.excluded_cb else {
-        return;
-    };
-    let custom = crate::entry::api::archive_entry_new();
-    if custom.is_null() {
-        return;
-    }
-    if backend_entry_to_custom(entry, custom) == ARCHIVE_OK {
-        callback(
-            (handle as *mut crate::common::state::ReadDiskArchiveHandle).cast(),
-            handle.excluded_client_data,
-            custom,
-        );
-    }
-    crate::entry::api::archive_entry_free(custom);
-}
-
-unsafe extern "C" fn metadata_filter_callback_shim(
-    _backend: *mut BackendArchive,
-    client_data: *mut c_void,
-    entry: *mut BackendEntry,
-) -> c_int {
-    let handle = &mut *(client_data as *mut crate::common::state::ReadDiskArchiveHandle);
-    let Some(callback) = handle.metadata_filter_cb else {
-        return 1;
-    };
-    let custom = crate::entry::api::archive_entry_new();
-    if custom.is_null() {
-        return 0;
-    }
-    let status = if backend_entry_to_custom(entry, custom) == ARCHIVE_OK {
-        callback(
-            (handle as *mut crate::common::state::ReadDiskArchiveHandle).cast(),
-            handle.metadata_filter_client_data,
-            custom,
-        )
-    } else {
-        0
-    };
-    crate::entry::api::archive_entry_free(custom);
-    status
-}
-
 fn validate_read_disk(
     a: *mut archive,
     function: &str,
@@ -512,170 +407,6 @@ unsafe fn resolve_read_disk_uname(
     None
 }
 
-unsafe fn apply_read_disk_lookup_names(
-    handle: &mut crate::common::state::ReadDiskArchiveHandle,
-    entry: *mut archive_entry,
-) {
-    let Some(entry_data) = from_raw(entry) else {
-        return;
-    };
-    if let Some(uname) = resolve_read_disk_uname(handle, entry_data.uid) {
-        entry_data.uname.set(Some(uname));
-    }
-    if let Some(gname) = resolve_read_disk_gname(handle, entry_data.gid) {
-        entry_data.gname.set(Some(gname));
-    }
-}
-
-unsafe fn clear_backend_match(handle: &mut crate::common::state::ReadDiskArchiveHandle) {
-    if !handle.backend_match.is_null() {
-        (backend_api().archive_match_free)(handle.backend_match);
-        handle.backend_match = ptr::null_mut();
-    }
-}
-
-unsafe fn apply_read_disk_matching(
-    handle: &mut crate::common::state::ReadDiskArchiveHandle,
-) -> c_int {
-    clear_backend_match(handle);
-    if handle.matching.is_null() {
-        return (backend_api().archive_read_disk_set_matching)(
-            handle.backend,
-            ptr::null_mut(),
-            None,
-            ptr::null_mut(),
-        );
-    }
-
-    handle.backend_match = clone_match_to_backend(handle.matching);
-    if handle.backend_match.is_null() {
-        set_error_string(
-            &mut handle.core,
-            libc::ENOMEM,
-            "failed to clone archive_match".to_string(),
-        );
-        return ARCHIVE_FATAL;
-    }
-
-    (backend_api().archive_read_disk_set_matching)(
-        handle.backend,
-        handle.backend_match,
-        handle.excluded_cb.map(|_| {
-            excluded_callback_shim
-                as unsafe extern "C" fn(*mut BackendArchive, *mut c_void, *mut BackendEntry)
-        }),
-        (handle as *mut crate::common::state::ReadDiskArchiveHandle).cast(),
-    )
-}
-
-unsafe fn ensure_read_disk_backend(
-    handle: &mut crate::common::state::ReadDiskArchiveHandle,
-) -> c_int {
-    if handle.backend.is_null() {
-        handle.backend = (backend_api().archive_read_disk_new)();
-        if handle.backend.is_null() {
-            set_error_string(
-                &mut handle.core,
-                libc::ENOMEM,
-                "failed to create read-disk backend".to_string(),
-            );
-            return ARCHIVE_FATAL;
-        }
-
-        let mut status = match handle.symlink_mode {
-            ReadDiskSymlinkMode::Logical => {
-                (backend_api().archive_read_disk_set_symlink_logical)(handle.backend)
-            }
-            ReadDiskSymlinkMode::Physical => {
-                (backend_api().archive_read_disk_set_symlink_physical)(handle.backend)
-            }
-            ReadDiskSymlinkMode::Hybrid => {
-                (backend_api().archive_read_disk_set_symlink_hybrid)(handle.backend)
-            }
-        };
-        if status != ARCHIVE_OK {
-            return status;
-        }
-        if handle.behavior_flags != 0 {
-            status =
-                (backend_api().archive_read_disk_set_behavior)(handle.backend, handle.behavior_flags);
-            if status != ARCHIVE_OK {
-                return status;
-            }
-        }
-        if handle.use_standard_lookup {
-            status = (backend_api().archive_read_disk_set_standard_lookup)(handle.backend);
-            if status != ARCHIVE_OK {
-                return status;
-            }
-        } else {
-            if handle.gname_lookup.is_some() {
-                status = (backend_api().archive_read_disk_set_gname_lookup)(
-                    handle.backend,
-                    handle.gname_lookup_private_data,
-                    handle.gname_lookup,
-                    None,
-                );
-                if status != ARCHIVE_OK {
-                    return status;
-                }
-            }
-            if handle.uname_lookup.is_some() {
-                status = (backend_api().archive_read_disk_set_uname_lookup)(
-                    handle.backend,
-                    handle.uname_lookup_private_data,
-                    handle.uname_lookup,
-                    None,
-                );
-                if status != ARCHIVE_OK {
-                    return status;
-                }
-            }
-        }
-        status = apply_read_disk_matching(handle);
-        if status != ARCHIVE_OK {
-            return status;
-        }
-        if handle.metadata_filter_cb.is_some() {
-            status = (backend_api().archive_read_disk_set_metadata_filter_callback)(
-                handle.backend,
-                handle.metadata_filter_cb.map(|_| {
-                    metadata_filter_callback_shim
-                        as unsafe extern "C" fn(
-                            *mut BackendArchive,
-                            *mut c_void,
-                            *mut BackendEntry,
-                        ) -> c_int
-                }),
-                (handle as *mut crate::common::state::ReadDiskArchiveHandle).cast(),
-            );
-            if status != ARCHIVE_OK {
-                return status;
-            }
-        }
-    }
-
-    if handle.backend_opened {
-        return ARCHIVE_OK;
-    }
-
-    let status = match &handle.open_path {
-        ReadDiskOpenPath::None => ARCHIVE_OK,
-        ReadDiskOpenPath::Utf8(path) => {
-            let path = CString::new(path.as_str()).expect("read-disk path");
-            (backend_api().archive_read_disk_open)(handle.backend, path.as_ptr())
-        }
-        ReadDiskOpenPath::Wide(path) => {
-            let wide = to_wide_null(path);
-            (backend_api().archive_read_disk_open_w)(handle.backend, wide.as_ptr())
-        }
-    };
-    if status == ARCHIVE_OK {
-        handle.backend_opened = !matches!(handle.open_path, ReadDiskOpenPath::None);
-    }
-    status
-}
-
 #[no_mangle]
 pub extern "C" fn archive_read_disk_set_symlink_logical(a: *mut archive) -> c_int {
     ffi_int(ARCHIVE_FATAL, || unsafe {
@@ -684,13 +415,7 @@ pub extern "C" fn archive_read_disk_set_symlink_logical(a: *mut archive) -> c_in
         };
         clear_error(&mut handle.core);
         handle.symlink_mode = ReadDiskSymlinkMode::Logical;
-        let status = if handle.backend.is_null() {
-            ARCHIVE_OK
-        } else {
-            (backend_api().archive_read_disk_set_symlink_logical)(handle.backend)
-        };
-        sync_backend_core(a);
-        status
+        ARCHIVE_OK
     })
 }
 
@@ -702,13 +427,7 @@ pub extern "C" fn archive_read_disk_set_symlink_physical(a: *mut archive) -> c_i
         };
         clear_error(&mut handle.core);
         handle.symlink_mode = ReadDiskSymlinkMode::Physical;
-        let status = if handle.backend.is_null() {
-            ARCHIVE_OK
-        } else {
-            (backend_api().archive_read_disk_set_symlink_physical)(handle.backend)
-        };
-        sync_backend_core(a);
-        status
+        ARCHIVE_OK
     })
 }
 
@@ -720,13 +439,7 @@ pub extern "C" fn archive_read_disk_set_symlink_hybrid(a: *mut archive) -> c_int
         };
         clear_error(&mut handle.core);
         handle.symlink_mode = ReadDiskSymlinkMode::Hybrid;
-        let status = if handle.backend.is_null() {
-            ARCHIVE_OK
-        } else {
-            (backend_api().archive_read_disk_set_symlink_hybrid)(handle.backend)
-        };
-        sync_backend_core(a);
-        status
+        ARCHIVE_OK
     })
 }
 
@@ -744,36 +457,7 @@ pub extern "C" fn archive_read_disk_entry_from_file(
         if entry.is_null() {
             return ARCHIVE_FATAL;
         }
-        let ensure_status = ensure_read_disk_backend(handle);
-        if ensure_status != ARCHIVE_OK {
-            return ensure_status;
-        }
-        let backend_entry = (backend_api().archive_entry_new)();
-        if backend_entry.is_null() {
-            return ARCHIVE_FATAL;
-        }
-        let status = if custom_entry_to_backend(entry, backend_entry) != ARCHIVE_OK {
-            ARCHIVE_FATAL
-        } else {
-            let status = (backend_api().archive_read_disk_entry_from_file)(
-                handle.backend,
-                backend_entry,
-                fd,
-                st.cast(),
-            );
-            if status == ARCHIVE_OK {
-                let convert_status = backend_entry_to_custom(backend_entry, entry);
-                if convert_status == ARCHIVE_OK {
-                    apply_read_disk_lookup_names(handle, entry);
-                }
-                convert_status
-            } else {
-                status
-            }
-        };
-        (backend_api().archive_entry_free)(backend_entry);
-        sync_backend_core(a);
-        status
+        native_read_disk_entry_from_file(handle, entry, fd, st)
     })
 }
 
@@ -820,11 +504,7 @@ pub extern "C" fn archive_read_disk_set_standard_lookup(a: *mut archive) -> c_in
         cleanup_read_disk_gname_lookup(handle);
         cleanup_read_disk_uname_lookup(handle);
         handle.use_standard_lookup = true;
-        if handle.backend.is_null() {
-            ARCHIVE_OK
-        } else {
-            (backend_api().archive_read_disk_set_standard_lookup)(handle.backend)
-        }
+        ARCHIVE_OK
     })
 }
 
@@ -846,16 +526,7 @@ pub extern "C" fn archive_read_disk_set_gname_lookup(
         if lookup.is_some() {
             handle.use_standard_lookup = false;
         }
-        if handle.backend.is_null() {
-            ARCHIVE_OK
-        } else {
-            (backend_api().archive_read_disk_set_gname_lookup)(
-                handle.backend,
-                private_data,
-                lookup,
-                None,
-            )
-        }
+        ARCHIVE_OK
     })
 }
 
@@ -877,16 +548,7 @@ pub extern "C" fn archive_read_disk_set_uname_lookup(
         if lookup.is_some() {
             handle.use_standard_lookup = false;
         }
-        if handle.backend.is_null() {
-            ARCHIVE_OK
-        } else {
-            (backend_api().archive_read_disk_set_uname_lookup)(
-                handle.backend,
-                private_data,
-                lookup,
-                None,
-            )
-        }
+        ARCHIVE_OK
     })
 }
 
@@ -900,12 +562,9 @@ pub extern "C" fn archive_read_disk_open(a: *mut archive, path: *const c_char) -
             return ARCHIVE_FATAL;
         }
         clear_error(&mut handle.core);
-        handle.open_path = ReadDiskOpenPath::Utf8(
-            from_optional_c_str(path).ok_or(ARCHIVE_FATAL).unwrap_or_default(),
-        );
-        let status = ensure_read_disk_backend(handle);
-        sync_backend_core(a);
-        status
+        let path = from_optional_c_str(path).ok_or(ARCHIVE_FATAL).unwrap_or_default();
+        handle.open_path = ReadDiskOpenPath::Utf8(path.clone());
+        native_read_disk_open_path(handle, &path)
     })
 }
 
@@ -919,11 +578,9 @@ pub extern "C" fn archive_read_disk_open_w(a: *mut archive, path: *const wchar_t
             return ARCHIVE_FATAL;
         }
         clear_error(&mut handle.core);
-        handle.open_path =
-            ReadDiskOpenPath::Wide(from_optional_wide(path).ok_or(ARCHIVE_FATAL).unwrap_or_default());
-        let status = ensure_read_disk_backend(handle);
-        sync_backend_core(a);
-        status
+        let path = from_optional_wide(path).ok_or(ARCHIVE_FATAL).unwrap_or_default();
+        handle.open_path = ReadDiskOpenPath::Wide(path.clone());
+        native_read_disk_open_path(handle, &path)
     })
 }
 
@@ -933,11 +590,7 @@ pub extern "C" fn archive_read_disk_descend(a: *mut archive) -> c_int {
         let Some(handle) = validate_read_disk(a, "archive_read_disk_descend") else {
             return ARCHIVE_FATAL;
         };
-        let ensure_status = ensure_read_disk_backend(handle);
-        if ensure_status != ARCHIVE_OK {
-            return ensure_status;
-        }
-        (backend_api().archive_read_disk_descend)(handle.backend)
+        native_read_disk_descend(handle)
     })
 }
 
@@ -947,11 +600,7 @@ pub extern "C" fn archive_read_disk_can_descend(a: *mut archive) -> c_int {
         let Some(handle) = validate_read_disk(a, "archive_read_disk_can_descend") else {
             return ARCHIVE_FATAL;
         };
-        let ensure_status = ensure_read_disk_backend(handle);
-        if ensure_status != ARCHIVE_OK {
-            return ensure_status;
-        }
-        (backend_api().archive_read_disk_can_descend)(handle.backend)
+        native_read_disk_can_descend(handle)
     })
 }
 
@@ -961,11 +610,8 @@ pub extern "C" fn archive_read_disk_current_filesystem(a: *mut archive) -> c_int
         let Some(handle) = validate_read_disk(a, "archive_read_disk_current_filesystem") else {
             return ARCHIVE_FATAL;
         };
-        let ensure_status = ensure_read_disk_backend(handle);
-        if ensure_status != ARCHIVE_OK {
-            return ensure_status;
-        }
-        (backend_api().archive_read_disk_current_filesystem)(handle.backend)
+        let _ = handle;
+        0
     })
 }
 
@@ -977,11 +623,8 @@ pub extern "C" fn archive_read_disk_current_filesystem_is_synthetic(a: *mut arch
         else {
             return ARCHIVE_FATAL;
         };
-        let ensure_status = ensure_read_disk_backend(handle);
-        if ensure_status != ARCHIVE_OK {
-            return ensure_status;
-        }
-        (backend_api().archive_read_disk_current_filesystem_is_synthetic)(handle.backend)
+        let _ = handle;
+        0
     })
 }
 
@@ -992,11 +635,8 @@ pub extern "C" fn archive_read_disk_current_filesystem_is_remote(a: *mut archive
         else {
             return ARCHIVE_FATAL;
         };
-        let ensure_status = ensure_read_disk_backend(handle);
-        if ensure_status != ARCHIVE_OK {
-            return ensure_status;
-        }
-        (backend_api().archive_read_disk_current_filesystem_is_remote)(handle.backend)
+        let _ = handle;
+        0
     })
 }
 
@@ -1007,11 +647,7 @@ pub extern "C" fn archive_read_disk_set_atime_restored(a: *mut archive) -> c_int
             return ARCHIVE_FATAL;
         };
         handle.behavior_flags |= 0x0001;
-        if handle.backend.is_null() {
-            ARCHIVE_OK
-        } else {
-            (backend_api().archive_read_disk_set_atime_restored)(handle.backend)
-        }
+        ARCHIVE_OK
     })
 }
 
@@ -1022,11 +658,7 @@ pub extern "C" fn archive_read_disk_set_behavior(a: *mut archive, flags: c_int) 
             return ARCHIVE_FATAL;
         };
         handle.behavior_flags = flags;
-        if handle.backend.is_null() {
-            ARCHIVE_OK
-        } else {
-            (backend_api().archive_read_disk_set_behavior)(handle.backend, flags)
-        }
+        ARCHIVE_OK
     })
 }
 
@@ -1044,11 +676,7 @@ pub extern "C" fn archive_read_disk_set_matching(
         handle.matching = matching;
         handle.excluded_cb = excluded_func;
         handle.excluded_client_data = client_data;
-        if handle.backend.is_null() {
-            ARCHIVE_OK
-        } else {
-            apply_read_disk_matching(handle)
-        }
+        ARCHIVE_OK
     })
 }
 
@@ -1065,22 +693,7 @@ pub extern "C" fn archive_read_disk_set_metadata_filter_callback(
         };
         handle.metadata_filter_cb = metadata_filter_func;
         handle.metadata_filter_client_data = client_data;
-        if handle.backend.is_null() {
-            ARCHIVE_OK
-        } else {
-            (backend_api().archive_read_disk_set_metadata_filter_callback)(
-                handle.backend,
-                metadata_filter_func.map(|_| {
-                    metadata_filter_callback_shim
-                        as unsafe extern "C" fn(
-                            *mut BackendArchive,
-                            *mut c_void,
-                            *mut BackendEntry,
-                        ) -> c_int
-                }),
-                (handle as *mut crate::common::state::ReadDiskArchiveHandle).cast(),
-            )
-        }
+        ARCHIVE_OK
     })
 }
 
@@ -1091,11 +704,7 @@ pub extern "C" fn archive_write_disk_set_skip_file(a: *mut archive, dev: i64, in
             return ARCHIVE_FATAL;
         };
         handle.skip_file = Some((dev, ino));
-        if handle.backend.is_null() {
-            ARCHIVE_OK
-        } else {
-            (backend_api().archive_write_disk_set_skip_file)(handle.backend, dev, ino)
-        }
+        ARCHIVE_OK
     })
 }
 
@@ -1106,11 +715,7 @@ pub extern "C" fn archive_write_disk_set_options(a: *mut archive, flags: c_int) 
             return ARCHIVE_FATAL;
         };
         handle.options = flags;
-        if handle.backend.is_null() {
-            ARCHIVE_OK
-        } else {
-            (backend_api().archive_write_disk_set_options)(handle.backend, flags)
-        }
+        ARCHIVE_OK
     })
 }
 

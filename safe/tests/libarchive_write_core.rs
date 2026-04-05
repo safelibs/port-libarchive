@@ -6,7 +6,7 @@ mod write_disk_support;
 use std::ffi::CString;
 use std::ptr;
 
-use archive::common::error::ARCHIVE_OK;
+use archive::common::error::{ARCHIVE_FATAL, ARCHIVE_OK};
 use archive::ffi::archive_common as common;
 use archive::ffi::archive_entry_api as entry;
 use archive::ffi::archive_read as read;
@@ -96,5 +96,49 @@ fn write_open_callbacks_handle_short_writes() {
         );
         assert_eq!(payload, roundtrip);
         assert_eq!(ARCHIVE_OK, common::archive_read_free(reader));
+    }
+}
+
+#[test]
+fn write_format_name_and_extension_reject_deferred_formats() {
+    unsafe {
+        let writer = write::archive_write_new();
+        assert!(!writer.is_null());
+
+        let pax = CString::new("pax").unwrap();
+        assert_eq!(
+            ARCHIVE_OK,
+            write::archive_write_set_format_by_name(writer, pax.as_ptr())
+        );
+
+        let zip = CString::new("zip").unwrap();
+        assert_eq!(
+            ARCHIVE_FATAL,
+            write::archive_write_set_format_by_name(writer, zip.as_ptr())
+        );
+        let message = std::ffi::CStr::from_ptr(common::archive_error_string(writer))
+            .to_string_lossy()
+            .into_owned();
+        assert!(message.contains("No such format 'zip'"));
+        let _ = common::archive_write_free(writer);
+
+        let writer = write::archive_write_new();
+        assert!(!writer.is_null());
+        let tar_gz = CString::new("archive.tar.gz").unwrap();
+        assert_eq!(
+            ARCHIVE_OK,
+            write::archive_write_set_format_filter_by_ext(writer, tar_gz.as_ptr())
+        );
+
+        let zip_ext = CString::new("archive.zip").unwrap();
+        assert_eq!(
+            ARCHIVE_FATAL,
+            write::archive_write_set_format_filter_by_ext(writer, zip_ext.as_ptr())
+        );
+        let message = std::ffi::CStr::from_ptr(common::archive_error_string(writer))
+            .to_string_lossy()
+            .into_owned();
+        assert!(message.contains("No such format 'archive.zip'"));
+        let _ = common::archive_write_free(writer);
     }
 }

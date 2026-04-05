@@ -20,12 +20,16 @@ unsafe extern "C" {
     pub fn archive_read_support_filter_lzip(a: *mut archive) -> c_int;
     pub fn archive_read_support_filter_lzma(a: *mut archive) -> c_int;
     pub fn archive_read_support_filter_lzop(a: *mut archive) -> c_int;
+    pub fn archive_read_support_filter_uu(a: *mut archive) -> c_int;
     pub fn archive_read_support_filter_xz(a: *mut archive) -> c_int;
     pub fn archive_read_support_filter_zstd(a: *mut archive) -> c_int;
 
     pub fn archive_read_support_format_all(a: *mut archive) -> c_int;
+    pub fn archive_read_support_format_ar(a: *mut archive) -> c_int;
+    pub fn archive_read_support_format_cpio(a: *mut archive) -> c_int;
     pub fn archive_read_support_format_empty(a: *mut archive) -> c_int;
     pub fn archive_read_support_format_raw(a: *mut archive) -> c_int;
+    pub fn archive_read_support_format_tar(a: *mut archive) -> c_int;
 
     pub fn archive_read_open_memory(a: *mut archive, buff: *const c_void, size: size_t) -> c_int;
     pub fn archive_read_open_filename(

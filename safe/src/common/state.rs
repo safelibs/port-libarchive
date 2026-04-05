@@ -1,7 +1,9 @@
+use std::collections::HashSet;
 use std::ffi::{c_char, c_int, c_void, CString};
+use std::path::PathBuf;
 use std::ptr;
 
-use libc::size_t;
+use libc::{mode_t, size_t, stat, timespec};
 
 use crate::common::api::ensure_variadic_shim_initialized;
 use crate::common::backend::{
@@ -11,7 +13,7 @@ use crate::common::backend::{
 };
 use crate::common::error::{
     ARCHIVE_FATAL, ARCHIVE_MATCH_MAGIC, ARCHIVE_OK, ARCHIVE_READ_DISK_MAGIC, ARCHIVE_READ_MAGIC,
-    ARCHIVE_STATE_ANY, ARCHIVE_STATE_CLOSED, ARCHIVE_STATE_FATAL, ARCHIVE_STATE_NEW,
+    ARCHIVE_STATE_CLOSED, ARCHIVE_STATE_FATAL, ARCHIVE_STATE_NEW,
     ARCHIVE_WRITE_DISK_MAGIC, ARCHIVE_WRITE_MAGIC,
 };
 use crate::ffi::{archive, archive_entry};
@@ -49,6 +51,7 @@ pub(crate) enum ReadFilterRegistration {
     Lzip,
     Lzma,
     Lzop,
+    Uu,
     Xz,
     Zstd,
 }
@@ -56,8 +59,11 @@ pub(crate) enum ReadFilterRegistration {
 #[derive(Clone, Copy)]
 pub(crate) enum ReadFormatRegistration {
     All,
+    Ar,
+    Cpio,
     Empty,
     Raw,
+    Tar,
 }
 
 #[derive(Clone)]
@@ -104,12 +110,6 @@ pub(crate) enum WriteFilterConfig {
 
 #[derive(Clone)]
 pub(crate) enum WriteFormatConfig {
-    Code(c_int),
-    Name(String),
-    ByExt {
-        filename: String,
-        default_ext: Option<String>,
-    },
     ArBsd,
     ArSvr4,
     Cpio,
@@ -172,6 +172,67 @@ pub(crate) enum ReadDiskOpenPath {
     None,
     Utf8(String),
     Wide(String),
+}
+
+#[derive(Clone)]
+pub(crate) struct ReadDiskNode {
+    pub(crate) display_path: String,
+    pub(crate) filesystem_path: PathBuf,
+    pub(crate) follow_final_symlink: bool,
+}
+
+pub(crate) struct ReadDiskAtimeRestore {
+    pub(crate) path: PathBuf,
+    pub(crate) atime: timespec,
+    pub(crate) mtime: timespec,
+    pub(crate) follow_symlink: bool,
+}
+
+#[derive(Default)]
+pub(crate) struct ReadDiskTraversalState {
+    pub(crate) pending: Vec<ReadDiskNode>,
+    pub(crate) current: Option<ReadDiskNode>,
+    pub(crate) current_resolved_path: Option<PathBuf>,
+    pub(crate) current_data: Vec<u8>,
+    pub(crate) current_data_cursor: usize,
+    pub(crate) current_data_eof: bool,
+    pub(crate) current_data_offset: i64,
+    pub(crate) current_can_descend: bool,
+    pub(crate) restore_atime: Option<ReadDiskAtimeRestore>,
+    pub(crate) visited_dirs: HashSet<(u64, u64)>,
+    pub(crate) current_stat: Option<stat>,
+}
+
+pub(crate) struct WriteDiskPendingFixup {
+    pub(crate) path: PathBuf,
+    pub(crate) mode: mode_t,
+    pub(crate) uid: i64,
+    pub(crate) gid: i64,
+    pub(crate) atime: Option<(i64, i64)>,
+    pub(crate) mtime: Option<(i64, i64)>,
+    pub(crate) apply_perm: bool,
+    pub(crate) apply_owner: bool,
+    pub(crate) apply_time: bool,
+    pub(crate) xattrs: Vec<(CString, Vec<u8>)>,
+}
+
+pub(crate) struct WriteDiskCurrentState {
+    pub(crate) path: PathBuf,
+    pub(crate) final_path: Option<PathBuf>,
+    pub(crate) fd: c_int,
+    pub(crate) size_limit: Option<i64>,
+    pub(crate) written: i64,
+    pub(crate) accept_data: bool,
+    pub(crate) close_fd_on_finish: bool,
+    pub(crate) fixup: Option<WriteDiskPendingFixup>,
+}
+
+#[derive(Default)]
+pub(crate) struct WriteDiskExtractionState {
+    pub(crate) cwd_root: Option<PathBuf>,
+    pub(crate) current: Option<WriteDiskCurrentState>,
+    pub(crate) deferred_dirs: Vec<WriteDiskPendingFixup>,
+    pub(crate) last_header_failed: bool,
 }
 
 #[repr(C)]
@@ -248,6 +309,7 @@ pub(crate) struct ReadDiskArchiveHandle {
     pub(crate) use_standard_lookup: bool,
     pub(crate) gname_cache: Option<CString>,
     pub(crate) uname_cache: Option<CString>,
+    pub(crate) traversal: ReadDiskTraversalState,
 }
 
 #[repr(C)]
@@ -263,6 +325,7 @@ pub(crate) struct WriteDiskArchiveHandle {
     pub(crate) user_lookup: BackendWriteDiskLookupCallback,
     pub(crate) user_lookup_cleanup: BackendWriteDiskCleanupCallback,
     pub(crate) use_standard_lookup: bool,
+    pub(crate) extraction: WriteDiskExtractionState,
 }
 
 impl ArchiveCore {
@@ -375,6 +438,7 @@ pub(crate) fn alloc_archive(kind: ArchiveKind) -> *mut archive {
             use_standard_lookup: false,
             gname_cache: None,
             uname_cache: None,
+            traversal: ReadDiskTraversalState::default(),
         })) as *mut archive,
         ArchiveKind::WriteDisk => Box::into_raw(Box::new(WriteDiskArchiveHandle {
             core: ArchiveCore::new(kind),
@@ -388,6 +452,7 @@ pub(crate) fn alloc_archive(kind: ArchiveKind) -> *mut archive {
             user_lookup: None,
             user_lookup_cleanup: None,
             use_standard_lookup: false,
+            extraction: WriteDiskExtractionState::default(),
         })) as *mut archive,
         ArchiveKind::Match => Box::into_raw(Box::new(ArchiveBaseHandle {
             core: ArchiveCore::new(kind),
@@ -502,9 +567,7 @@ pub(crate) unsafe fn free_archive(a: *mut archive) -> c_int {
             if !(*handle).backend_match.is_null() {
                 (backend_api().archive_match_free)((*handle).backend_match);
             }
-            if !(*handle).backend.is_null() {
-                (backend_api().archive_read_free)((*handle).backend);
-            }
+            let _ = crate::disk::native_read_disk_close(&mut *handle);
             if let Some(cleanup) = (*handle).gname_lookup_cleanup {
                 cleanup((*handle).gname_lookup_private_data);
             }
@@ -515,9 +578,7 @@ pub(crate) unsafe fn free_archive(a: *mut archive) -> c_int {
         }
         ARCHIVE_WRITE_DISK_MAGIC => {
             let handle = a.cast::<WriteDiskArchiveHandle>();
-            if !(*handle).backend.is_null() {
-                (backend_api().archive_write_free)((*handle).backend);
-            }
+            let _ = crate::disk::native_write_disk_close(&mut *handle);
             if let Some(cleanup) = (*handle).group_lookup_cleanup {
                 cleanup((*handle).group_lookup_private_data);
             }
@@ -542,19 +603,35 @@ pub(crate) unsafe fn close_archive(a: *mut archive) -> c_int {
 
     let status = match core.magic {
         ARCHIVE_READ_MAGIC | ARCHIVE_READ_DISK_MAGIC => {
-            let backend = backend_archive(a);
-            if backend.is_null() {
-                ARCHIVE_OK
+            if core.magic == ARCHIVE_READ_DISK_MAGIC {
+                if let Some(handle) = read_disk_from_archive(a) {
+                    crate::disk::native_read_disk_close(handle)
+                } else {
+                    ARCHIVE_FATAL
+                }
             } else {
-                (backend_api().archive_read_close)(backend)
+                let backend = backend_archive(a);
+                if backend.is_null() {
+                    ARCHIVE_OK
+                } else {
+                    (backend_api().archive_read_close)(backend)
+                }
             }
         }
         ARCHIVE_WRITE_MAGIC | ARCHIVE_WRITE_DISK_MAGIC => {
-            let backend = backend_archive(a);
-            if backend.is_null() {
-                ARCHIVE_OK
+            if core.magic == ARCHIVE_WRITE_DISK_MAGIC {
+                if let Some(handle) = write_disk_from_archive(a) {
+                    crate::disk::native_write_disk_close(handle)
+                } else {
+                    ARCHIVE_FATAL
+                }
             } else {
-                (backend_api().archive_write_close)(backend)
+                let backend = backend_archive(a);
+                if backend.is_null() {
+                    ARCHIVE_OK
+                } else {
+                    (backend_api().archive_write_close)(backend)
+                }
             }
         }
         _ => ARCHIVE_OK,
