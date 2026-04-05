@@ -29,14 +29,25 @@ __FBSDID("$FreeBSD$");
 DEFINE_TEST(test_archive_clear_error)
 {
 	struct archive* a = archive_read_new();
+	struct archive* b = archive_write_new();
+
+	assert(a != NULL);
+	assert(b != NULL);
 
 	archive_set_error(a, 12, "abcdefgh");
 	assertEqualInt(12, archive_errno(a));
 	assertEqualString("abcdefgh", archive_error_string(a));
 
+	archive_copy_error(b, a);
+	assertEqualInt(12, archive_errno(b));
+	assertEqualString("abcdefgh", archive_error_string(b));
+
 	archive_clear_error(a);
 	assertEqualInt(0, archive_errno(a));
 	assertEqualString(NULL, archive_error_string(a));
+	assertEqualInt(12, archive_errno(b));
+	assertEqualString("abcdefgh", archive_error_string(b));
 
 	archive_read_free(a);
+	archive_write_free(b);
 }

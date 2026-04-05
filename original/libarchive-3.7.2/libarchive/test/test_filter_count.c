@@ -34,9 +34,10 @@ read_test(const char *name)
 	struct archive* a = archive_read_new();
 	int r;
 
-	r = archive_read_support_filter_bzip2(a);
+	r = archive_read_support_filter_by_code(a, ARCHIVE_FILTER_BZIP2);
 	if((ARCHIVE_WARN == r && !canBzip2()) || ARCHIVE_WARN > r) {
 		skipping("bzip2 unsupported");
+		assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 		return;
 	}
 
@@ -46,29 +47,56 @@ read_test(const char *name)
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a, name, 2));
 	/* bzip2 and none */
 	assertEqualInt(2, archive_filter_count(a));
-	
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_FILTER_BZIP2, archive_compression(a));
+	assertEqualString("bzip2", archive_compression_name(a));
+
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
 static void
 write_test(void)
 {
 	char buff[4096];
+	size_t used;
 	struct archive* a = archive_write_new();
 	int r;
 
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_set_format_ustar(a));
+	assertEqualInt(10240, archive_write_get_bytes_per_block(a));
+	assertEqualIntA(a, ARCHIVE_OK,
+	    archive_write_set_format(a, ARCHIVE_FORMAT_TAR_USTAR));
+	assertEqualInt(ARCHIVE_FORMAT_TAR_USTAR & ARCHIVE_FORMAT_BASE_MASK,
+	    archive_format(a) & ARCHIVE_FORMAT_BASE_MASK);
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_set_bytes_per_block(a, 10));
+	assertEqualInt(10, archive_write_get_bytes_per_block(a));
+	assertEqualIntA(a, ARCHIVE_OK,
+	    archive_write_add_filter(a, ARCHIVE_FILTER_NONE));
+	used = 0;
+	assertEqualIntA(a, ARCHIVE_OK,
+	    archive_write_open_memory(a, buff, sizeof(buff), &used));
+	assertEqualInt(1, archive_filter_count(a));
+	assertEqualInt(ARCHIVE_FILTER_NONE, archive_compression(a));
+	assertEqualString(NULL, archive_compression_name(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
-	r = archive_write_add_filter_bzip2(a);
+	assert((a = archive_write_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK,
+	    archive_write_set_format(a, ARCHIVE_FORMAT_TAR_USTAR));
+	assertEqualIntA(a, ARCHIVE_OK, archive_write_set_bytes_per_block(a, 10));
+	assertEqualInt(10, archive_write_get_bytes_per_block(a));
+	r = archive_write_add_filter(a, ARCHIVE_FILTER_BZIP2);
 	if((ARCHIVE_WARN == r && !canBzip2()) || ARCHIVE_WARN > r) {
 		skipping("bzip2 unsupported");
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		return;
 	}
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_open_memory(a, buff, 4096, 0));
+	used = 0;
+	assertEqualIntA(a, ARCHIVE_OK,
+	    archive_write_open_memory(a, buff, sizeof(buff), &used));
 	/* bzip2 and none */
 	assertEqualInt(2, archive_filter_count(a));
-	archive_write_free(a);
+	assertEqualInt(ARCHIVE_FILTER_BZIP2, archive_compression(a));
+	assertEqualString("bzip2", archive_compression_name(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 }
 
 DEFINE_TEST(test_filter_count)
@@ -76,5 +104,3 @@ DEFINE_TEST(test_filter_count)
 	read_test("test_compat_bzip2_1.tbz");
 	write_test();
 }
-
-

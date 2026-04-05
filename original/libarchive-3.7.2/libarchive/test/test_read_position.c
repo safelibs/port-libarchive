@@ -30,26 +30,67 @@ static unsigned char tmp[1000];
 static unsigned char  buff[10000];
 size_t data_sizes[] = {0, 5, 511, 512, 513};
 
+static void assert_position_aliases(struct archive *a);
 static void verify_read_positions(struct archive *a);
+
+static void
+assert_position_aliases(struct archive *a)
+{
+	assertEqualInt((intmax_t)archive_filter_bytes(a, -1),
+	    (intmax_t)archive_position_compressed(a));
+	assertEqualInt((intmax_t)archive_filter_bytes(a, 0),
+	    (intmax_t)archive_position_uncompressed(a));
+}
 
 static void
 verify_read_positions(struct archive *a)
 {
 	struct archive_entry *ae;
+	intmax_t compressed_position = 0;
+	intmax_t uncompressed_position = 0;
 	intmax_t read_position = 0;
 	size_t j;
 
 	/* Initial header position is zero. */
 	assert(read_position == (intmax_t)archive_read_header_position(a));
+	assert_position_aliases(a);
+	assertEqualInt(0, (intmax_t)archive_position_compressed(a));
+	assertEqualInt(0, (intmax_t)archive_position_uncompressed(a));
 	for (j = 0; j < sizeof(data_sizes)/sizeof(data_sizes[0]); ++j) {
 		assertA(0 == archive_read_next_header(a, &ae));
 		assertEqualInt(read_position,
 		    (intmax_t)archive_read_header_position(a));
+		assert_position_aliases(a);
+		assert((intmax_t)archive_position_compressed(a) >=
+		    compressed_position);
+		assert((intmax_t)archive_position_uncompressed(a) >=
+		    uncompressed_position);
+		assertEqualInt((intmax_t)archive_position_compressed(a),
+		    (intmax_t)archive_position_uncompressed(a));
+		compressed_position = archive_position_compressed(a);
+		uncompressed_position = archive_position_uncompressed(a);
 		/* Every other entry: read, then skip */
-		if (j & 1)
+		if (j & 1) {
 			assertEqualInt(1,
 			    archive_read_data(a, tmp, 1));
+			assert_position_aliases(a);
+			assert((intmax_t)archive_position_compressed(a) >=
+			    compressed_position);
+			assert((intmax_t)archive_position_uncompressed(a) >=
+			    uncompressed_position);
+			compressed_position = archive_position_compressed(a);
+			uncompressed_position = archive_position_uncompressed(a);
+		}
 		assertA(0 == archive_read_data_skip(a));
+		assert_position_aliases(a);
+		assert((intmax_t)archive_position_compressed(a) >=
+		    compressed_position);
+		assert((intmax_t)archive_position_uncompressed(a) >=
+		    uncompressed_position);
+		assertEqualInt((intmax_t)archive_position_compressed(a),
+		    (intmax_t)archive_position_uncompressed(a));
+		compressed_position = archive_position_compressed(a);
+		uncompressed_position = archive_position_uncompressed(a);
 		/* read_data_skip() doesn't change header_position */
 		assertEqualInt(read_position,
 		    (intmax_t)archive_read_header_position(a));
@@ -59,8 +100,10 @@ verify_read_positions(struct archive *a)
 	}
 
 	assertA(1 == archive_read_next_header(a, &ae));
+	assert_position_aliases(a);
 	assertEqualInt(read_position, (intmax_t)archive_read_header_position(a));
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
+	assert_position_aliases(a);
 	assertEqualInt(read_position, (intmax_t)archive_read_header_position(a));
 }
 
@@ -93,6 +136,11 @@ DEFINE_TEST(test_read_position)
 		    == (size_t)archive_write_data(a, nulls, sizeof(nulls)));
 	}
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
+	assert_position_aliases(a);
+	assertEqualInt((intmax_t)write_pos,
+	    (intmax_t)archive_position_compressed(a));
+	assertEqualInt((intmax_t)write_pos,
+	    (intmax_t)archive_position_uncompressed(a));
 	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	/* Read the archive back with a skip function. */

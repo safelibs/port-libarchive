@@ -65,6 +65,7 @@ DEFINE_TEST(test_entry)
 	const char *xname; /* For xattr tests. */
 	const void *xval; /* For xattr tests. */
 	size_t xsize; /* For xattr tests. */
+	la_int64_t offset, length;
 	wchar_t wc;
 	long l;
 	int i;
@@ -272,6 +273,25 @@ DEFINE_TEST(test_entry)
 	archive_entry_set_link(e, "link");
 	assertEqualString(archive_entry_hardlink(e), "hardlink");
 	assertEqualString(archive_entry_symlink(e), "link");
+	archive_entry_clear(e);
+	archive_entry_set_hardlink(e, "hardlink");
+	archive_entry_set_link_utf8(e, "link4");
+	assertEqualString(archive_entry_hardlink(e), "link4");
+	assertEqualString(archive_entry_hardlink_utf8(e), "link4");
+	assertEqualString(archive_entry_symlink(e), NULL);
+	assertEqualInt(1, archive_entry_update_link_utf8(e, "link5"));
+	assertEqualString(archive_entry_hardlink(e), "link5");
+	assertEqualString(archive_entry_hardlink_utf8(e), "link5");
+	archive_entry_clear(e);
+	archive_entry_set_symlink(e, "symlink");
+	archive_entry_set_link_utf8(e, "link6");
+	assertEqualString(archive_entry_hardlink(e), NULL);
+	assertEqualString(archive_entry_symlink(e), "link6");
+	assertEqualString(archive_entry_symlink_utf8(e), "link6");
+	assertEqualInt(1, archive_entry_update_link_utf8(e, "link7"));
+	assertEqualString(archive_entry_hardlink(e), NULL);
+	assertEqualString(archive_entry_symlink(e), "link7");
+	assertEqualString(archive_entry_symlink_utf8(e), "link7");
 
 	/* mode */
 	archive_entry_set_mode(e, 0123456);
@@ -347,6 +367,9 @@ DEFINE_TEST(test_entry)
 	/* sourcepath */
 	archive_entry_copy_sourcepath(e, "path1");
 	assertEqualString(archive_entry_sourcepath(e), "path1");
+	archive_entry_copy_sourcepath_w(e, L"wpath1");
+	assertEqualWString(archive_entry_sourcepath_w(e), L"wpath1");
+	assertEqualString(archive_entry_sourcepath(e), "wpath1");
 
 	/* symlink */
 	archive_entry_set_symlink(e, "symlinkname");
@@ -382,6 +405,27 @@ DEFINE_TEST(test_entry)
 	assertEqualWString(archive_entry_symlink_w(e), L"symlinkname2");
 	assertEqualString(archive_entry_symlink(e), "symlinkname2");
 	assertEqualString(archive_entry_symlink_utf8(e), "symlinkname2");
+
+	/* entry encryption flags */
+	assertEqualInt(0, archive_entry_is_data_encrypted(e));
+	assertEqualInt(0, archive_entry_is_metadata_encrypted(e));
+	assertEqualInt(0, archive_entry_is_encrypted(e));
+	archive_entry_set_is_data_encrypted(e, 1);
+	assertEqualInt(1, archive_entry_is_data_encrypted(e));
+	assertEqualInt(0, archive_entry_is_metadata_encrypted(e));
+	assert(archive_entry_is_encrypted(e) != 0);
+	archive_entry_set_is_metadata_encrypted(e, 1);
+	assertEqualInt(1, archive_entry_is_data_encrypted(e));
+	assertEqualInt(1, archive_entry_is_metadata_encrypted(e));
+	assert(archive_entry_is_encrypted(e) != 0);
+	archive_entry_set_is_data_encrypted(e, 0);
+	assertEqualInt(0, archive_entry_is_data_encrypted(e));
+	assertEqualInt(1, archive_entry_is_metadata_encrypted(e));
+	assert(archive_entry_is_encrypted(e) != 0);
+	archive_entry_set_is_metadata_encrypted(e, 0);
+	assertEqualInt(0, archive_entry_is_data_encrypted(e));
+	assertEqualInt(0, archive_entry_is_metadata_encrypted(e));
+	assertEqualInt(0, archive_entry_is_encrypted(e));
 
 	/* uid */
 	archive_entry_set_uid(e, 83);
@@ -490,6 +534,20 @@ DEFINE_TEST(test_entry)
 	assertEqualString(xname, NULL);
 	assertEqualString(xval, NULL);
 	assertEqualInt((int)xsize, 0);
+
+	/* sparse entries */
+	archive_entry_clear(e);
+	archive_entry_set_size(e, 1024);
+	archive_entry_sparse_add_entry(e, 0, 128);
+	archive_entry_sparse_add_entry(e, 512, 256);
+	assertEqualInt(2, archive_entry_sparse_count(e));
+	archive_entry_sparse_clear(e);
+	assertEqualInt(0, archive_entry_sparse_count(e));
+	assertEqualInt(0, archive_entry_sparse_reset(e));
+	assertEqualInt(ARCHIVE_WARN,
+	    archive_entry_sparse_next(e, &offset, &length));
+	assertEqualInt(0, offset);
+	assertEqualInt(0, length);
 
 
 	/*

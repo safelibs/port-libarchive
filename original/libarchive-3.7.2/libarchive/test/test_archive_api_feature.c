@@ -51,4 +51,10 @@ DEFINE_TEST(test_archive_api_feature)
 		failure("Version string is: %s", archive_version_string());
 		assert(*p == '\0');
 	}
+
+	p = archive_version_details();
+	assert(p != NULL);
+	assert(strlen(p) >= strlen(archive_version_string()));
+	assertEqualMem(archive_version_string(), p,
+	    strlen(archive_version_string()));
 }
