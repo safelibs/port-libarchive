@@ -110,11 +110,8 @@ const PLACEHOLDER_FORMAT_CAB: u32 = 1 << 1;
 const PLACEHOLDER_FORMAT_ISO9660: u32 = 1 << 2;
 const PLACEHOLDER_FORMAT_LHA: u32 = 1 << 3;
 const PLACEHOLDER_FORMAT_MTREE: u32 = 1 << 4;
-const PLACEHOLDER_FORMAT_RAR: u32 = 1 << 5;
-const PLACEHOLDER_FORMAT_RAR5: u32 = 1 << 6;
 const PLACEHOLDER_FORMAT_WARC: u32 = 1 << 7;
 const PLACEHOLDER_FORMAT_XAR: u32 = 1 << 8;
-const PLACEHOLDER_FORMAT_ZIP: u32 = 1 << 9;
 
 fn validate_read_with_state(
     a: *mut archive,
@@ -655,15 +652,10 @@ placeholder_reader_format_support!(
     PLACEHOLDER_FORMAT_MTREE,
     "mtree"
 );
-placeholder_reader_format_support!(
-    archive_read_support_format_rar,
-    PLACEHOLDER_FORMAT_RAR,
-    "rar"
-);
-placeholder_reader_format_support!(
+backend_reader_format_support!(archive_read_support_format_rar, archive_read_support_format_rar);
+backend_reader_format_support!(
     archive_read_support_format_rar5,
-    PLACEHOLDER_FORMAT_RAR5,
-    "rar5"
+    archive_read_support_format_rar5
 );
 placeholder_reader_format_support!(
     archive_read_support_format_warc,
@@ -675,20 +667,14 @@ placeholder_reader_format_support!(
     PLACEHOLDER_FORMAT_XAR,
     "xar"
 );
-placeholder_reader_format_support!(
-    archive_read_support_format_zip,
-    PLACEHOLDER_FORMAT_ZIP,
-    "zip"
-);
-placeholder_reader_format_support!(
+backend_reader_format_support!(archive_read_support_format_zip, archive_read_support_format_zip);
+backend_reader_format_support!(
     archive_read_support_format_zip_streamable,
-    PLACEHOLDER_FORMAT_ZIP,
-    "zip"
+    archive_read_support_format_zip_streamable
 );
-placeholder_reader_format_support!(
+backend_reader_format_support!(
     archive_read_support_format_zip_seekable,
-    PLACEHOLDER_FORMAT_ZIP,
-    "zip"
+    archive_read_support_format_zip_seekable
 );
 
 #[no_mangle]

@@ -142,12 +142,6 @@ rows = [
     row for row in manifest["rows"]
     if row["suite"] == suite and row["phase_group"] == phase_group
 ]
-if suite == "libarchive" and phase_group == "read_mainstream":
-    deferred_sources = {
-        "original/libarchive-3.7.2/libarchive/test/test_archive_read_add_passphrase.c",
-        "original/libarchive-3.7.2/libarchive/test/test_archive_read_multiple_data_objects.c",
-    }
-    rows = [row for row in rows if row["source_file"] not in deferred_sources]
 if not rows:
     raise SystemExit(f"no tests selected for suite={suite!r} phase_group={phase_group!r}")
 

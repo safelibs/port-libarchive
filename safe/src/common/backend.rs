@@ -238,8 +238,15 @@ pub struct Api {
     pub archive_read_support_format_cpio: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_support_format_empty: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_support_format_gnutar: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
+    pub archive_read_support_format_rar: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
+    pub archive_read_support_format_rar5: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_support_format_raw: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_support_format_tar: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
+    pub archive_read_support_format_zip: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
+    pub archive_read_support_format_zip_seekable:
+        unsafe extern "C" fn(*mut BackendArchive) -> c_int,
+    pub archive_read_support_format_zip_streamable:
+        unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_set_format:
         unsafe extern "C" fn(*mut BackendArchive, c_int) -> c_int,
     pub archive_read_append_filter:
