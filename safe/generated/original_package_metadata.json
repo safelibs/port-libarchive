@@ -1,0 +1,15 @@
+{
+  "deb_filenames": {
+    "development": "libarchive-dev_3.7.2-2ubuntu0.6_amd64.deb",
+    "runtime": "libarchive13t64_3.7.2-2ubuntu0.6_amd64.deb",
+    "tools": "libarchive-tools_3.7.2-2ubuntu0.6_amd64.deb"
+  },
+  "debian_revision": "2ubuntu0.6",
+  "development_pkgconfig_install_path": "/usr/lib/x86_64-linux-gnu/pkgconfig/libarchive.pc",
+  "full_version": "3.7.2-2ubuntu0.6",
+  "multiarch_triplet": "x86_64-linux-gnu",
+  "package_version": "3.7.2",
+  "runtime_shared_library_install_path": "/usr/lib/x86_64-linux-gnu/libarchive.so.13.7.2",
+  "runtime_soname_install_path": "/usr/lib/x86_64-linux-gnu/libarchive.so.13",
+  "schema_version": 1
+}

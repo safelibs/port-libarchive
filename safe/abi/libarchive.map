@@ -1,0 +1,20 @@
+{
+  global:
+    archive_version_number;
+    archive_version_string;
+    archive_version_details;
+    archive_read_new;
+    archive_write_new;
+    archive_read_disk_new;
+    archive_write_disk_new;
+    archive_entry_new;
+    archive_entry_new2;
+    archive_match_new;
+    archive_free;
+    archive_read_free;
+    archive_write_free;
+    archive_entry_free;
+    archive_match_free;
+  local:
+    *;
+};

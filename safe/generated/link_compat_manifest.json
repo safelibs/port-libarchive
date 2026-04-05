@@ -1,0 +1,3681 @@
+{
+  "objects": [
+    {
+      "link_order": 0,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/test_utils/libarchive_test-test_utils.o",
+      "source_path": "original/libarchive-3.7.2/test_utils/test_utils.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 1,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/test_utils/libarchive_test-test_main.o",
+      "source_path": "original/libarchive-3.7.2/test_utils/test_main.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 2,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-read_open_memory.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/read_open_memory.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 3,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_acl_nfs4.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_acl_nfs4.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 4,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_acl_pax.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_acl_pax.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 5,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_acl_platform_nfs4.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_acl_platform_nfs4.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 6,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_acl_platform_posix1e.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_acl_platform_posix1e.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 7,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_acl_posix1e.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_acl_posix1e.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 8,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_acl_text.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_acl_text.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 9,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_api_feature.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_api_feature.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 10,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_clear_error.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_clear_error.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 11,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_cmdline.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_cmdline.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 12,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_digest.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_digest.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 13,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_getdate.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_getdate.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 14,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_match_owner.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_match_owner.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 15,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_match_path.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_match_path.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 16,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_match_time.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_match_time.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 17,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_pathmatch.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_pathmatch.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 18,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_add_passphrase.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_add_passphrase.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 19,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_close_twice.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_close_twice.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 20,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_close_twice_open_fd.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_close_twice_open_fd.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 21,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_close_twice_open_filename.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_close_twice_open_filename.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 22,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_multiple_data_objects.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_multiple_data_objects.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 23,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_next_header_empty.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_next_header_empty.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 24,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_next_header_raw.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_next_header_raw.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 25,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_open2.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_open2.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 26,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_set_filter_option.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_set_filter_option.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 27,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_set_format_option.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_set_format_option.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 28,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_set_option.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_set_option.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 29,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_set_options.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_set_options.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 30,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_support.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_support.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 31,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_set_error.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_set_error.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 32,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_string.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_string.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 33,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_string_conversion.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_string_conversion.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 34,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_write_add_filter_by_name.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_write_add_filter_by_name.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 35,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_write_set_filter_option.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_filter_option.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 36,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_write_set_format_by_name.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 37,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_write_set_format_filter_by_ext.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_filter_by_ext.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 38,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_write_set_format_option.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_option.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 39,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_write_set_option.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_option.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 40,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_write_set_options.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_options.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 41,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_write_set_passphrase.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_passphrase.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 42,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_bad_fd.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_bad_fd.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 43,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_bzip2.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_bzip2.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 44,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_cpio.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_cpio.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 45,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_gtar.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_gtar.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 46,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_gzip.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_gzip.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 47,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_lz4.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_lz4.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 48,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_lzip.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_lzip.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 49,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_lzma.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_lzma.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 50,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_lzop.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_lzop.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 51,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_mac.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_mac.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 52,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_perl_archive_tar.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_perl_archive_tar.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 53,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_plexus_archiver_tar.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_plexus_archiver_tar.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 54,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_solaris_tar_acl.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_solaris_tar_acl.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 55,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_solaris_pax_sparse.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_solaris_pax_sparse.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 56,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_star_acl.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_star_acl.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 57,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_tar_directory.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_tar_directory.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 58,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_tar_hardlink.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_tar_hardlink.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 59,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_uudecode.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_uudecode.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 60,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_uudecode_large.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_uudecode_large.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 61,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_xz.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_xz.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 62,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_zip.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_zip.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 63,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_zstd.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_zstd.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 64,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_empty_write.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_empty_write.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 65,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_entry.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_entry.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 66,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_entry_strmode.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_entry_strmode.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 67,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_extattr_freebsd.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_extattr_freebsd.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 68,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_filter_count.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_filter_count.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 69,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_fuzz.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_fuzz.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 70,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_gnutar_filename_encoding.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_gnutar_filename_encoding.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 71,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_link_resolver.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_link_resolver.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 72,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_open_failure.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_open_failure.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 73,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_open_fd.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_open_fd.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 74,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_open_file.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_open_file.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 75,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_open_filename.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_open_filename.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 76,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_pax_filename_encoding.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_pax_filename_encoding.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 77,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_pax_xattr_header.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_pax_xattr_header.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 78,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_data_large.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_data_large.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 79,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_disk.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_disk.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 80,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_disk_directory_traversals.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_disk_directory_traversals.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 81,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_disk_entry_from_file.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_disk_entry_from_file.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 82,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_extract.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_extract.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 83,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_file_nonexistent.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_file_nonexistent.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 84,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_filter_compress.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_filter_compress.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 85,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_filter_grzip.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_filter_grzip.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 86,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_filter_lrzip.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_filter_lrzip.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 87,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_filter_lzop.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_filter_lzop.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 88,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_filter_lzop_multiple_parts.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_filter_lzop_multiple_parts.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 89,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_filter_program.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_filter_program.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 90,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_filter_program_signature.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_filter_program_signature.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 91,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_filter_uudecode.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_filter_uudecode.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 92,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_filter_uudecode_raw.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_filter_uudecode_raw.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 93,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_7zip.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 94,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_7zip_encryption_data.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip_encryption_data.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 95,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_7zip_encryption_partially.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip_encryption_partially.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 96,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_7zip_encryption_header.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip_encryption_header.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 97,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_7zip_malformed.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip_malformed.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 98,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_7zip_packinfo_digests.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip_packinfo_digests.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 99,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_ar.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_ar.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 100,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cab.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cab.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 101,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cab_filename.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cab_filename.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 102,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_afio.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_afio.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 103,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_bin.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 104,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_bin_Z.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin_Z.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 105,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_bin_be.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin_be.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 106,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_bin_bz2.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin_bz2.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 107,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_bin_gz.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin_gz.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 108,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_bin_le.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin_le.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 109,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_bin_lzip.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin_lzip.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 110,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_bin_lzma.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin_lzma.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 111,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_bin_xz.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin_xz.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 112,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_filename.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_filename.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 113,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_odc.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_odc.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 114,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_svr4_bzip2_rpm.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_svr4_bzip2_rpm.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 115,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_svr4_gzip.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_svr4_gzip.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 116,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_svr4_gzip_rpm.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_svr4_gzip_rpm.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 117,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_svr4c_Z.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_svr4c_Z.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 118,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_empty.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_empty.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 119,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_gtar_filename.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_gtar_filename.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 120,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_gtar_gz.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_gtar_gz.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 121,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_gtar_lzma.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_gtar_lzma.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 122,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_gtar_sparse.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_gtar_sparse.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 123,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_gtar_sparse_skip_entry.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_gtar_sparse_skip_entry.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 124,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_iso_Z.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_iso_Z.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 125,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_iso_multi_extent.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_iso_multi_extent.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 126,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_iso_xorriso.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_iso_xorriso.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 127,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_isojoliet_bz2.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_isojoliet_bz2.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 128,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_isojoliet_long.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_isojoliet_long.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 129,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_isojoliet_rr.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_isojoliet_rr.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 130,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_isojoliet_versioned.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_isojoliet_versioned.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 131,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_isorr_bz2.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_isorr_bz2.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 132,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_isorr_ce.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_isorr_ce.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 133,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_isorr_new_bz2.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_isorr_new_bz2.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 134,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_isorr_rr_moved.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_isorr_rr_moved.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 135,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_isozisofs_bz2.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_isozisofs_bz2.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 136,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_lha.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_lha.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 137,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_lha_bugfix_0.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_lha_bugfix_0.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 138,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_lha_filename.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_lha_filename.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 139,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_lha_filename_utf16.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_lha_filename_utf16.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 140,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_mtree.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_mtree.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 141,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_mtree_crash747.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_mtree_crash747.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 142,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_pax_bz2.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_pax_bz2.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 143,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_rar.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 144,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_rar_encryption_data.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar_encryption_data.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 145,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_rar_encryption_partially.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar_encryption_partially.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 146,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_rar_encryption_header.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar_encryption_header.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 147,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_rar_filter.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar_filter.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 148,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_rar_invalid1.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar_invalid1.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 149,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_rar_overflow.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar_overflow.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 150,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_rar5.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 151,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_rar5_loop_bug.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5_loop_bug.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 152,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_raw.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_raw.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 153,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_tar.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_tar.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 154,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_tar_concatenated.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_tar_concatenated.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 155,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_tar_empty_pax.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_tar_empty_pax.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 156,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_tar_empty_filename.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_tar_empty_filename.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 157,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_tar_empty_with_gnulabel.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_tar_empty_with_gnulabel.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 158,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_tar_filename.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_tar_filename.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 159,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_tar_invalid_pax_size.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_tar_invalid_pax_size.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 160,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_tbz.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_tbz.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 161,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_tgz.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_tgz.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 162,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_tlz.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_tlz.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 163,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_txz.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_txz.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 164,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_tz.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_tz.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 165,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_ustar_filename.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_ustar_filename.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 166,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_warc.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_warc.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 167,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_xar.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_xar.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 168,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 169,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_7075_utf8_paths.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_7075_utf8_paths.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 170,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_comment_stored.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_comment_stored.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 171,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_encryption_data.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_encryption_data.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 172,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_encryption_partially.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_encryption_partially.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 173,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_encryption_header.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_encryption_header.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 174,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_extra_padding.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_extra_padding.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 175,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_filename.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_filename.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 176,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_high_compression.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_high_compression.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 177,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_jar.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_jar.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 178,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_mac_metadata.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_mac_metadata.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 179,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_malformed.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_malformed.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 180,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_msdos.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_msdos.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 181,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_nested.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_nested.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 182,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_nofiletype.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_nofiletype.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 183,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_padded.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_padded.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 184,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_sfx.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_sfx.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 185,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_traditional_encryption_data.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_traditional_encryption_data.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 186,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_winzip_aes.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_winzip_aes.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 187,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_winzip_aes_large.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_winzip_aes_large.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 188,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_zip64.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_zip64.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 189,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_with_invalid_traditional_eocd.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_with_invalid_traditional_eocd.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 190,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_large.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_large.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 191,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_pax_xattr_rht_security_selinux.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_pax_xattr_rht_security_selinux.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 192,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_pax_xattr_schily.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_pax_xattr_schily.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 193,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_pax_truncated.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_pax_truncated.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 194,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_position.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_position.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 195,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_set_format.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_set_format.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 196,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_too_many_filters.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_too_many_filters.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 197,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_truncated.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_truncated.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 198,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_truncated_filter.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_truncated_filter.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 199,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_short_writes.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_short_writes.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 200,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_sparse_basic.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_sparse_basic.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 201,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_tar_filenames.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_tar_filenames.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 202,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_tar_large.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_tar_large.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 203,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_ustar_filenames.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_ustar_filenames.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 204,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_ustar_filename_encoding.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_ustar_filename_encoding.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 205,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_warn_missing_hardlink_target.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_warn_missing_hardlink_target.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 206,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 207,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_appledouble.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_appledouble.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 208,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_failures.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_failures.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 209,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_fixup.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_fixup.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 210,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_hardlink.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_hardlink.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 211,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_hfs_compression.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_hfs_compression.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 212,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_lookup.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_lookup.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 213,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_mac_metadata.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_mac_metadata.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 214,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_no_hfs_compression.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_no_hfs_compression.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 215,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_perms.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_perms.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 216,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_secure.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_secure.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 217,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_secure744.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_secure744.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 218,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_secure745.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_secure745.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 219,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_secure746.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_secure746.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 220,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_sparse.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_sparse.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 221,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_symlink.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_symlink.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 222,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_times.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_times.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 223,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_b64encode.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_b64encode.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 224,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_bzip2.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_bzip2.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 225,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_compress.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_compress.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 226,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_gzip.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_gzip.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 227,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_gzip_timestamp.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_gzip_timestamp.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 228,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_lrzip.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_lrzip.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 229,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_lz4.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_lz4.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 230,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_lzip.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_lzip.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 231,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_lzma.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_lzma.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 232,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_lzop.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_lzop.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 233,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_program.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_program.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 234,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_uuencode.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_uuencode.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 235,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_xz.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_xz.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 236,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_zstd.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_zstd.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 237,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_7zip.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_7zip.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 238,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_7zip_empty.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_7zip_empty.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 239,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_7zip_large.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_7zip_large.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 240,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_ar.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_ar.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 241,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_cpio.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_cpio.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 242,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_cpio_empty.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_cpio_empty.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 243,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_cpio_newc.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_cpio_newc.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 244,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_cpio_odc.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_cpio_odc.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 245,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_gnutar.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_gnutar.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 246,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_gnutar_filenames.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_gnutar_filenames.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 247,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_iso9660.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_iso9660.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 248,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_iso9660_boot.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_iso9660_boot.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 249,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_iso9660_empty.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_iso9660_empty.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 250,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_iso9660_filename.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_iso9660_filename.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 251,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_iso9660_zisofs.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_iso9660_zisofs.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 252,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_mtree.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_mtree.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 253,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_mtree_absolute_path.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_mtree_absolute_path.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 254,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_mtree_classic.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_mtree_classic.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 255,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_mtree_classic_indent.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_mtree_classic_indent.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 256,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_mtree_fflags.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_mtree_fflags.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 257,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_mtree_no_separator.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_mtree_no_separator.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 258,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_mtree_quoted_filename.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_mtree_quoted_filename.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 259,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_pax.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_pax.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 260,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_raw.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_raw.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 261,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_raw_b64.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_raw_b64.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 262,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_shar_empty.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_shar_empty.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 263,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_tar.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_tar.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 264,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_tar_empty.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_tar_empty.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 265,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_tar_sparse.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_tar_sparse.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 266,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_tar_ustar.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_tar_ustar.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 267,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_tar_v7tar.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_tar_v7tar.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 268,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_warc.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_warc.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 269,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_warc_empty.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_warc_empty.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 270,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_xar.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_xar.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 271,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_xar_empty.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_xar_empty.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 272,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_zip.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 273,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_zip_compression_store.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip_compression_store.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 274,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_zip_entry_size_unset.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip_entry_size_unset.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 275,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_zip_empty.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip_empty.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 276,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_zip_empty_zip64.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip_empty_zip64.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 277,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_zip_file.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip_file.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 278,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_zip_file_zip64.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip_file_zip64.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 279,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_zip_large.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip_large.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 280,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_zip_zip64.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip_zip64.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 281,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_open_memory.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_open_memory.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 282,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_read_format_zip.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_read_format_zip.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 283,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_xattr_platform.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_xattr_platform.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 284,
+      "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_zip_filename_encoding.o",
+      "source_path": "original/libarchive-3.7.2/libarchive/test/test_zip_filename_encoding.c",
+      "target_name": "libarchive_test"
+    },
+    {
+      "link_order": 0,
+      "preserved_object_path": "safe/generated/original_link_objects/examples/minitar.o",
+      "source_path": "original/libarchive-3.7.2/examples/minitar/minitar.c",
+      "target_name": "minitar"
+    },
+    {
+      "link_order": 0,
+      "preserved_object_path": "safe/generated/original_link_objects/examples/untar.o",
+      "source_path": "original/libarchive-3.7.2/examples/untar.c",
+      "target_name": "untar"
+    }
+  ],
+  "schema_version": 1,
+  "targets": [
+    {
+      "extra_libraries": [
+        "-lnettle",
+        "-lacl",
+        "-llzma",
+        "-lzstd",
+        "-llz4",
+        "-lbz2",
+        "-lz",
+        "-lxml2"
+      ],
+      "final_link_target_name": "libarchive_test",
+      "must_run_as_part_of_link_compat_verification": true,
+      "ordered_objects": [
+        {
+          "link_order": 0,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/test_utils/libarchive_test-test_utils.o",
+          "source_path": "original/libarchive-3.7.2/test_utils/test_utils.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 1,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/test_utils/libarchive_test-test_main.o",
+          "source_path": "original/libarchive-3.7.2/test_utils/test_main.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 2,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-read_open_memory.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/read_open_memory.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 3,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_acl_nfs4.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_acl_nfs4.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 4,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_acl_pax.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_acl_pax.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 5,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_acl_platform_nfs4.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_acl_platform_nfs4.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 6,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_acl_platform_posix1e.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_acl_platform_posix1e.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 7,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_acl_posix1e.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_acl_posix1e.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 8,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_acl_text.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_acl_text.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 9,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_api_feature.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_api_feature.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 10,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_clear_error.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_clear_error.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 11,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_cmdline.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_cmdline.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 12,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_digest.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_digest.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 13,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_getdate.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_getdate.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 14,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_match_owner.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_match_owner.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 15,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_match_path.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_match_path.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 16,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_match_time.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_match_time.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 17,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_pathmatch.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_pathmatch.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 18,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_add_passphrase.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_add_passphrase.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 19,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_close_twice.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_close_twice.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 20,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_close_twice_open_fd.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_close_twice_open_fd.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 21,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_close_twice_open_filename.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_close_twice_open_filename.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 22,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_multiple_data_objects.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_multiple_data_objects.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 23,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_next_header_empty.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_next_header_empty.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 24,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_next_header_raw.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_next_header_raw.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 25,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_open2.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_open2.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 26,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_set_filter_option.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_set_filter_option.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 27,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_set_format_option.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_set_format_option.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 28,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_set_option.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_set_option.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 29,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_set_options.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_set_options.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 30,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_read_support.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_read_support.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 31,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_set_error.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_set_error.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 32,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_string.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_string.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 33,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_string_conversion.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_string_conversion.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 34,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_write_add_filter_by_name.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_write_add_filter_by_name.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 35,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_write_set_filter_option.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_filter_option.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 36,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_write_set_format_by_name.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 37,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_write_set_format_filter_by_ext.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_filter_by_ext.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 38,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_write_set_format_option.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_option.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 39,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_write_set_option.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_option.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 40,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_write_set_options.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_options.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 41,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_archive_write_set_passphrase.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_passphrase.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 42,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_bad_fd.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_bad_fd.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 43,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_bzip2.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_bzip2.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 44,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_cpio.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_cpio.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 45,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_gtar.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_gtar.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 46,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_gzip.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_gzip.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 47,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_lz4.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_lz4.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 48,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_lzip.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_lzip.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 49,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_lzma.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_lzma.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 50,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_lzop.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_lzop.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 51,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_mac.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_mac.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 52,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_perl_archive_tar.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_perl_archive_tar.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 53,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_plexus_archiver_tar.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_plexus_archiver_tar.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 54,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_solaris_tar_acl.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_solaris_tar_acl.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 55,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_solaris_pax_sparse.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_solaris_pax_sparse.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 56,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_star_acl.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_star_acl.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 57,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_tar_directory.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_tar_directory.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 58,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_tar_hardlink.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_tar_hardlink.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 59,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_uudecode.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_uudecode.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 60,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_uudecode_large.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_uudecode_large.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 61,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_xz.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_xz.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 62,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_zip.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_zip.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 63,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_compat_zstd.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_compat_zstd.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 64,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_empty_write.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_empty_write.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 65,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_entry.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_entry.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 66,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_entry_strmode.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_entry_strmode.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 67,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_extattr_freebsd.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_extattr_freebsd.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 68,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_filter_count.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_filter_count.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 69,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_fuzz.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_fuzz.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 70,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_gnutar_filename_encoding.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_gnutar_filename_encoding.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 71,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_link_resolver.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_link_resolver.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 72,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_open_failure.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_open_failure.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 73,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_open_fd.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_open_fd.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 74,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_open_file.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_open_file.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 75,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_open_filename.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_open_filename.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 76,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_pax_filename_encoding.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_pax_filename_encoding.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 77,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_pax_xattr_header.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_pax_xattr_header.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 78,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_data_large.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_data_large.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 79,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_disk.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_disk.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 80,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_disk_directory_traversals.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_disk_directory_traversals.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 81,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_disk_entry_from_file.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_disk_entry_from_file.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 82,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_extract.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_extract.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 83,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_file_nonexistent.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_file_nonexistent.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 84,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_filter_compress.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_filter_compress.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 85,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_filter_grzip.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_filter_grzip.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 86,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_filter_lrzip.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_filter_lrzip.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 87,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_filter_lzop.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_filter_lzop.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 88,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_filter_lzop_multiple_parts.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_filter_lzop_multiple_parts.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 89,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_filter_program.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_filter_program.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 90,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_filter_program_signature.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_filter_program_signature.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 91,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_filter_uudecode.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_filter_uudecode.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 92,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_filter_uudecode_raw.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_filter_uudecode_raw.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 93,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_7zip.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 94,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_7zip_encryption_data.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip_encryption_data.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 95,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_7zip_encryption_partially.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip_encryption_partially.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 96,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_7zip_encryption_header.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip_encryption_header.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 97,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_7zip_malformed.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip_malformed.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 98,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_7zip_packinfo_digests.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip_packinfo_digests.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 99,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_ar.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_ar.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 100,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cab.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cab.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 101,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cab_filename.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cab_filename.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 102,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_afio.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_afio.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 103,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_bin.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 104,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_bin_Z.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin_Z.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 105,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_bin_be.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin_be.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 106,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_bin_bz2.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin_bz2.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 107,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_bin_gz.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin_gz.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 108,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_bin_le.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin_le.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 109,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_bin_lzip.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin_lzip.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 110,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_bin_lzma.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin_lzma.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 111,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_bin_xz.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin_xz.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 112,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_filename.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_filename.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 113,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_odc.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_odc.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 114,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_svr4_bzip2_rpm.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_svr4_bzip2_rpm.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 115,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_svr4_gzip.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_svr4_gzip.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 116,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_svr4_gzip_rpm.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_svr4_gzip_rpm.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 117,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_cpio_svr4c_Z.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_svr4c_Z.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 118,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_empty.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_empty.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 119,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_gtar_filename.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_gtar_filename.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 120,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_gtar_gz.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_gtar_gz.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 121,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_gtar_lzma.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_gtar_lzma.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 122,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_gtar_sparse.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_gtar_sparse.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 123,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_gtar_sparse_skip_entry.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_gtar_sparse_skip_entry.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 124,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_iso_Z.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_iso_Z.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 125,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_iso_multi_extent.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_iso_multi_extent.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 126,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_iso_xorriso.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_iso_xorriso.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 127,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_isojoliet_bz2.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_isojoliet_bz2.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 128,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_isojoliet_long.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_isojoliet_long.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 129,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_isojoliet_rr.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_isojoliet_rr.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 130,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_isojoliet_versioned.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_isojoliet_versioned.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 131,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_isorr_bz2.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_isorr_bz2.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 132,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_isorr_ce.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_isorr_ce.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 133,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_isorr_new_bz2.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_isorr_new_bz2.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 134,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_isorr_rr_moved.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_isorr_rr_moved.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 135,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_isozisofs_bz2.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_isozisofs_bz2.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 136,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_lha.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_lha.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 137,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_lha_bugfix_0.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_lha_bugfix_0.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 138,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_lha_filename.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_lha_filename.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 139,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_lha_filename_utf16.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_lha_filename_utf16.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 140,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_mtree.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_mtree.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 141,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_mtree_crash747.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_mtree_crash747.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 142,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_pax_bz2.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_pax_bz2.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 143,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_rar.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 144,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_rar_encryption_data.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar_encryption_data.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 145,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_rar_encryption_partially.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar_encryption_partially.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 146,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_rar_encryption_header.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar_encryption_header.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 147,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_rar_filter.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar_filter.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 148,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_rar_invalid1.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar_invalid1.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 149,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_rar_overflow.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar_overflow.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 150,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_rar5.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 151,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_rar5_loop_bug.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5_loop_bug.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 152,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_raw.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_raw.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 153,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_tar.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_tar.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 154,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_tar_concatenated.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_tar_concatenated.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 155,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_tar_empty_pax.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_tar_empty_pax.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 156,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_tar_empty_filename.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_tar_empty_filename.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 157,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_tar_empty_with_gnulabel.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_tar_empty_with_gnulabel.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 158,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_tar_filename.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_tar_filename.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 159,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_tar_invalid_pax_size.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_tar_invalid_pax_size.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 160,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_tbz.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_tbz.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 161,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_tgz.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_tgz.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 162,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_tlz.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_tlz.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 163,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_txz.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_txz.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 164,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_tz.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_tz.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 165,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_ustar_filename.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_ustar_filename.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 166,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_warc.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_warc.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 167,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_xar.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_xar.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 168,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 169,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_7075_utf8_paths.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_7075_utf8_paths.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 170,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_comment_stored.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_comment_stored.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 171,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_encryption_data.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_encryption_data.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 172,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_encryption_partially.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_encryption_partially.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 173,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_encryption_header.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_encryption_header.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 174,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_extra_padding.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_extra_padding.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 175,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_filename.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_filename.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 176,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_high_compression.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_high_compression.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 177,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_jar.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_jar.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 178,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_mac_metadata.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_mac_metadata.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 179,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_malformed.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_malformed.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 180,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_msdos.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_msdos.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 181,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_nested.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_nested.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 182,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_nofiletype.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_nofiletype.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 183,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_padded.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_padded.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 184,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_sfx.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_sfx.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 185,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_traditional_encryption_data.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_traditional_encryption_data.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 186,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_winzip_aes.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_winzip_aes.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 187,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_winzip_aes_large.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_winzip_aes_large.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 188,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_zip64.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_zip64.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 189,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_format_zip_with_invalid_traditional_eocd.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_with_invalid_traditional_eocd.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 190,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_large.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_large.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 191,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_pax_xattr_rht_security_selinux.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_pax_xattr_rht_security_selinux.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 192,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_pax_xattr_schily.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_pax_xattr_schily.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 193,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_pax_truncated.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_pax_truncated.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 194,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_position.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_position.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 195,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_set_format.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_set_format.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 196,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_too_many_filters.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_too_many_filters.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 197,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_truncated.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_truncated.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 198,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_read_truncated_filter.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_read_truncated_filter.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 199,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_short_writes.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_short_writes.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 200,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_sparse_basic.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_sparse_basic.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 201,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_tar_filenames.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_tar_filenames.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 202,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_tar_large.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_tar_large.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 203,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_ustar_filenames.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_ustar_filenames.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 204,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_ustar_filename_encoding.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_ustar_filename_encoding.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 205,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_warn_missing_hardlink_target.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_warn_missing_hardlink_target.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 206,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 207,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_appledouble.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_appledouble.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 208,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_failures.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_failures.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 209,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_fixup.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_fixup.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 210,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_hardlink.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_hardlink.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 211,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_hfs_compression.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_hfs_compression.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 212,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_lookup.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_lookup.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 213,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_mac_metadata.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_mac_metadata.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 214,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_no_hfs_compression.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_no_hfs_compression.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 215,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_perms.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_perms.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 216,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_secure.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_secure.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 217,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_secure744.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_secure744.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 218,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_secure745.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_secure745.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 219,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_secure746.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_secure746.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 220,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_sparse.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_sparse.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 221,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_symlink.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_symlink.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 222,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_disk_times.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_disk_times.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 223,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_b64encode.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_b64encode.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 224,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_bzip2.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_bzip2.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 225,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_compress.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_compress.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 226,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_gzip.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_gzip.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 227,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_gzip_timestamp.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_gzip_timestamp.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 228,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_lrzip.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_lrzip.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 229,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_lz4.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_lz4.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 230,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_lzip.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_lzip.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 231,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_lzma.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_lzma.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 232,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_lzop.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_lzop.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 233,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_program.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_program.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 234,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_uuencode.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_uuencode.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 235,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_xz.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_xz.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 236,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_filter_zstd.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_filter_zstd.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 237,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_7zip.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_7zip.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 238,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_7zip_empty.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_7zip_empty.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 239,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_7zip_large.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_7zip_large.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 240,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_ar.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_ar.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 241,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_cpio.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_cpio.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 242,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_cpio_empty.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_cpio_empty.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 243,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_cpio_newc.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_cpio_newc.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 244,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_cpio_odc.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_cpio_odc.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 245,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_gnutar.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_gnutar.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 246,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_gnutar_filenames.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_gnutar_filenames.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 247,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_iso9660.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_iso9660.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 248,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_iso9660_boot.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_iso9660_boot.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 249,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_iso9660_empty.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_iso9660_empty.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 250,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_iso9660_filename.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_iso9660_filename.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 251,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_iso9660_zisofs.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_iso9660_zisofs.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 252,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_mtree.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_mtree.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 253,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_mtree_absolute_path.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_mtree_absolute_path.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 254,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_mtree_classic.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_mtree_classic.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 255,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_mtree_classic_indent.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_mtree_classic_indent.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 256,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_mtree_fflags.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_mtree_fflags.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 257,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_mtree_no_separator.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_mtree_no_separator.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 258,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_mtree_quoted_filename.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_mtree_quoted_filename.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 259,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_pax.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_pax.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 260,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_raw.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_raw.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 261,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_raw_b64.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_raw_b64.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 262,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_shar_empty.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_shar_empty.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 263,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_tar.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_tar.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 264,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_tar_empty.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_tar_empty.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 265,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_tar_sparse.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_tar_sparse.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 266,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_tar_ustar.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_tar_ustar.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 267,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_tar_v7tar.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_tar_v7tar.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 268,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_warc.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_warc.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 269,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_warc_empty.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_warc_empty.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 270,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_xar.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_xar.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 271,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_xar_empty.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_xar_empty.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 272,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_zip.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 273,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_zip_compression_store.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip_compression_store.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 274,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_zip_entry_size_unset.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip_entry_size_unset.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 275,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_zip_empty.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip_empty.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 276,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_zip_empty_zip64.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip_empty_zip64.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 277,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_zip_file.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip_file.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 278,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_zip_file_zip64.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip_file_zip64.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 279,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_zip_large.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip_large.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 280,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_format_zip_zip64.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip_zip64.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 281,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_open_memory.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_open_memory.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 282,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_write_read_format_zip.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_write_read_format_zip.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 283,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_xattr_platform.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_xattr_platform.c",
+          "target_name": "libarchive_test"
+        },
+        {
+          "link_order": 284,
+          "preserved_object_path": "safe/generated/original_link_objects/libarchive_test/libarchive/test/test-test_zip_filename_encoding.o",
+          "source_path": "original/libarchive-3.7.2/libarchive/test/test_zip_filename_encoding.c",
+          "target_name": "libarchive_test"
+        }
+      ],
+      "run_contract": {
+        "environment_overrides": {
+          "LANG": "en_US.UTF-8",
+          "LC_ALL": "en_US.UTF-8"
+        },
+        "fixture_roots": {
+          "reference_dir": "original/libarchive-3.7.2/libarchive/test"
+        },
+        "setup_actions": [],
+        "steps": [
+          {
+            "argv": [
+              "-r",
+              "{reference_dir}"
+            ],
+            "expected_exit_status": 0,
+            "type": "run"
+          }
+        ],
+        "working_directory_policy": "fresh_tempdir"
+      },
+      "target_name": "libarchive_test"
+    },
+    {
+      "extra_libraries": [
+        "-lnettle",
+        "-lacl",
+        "-llzma",
+        "-lzstd",
+        "-llz4",
+        "-lbz2",
+        "-lz",
+        "-lxml2"
+      ],
+      "final_link_target_name": "minitar",
+      "must_run_as_part_of_link_compat_verification": true,
+      "ordered_objects": [
+        {
+          "link_order": 0,
+          "preserved_object_path": "safe/generated/original_link_objects/examples/minitar.o",
+          "source_path": "original/libarchive-3.7.2/examples/minitar/minitar.c",
+          "target_name": "minitar"
+        }
+      ],
+      "run_contract": {
+        "environment_overrides": {},
+        "fixture_roots": {},
+        "setup_actions": [
+          {
+            "content": "Deadbeaf\n",
+            "path": "foo",
+            "type": "write_file"
+          }
+        ],
+        "steps": [
+          {
+            "argv": [
+              "-cf",
+              "foo.tar",
+              "foo"
+            ],
+            "expected_exit_status": 0,
+            "type": "run"
+          },
+          {
+            "expected_mime": "application/x-tar",
+            "path": "foo.tar",
+            "type": "assert_mime"
+          },
+          {
+            "argv": [
+              "-czf",
+              "foo.tar.gz",
+              "foo"
+            ],
+            "expected_exit_status": 0,
+            "type": "run"
+          },
+          {
+            "expected_mime": "application/gzip",
+            "path": "foo.tar.gz",
+            "type": "assert_mime"
+          },
+          {
+            "argv": [
+              "-cyf",
+              "foo.tar.bz2",
+              "foo"
+            ],
+            "expected_exit_status": 0,
+            "type": "run"
+          },
+          {
+            "expected_mime": "application/x-bzip2",
+            "path": "foo.tar.bz2",
+            "type": "assert_mime"
+          },
+          {
+            "destination": "foo.orig",
+            "source": "foo",
+            "type": "copy_file"
+          },
+          {
+            "path": "foo",
+            "type": "remove_path"
+          },
+          {
+            "argv": [
+              "-xf",
+              "foo.tar"
+            ],
+            "expected_exit_status": 0,
+            "type": "run"
+          },
+          {
+            "left": "foo",
+            "right": "foo.orig",
+            "type": "assert_files_equal"
+          },
+          {
+            "path": "foo",
+            "type": "remove_path"
+          },
+          {
+            "argv": [
+              "-xf",
+              "foo.tar.gz"
+            ],
+            "expected_exit_status": 0,
+            "type": "run"
+          },
+          {
+            "left": "foo",
+            "right": "foo.orig",
+            "type": "assert_files_equal"
+          },
+          {
+            "path": "foo",
+            "type": "remove_path"
+          },
+          {
+            "argv": [
+              "-xf",
+              "foo.tar.bz2"
+            ],
+            "expected_exit_status": 0,
+            "type": "run"
+          },
+          {
+            "left": "foo",
+            "right": "foo.orig",
+            "type": "assert_files_equal"
+          }
+        ],
+        "working_directory_policy": "fresh_tempdir"
+      },
+      "target_name": "minitar"
+    },
+    {
+      "extra_libraries": [
+        "-lnettle",
+        "-lacl",
+        "-llzma",
+        "-lzstd",
+        "-llz4",
+        "-lbz2",
+        "-lz",
+        "-lxml2"
+      ],
+      "final_link_target_name": "untar",
+      "must_run_as_part_of_link_compat_verification": true,
+      "ordered_objects": [
+        {
+          "link_order": 0,
+          "preserved_object_path": "safe/generated/original_link_objects/examples/untar.o",
+          "source_path": "original/libarchive-3.7.2/examples/untar.c",
+          "target_name": "untar"
+        }
+      ],
+      "run_contract": {
+        "environment_overrides": {},
+        "fixture_roots": {},
+        "setup_actions": [
+          {
+            "content": "Deadbeaf\n",
+            "path": "foo",
+            "type": "write_file"
+          },
+          {
+            "destination": "foo.orig",
+            "source": "foo",
+            "type": "copy_file"
+          },
+          {
+            "argv": [
+              "tar",
+              "-cf",
+              "foo.tar",
+              "foo"
+            ],
+            "expected_exit_status": 0,
+            "type": "host_run"
+          },
+          {
+            "path": "foo",
+            "type": "remove_path"
+          }
+        ],
+        "steps": [
+          {
+            "argv": [
+              "-xf",
+              "foo.tar"
+            ],
+            "expected_exit_status": 0,
+            "type": "run"
+          },
+          {
+            "left": "foo",
+            "right": "foo.orig",
+            "type": "assert_files_equal"
+          }
+        ],
+        "working_directory_policy": "fresh_tempdir"
+      },
+      "target_name": "untar"
+    }
+  ]
+}

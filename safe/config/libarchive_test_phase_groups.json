@@ -1,0 +1,3031 @@
+{
+  "counts": {
+    "advanced_formats": 368,
+    "foundation": 16,
+    "read_mainstream": 147,
+    "write_disk": 73
+  },
+  "rows": [
+    {
+      "define_test": "test_acl_nfs4",
+      "phase_group": "foundation",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_acl_nfs4.c"
+    },
+    {
+      "define_test": "test_acl_pax_posix1e",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_acl_pax.c"
+    },
+    {
+      "define_test": "test_acl_pax_nfs4",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_acl_pax.c"
+    },
+    {
+      "define_test": "test_acl_platform_nfs4",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_acl_platform_nfs4.c"
+    },
+    {
+      "define_test": "test_acl_platform_posix1e_restore",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_acl_platform_posix1e.c"
+    },
+    {
+      "define_test": "test_acl_platform_posix1e_read",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_acl_platform_posix1e.c"
+    },
+    {
+      "define_test": "test_acl_posix1e",
+      "phase_group": "foundation",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_acl_posix1e.c"
+    },
+    {
+      "define_test": "test_acl_from_text",
+      "phase_group": "foundation",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_acl_text.c"
+    },
+    {
+      "define_test": "test_acl_to_text",
+      "phase_group": "foundation",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_acl_text.c"
+    },
+    {
+      "define_test": "test_archive_api_feature",
+      "phase_group": "foundation",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_api_feature.c"
+    },
+    {
+      "define_test": "test_archive_clear_error",
+      "phase_group": "foundation",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_clear_error.c"
+    },
+    {
+      "define_test": "test_archive_cmdline",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_cmdline.c"
+    },
+    {
+      "define_test": "test_archive_md5",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_digest.c"
+    },
+    {
+      "define_test": "test_archive_rmd160",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_digest.c"
+    },
+    {
+      "define_test": "test_archive_sha1",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_digest.c"
+    },
+    {
+      "define_test": "test_archive_sha256",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_digest.c"
+    },
+    {
+      "define_test": "test_archive_sha384",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_digest.c"
+    },
+    {
+      "define_test": "test_archive_sha512",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_digest.c"
+    },
+    {
+      "define_test": "test_archive_getdate",
+      "phase_group": "foundation",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_getdate.c"
+    },
+    {
+      "define_test": "test_archive_match_owner",
+      "phase_group": "foundation",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_match_owner.c"
+    },
+    {
+      "define_test": "test_archive_match_path",
+      "phase_group": "foundation",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_match_path.c"
+    },
+    {
+      "define_test": "test_archive_match_time",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_match_time.c"
+    },
+    {
+      "define_test": "test_archive_pathmatch",
+      "phase_group": "foundation",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_pathmatch.c"
+    },
+    {
+      "define_test": "test_archive_read_add_passphrase",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_read_add_passphrase.c"
+    },
+    {
+      "define_test": "test_archive_read_add_passphrase_incorrect_sequance",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_read_add_passphrase.c"
+    },
+    {
+      "define_test": "test_archive_read_add_passphrase_single",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_read_add_passphrase.c"
+    },
+    {
+      "define_test": "test_archive_read_add_passphrase_multiple",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_read_add_passphrase.c"
+    },
+    {
+      "define_test": "test_archive_read_add_passphrase_set_callback1",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_read_add_passphrase.c"
+    },
+    {
+      "define_test": "test_archive_read_add_passphrase_set_callback2",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_read_add_passphrase.c"
+    },
+    {
+      "define_test": "test_archive_read_add_passphrase_set_callback3",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_read_add_passphrase.c"
+    },
+    {
+      "define_test": "test_archive_read_add_passphrase_multiple_with_callback",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_read_add_passphrase.c"
+    },
+    {
+      "define_test": "test_archive_read_add_passphrase_multiple_with_callback2",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_read_add_passphrase.c"
+    },
+    {
+      "define_test": "test_archive_read_close_twice",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_read_close_twice.c"
+    },
+    {
+      "define_test": "test_archive_read_close_twice_open_fd",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_read_close_twice_open_fd.c"
+    },
+    {
+      "define_test": "test_archive_read_close_twice_open_filename",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_read_close_twice_open_filename.c"
+    },
+    {
+      "define_test": "test_archive_read_multiple_data_objects",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_read_multiple_data_objects.c"
+    },
+    {
+      "define_test": "test_archive_read_next_header_empty",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_read_next_header_empty.c"
+    },
+    {
+      "define_test": "test_archive_read_next_header_raw",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_read_next_header_raw.c"
+    },
+    {
+      "define_test": "test_archive_read_open2",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_read_open2.c"
+    },
+    {
+      "define_test": "test_archive_read_set_filter_option",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_read_set_filter_option.c"
+    },
+    {
+      "define_test": "test_archive_read_set_format_option",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_read_set_format_option.c"
+    },
+    {
+      "define_test": "test_archive_read_set_option",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_read_set_option.c"
+    },
+    {
+      "define_test": "test_archive_read_set_options",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_read_set_options.c"
+    },
+    {
+      "define_test": "test_archive_read_support",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_read_support.c"
+    },
+    {
+      "define_test": "test_archive_set_error",
+      "phase_group": "foundation",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_set_error.c"
+    },
+    {
+      "define_test": "test_archive_string",
+      "phase_group": "foundation",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_string.c"
+    },
+    {
+      "define_test": "test_archive_string_sort",
+      "phase_group": "foundation",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_string.c"
+    },
+    {
+      "define_test": "test_archive_string_conversion",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_string_conversion.c"
+    },
+    {
+      "define_test": "test_archive_write_add_filter_by_name_b64encode",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_add_filter_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_add_filter_by_name_bzip2",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_add_filter_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_add_filter_by_name_compress",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_add_filter_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_add_filter_by_name_grzip",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_add_filter_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_add_filter_by_name_gzip",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_add_filter_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_add_filter_by_name_lrzip",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_add_filter_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_add_filter_by_name_lz4",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_add_filter_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_add_filter_by_name_lzip",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_add_filter_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_add_filter_by_name_lzma",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_add_filter_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_add_filter_by_name_lzop",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_add_filter_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_add_filter_by_name_uuencode",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_add_filter_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_add_filter_by_name_xz",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_add_filter_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_add_filter_by_name_zstd",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_add_filter_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_filter_option",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_filter_option.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_7zip",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_ar",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_arbsd",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_argnu",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_arsvr4",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_bsdtar",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_cd9660",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_cpio",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_gnutar",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_iso",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_iso9660",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_mtree",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_mtree_classic",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_newc",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_odc",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_oldtar",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_pax",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_paxr",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_posix",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_rpax",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_shar",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_shardump",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_ustar",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_v7tar",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_v7",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_warc",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_xar",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_by_name_zip",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_by_name.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_filter_by_ext_7zip",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_filter_by_ext.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_filter_by_ext_zip",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_filter_by_ext.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_filter_by_ext_jar",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_filter_by_ext.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_filter_by_ext_a",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_filter_by_ext.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_filter_by_ext_ar",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_filter_by_ext.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_filter_by_ext_cpio",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_filter_by_ext.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_filter_by_ext_iso",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_filter_by_ext.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_filter_by_ext_tar",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_filter_by_ext.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_filter_by_ext_tar_gz",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_filter_by_ext.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_filter_by_ext_tar_bz2",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_filter_by_ext.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_filter_by_ext_tar_xz",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_filter_by_ext.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_filter_by_no_ext_def_zip",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_filter_by_ext.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_filter_by_ext_tar_bz2_def_zip",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_filter_by_ext.c"
+    },
+    {
+      "define_test": "test_archive_write_set_format_option",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_format_option.c"
+    },
+    {
+      "define_test": "test_archive_write_set_option",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_option.c"
+    },
+    {
+      "define_test": "test_archive_write_set_options",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_options.c"
+    },
+    {
+      "define_test": "test_archive_write_set_passphrase",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_passphrase.c"
+    },
+    {
+      "define_test": "test_archive_write_set_passphrase_callback",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_archive_write_set_passphrase.c"
+    },
+    {
+      "define_test": "test_bad_fd",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_bad_fd.c"
+    },
+    {
+      "define_test": "test_compat_bzip2",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_bzip2.c"
+    },
+    {
+      "define_test": "test_compat_cpio",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_cpio.c"
+    },
+    {
+      "define_test": "test_compat_gtar",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_gtar.c"
+    },
+    {
+      "define_test": "test_compat_gzip",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_gzip.c"
+    },
+    {
+      "define_test": "test_compat_lz4",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_lz4.c"
+    },
+    {
+      "define_test": "test_compat_lzip",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_lzip.c"
+    },
+    {
+      "define_test": "test_compat_lzma",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_lzma.c"
+    },
+    {
+      "define_test": "test_compat_lzop",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_lzop.c"
+    },
+    {
+      "define_test": "test_compat_mac",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_mac.c"
+    },
+    {
+      "define_test": "test_compat_perl_archive_tar",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_perl_archive_tar.c"
+    },
+    {
+      "define_test": "test_compat_plexus_archiver_tar",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_plexus_archiver_tar.c"
+    },
+    {
+      "define_test": "test_compat_solaris_pax_sparse",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_solaris_pax_sparse.c"
+    },
+    {
+      "define_test": "test_compat_solaris_tar_acl",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_solaris_tar_acl.c"
+    },
+    {
+      "define_test": "test_compat_star_acl_posix1e",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_star_acl.c"
+    },
+    {
+      "define_test": "test_compat_star_acl_nfs4",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_star_acl.c"
+    },
+    {
+      "define_test": "test_compat_tar_directory",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_tar_directory.c"
+    },
+    {
+      "define_test": "test_compat_tar_hardlink",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_tar_hardlink.c"
+    },
+    {
+      "define_test": "test_compat_uudecode",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_uudecode.c"
+    },
+    {
+      "define_test": "test_compat_uudecode_large",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_uudecode_large.c"
+    },
+    {
+      "define_test": "test_compat_xz",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_xz.c"
+    },
+    {
+      "define_test": "test_compat_zip_1",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_zip.c"
+    },
+    {
+      "define_test": "test_compat_zip_2",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_zip.c"
+    },
+    {
+      "define_test": "test_compat_zip_3",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_zip.c"
+    },
+    {
+      "define_test": "test_compat_zip_4",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_zip.c"
+    },
+    {
+      "define_test": "test_compat_zip_5",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_zip.c"
+    },
+    {
+      "define_test": "test_compat_zip_6",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_zip.c"
+    },
+    {
+      "define_test": "test_compat_zip_7",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_zip.c"
+    },
+    {
+      "define_test": "test_compat_zip_8",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_zip.c"
+    },
+    {
+      "define_test": "test_compat_zstd",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_compat_zstd.c"
+    },
+    {
+      "define_test": "test_empty_write",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_empty_write.c"
+    },
+    {
+      "define_test": "test_entry",
+      "phase_group": "foundation",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_entry.c"
+    },
+    {
+      "define_test": "test_entry_strmode",
+      "phase_group": "foundation",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_entry_strmode.c"
+    },
+    {
+      "define_test": "test_extattr_freebsd",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_extattr_freebsd.c"
+    },
+    {
+      "define_test": "test_filter_count",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_filter_count.c"
+    },
+    {
+      "define_test": "test_fuzz_ar",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_fuzz.c"
+    },
+    {
+      "define_test": "test_fuzz_cab",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_fuzz.c"
+    },
+    {
+      "define_test": "test_fuzz_cpio",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_fuzz.c"
+    },
+    {
+      "define_test": "test_fuzz_iso9660",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_fuzz.c"
+    },
+    {
+      "define_test": "test_fuzz_lzh",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_fuzz.c"
+    },
+    {
+      "define_test": "test_fuzz_mtree",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_fuzz.c"
+    },
+    {
+      "define_test": "test_fuzz_rar",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_fuzz.c"
+    },
+    {
+      "define_test": "test_fuzz_tar",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_fuzz.c"
+    },
+    {
+      "define_test": "test_fuzz_zip",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_fuzz.c"
+    },
+    {
+      "define_test": "test_gnutar_filename_encoding_UTF8_CP866",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_gnutar_filename_encoding.c"
+    },
+    {
+      "define_test": "test_gnutar_filename_encoding_KOI8R_UTF8",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_gnutar_filename_encoding.c"
+    },
+    {
+      "define_test": "test_gnutar_filename_encoding_KOI8R_CP866",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_gnutar_filename_encoding.c"
+    },
+    {
+      "define_test": "test_gnutar_filename_encoding_CP1251_UTF8",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_gnutar_filename_encoding.c"
+    },
+    {
+      "define_test": "test_gnutar_filename_encoding_ru_RU_CP1251",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_gnutar_filename_encoding.c"
+    },
+    {
+      "define_test": "test_gnutar_filename_encoding_Russian_Russia",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_gnutar_filename_encoding.c"
+    },
+    {
+      "define_test": "test_gnutar_filename_encoding_EUCJP_UTF8",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_gnutar_filename_encoding.c"
+    },
+    {
+      "define_test": "test_gnutar_filename_encoding_EUCJP_CP932",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_gnutar_filename_encoding.c"
+    },
+    {
+      "define_test": "test_gnutar_filename_encoding_CP932_UTF8",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_gnutar_filename_encoding.c"
+    },
+    {
+      "define_test": "test_link_resolver",
+      "phase_group": "foundation",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_link_resolver.c"
+    },
+    {
+      "define_test": "test_open_failure",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_open_failure.c"
+    },
+    {
+      "define_test": "test_open_fd",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_open_fd.c"
+    },
+    {
+      "define_test": "test_open_file",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_open_file.c"
+    },
+    {
+      "define_test": "test_open_filename",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_open_filename.c"
+    },
+    {
+      "define_test": "test_pax_filename_encoding_KOI8R",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_pax_filename_encoding.c"
+    },
+    {
+      "define_test": "test_pax_filename_encoding_CP1251",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_pax_filename_encoding.c"
+    },
+    {
+      "define_test": "test_pax_filename_encoding_EUCJP",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_pax_filename_encoding.c"
+    },
+    {
+      "define_test": "test_pax_filename_encoding_CP932",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_pax_filename_encoding.c"
+    },
+    {
+      "define_test": "test_pax_filename_encoding_KOI8R_BINARY",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_pax_filename_encoding.c"
+    },
+    {
+      "define_test": "test_pax_filename_encoding_KOI8R_CP1251",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_pax_filename_encoding.c"
+    },
+    {
+      "define_test": "test_pax_filename_encoding",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_pax_filename_encoding.c"
+    },
+    {
+      "define_test": "test_pax_xattr_header",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_pax_xattr_header.c"
+    },
+    {
+      "define_test": "test_read_data_large",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_data_large.c"
+    },
+    {
+      "define_test": "test_read_disk",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_disk.c"
+    },
+    {
+      "define_test": "test_read_disk_directory_traversals",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_disk_directory_traversals.c"
+    },
+    {
+      "define_test": "test_read_disk_entry_from_file",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_disk_entry_from_file.c"
+    },
+    {
+      "define_test": "test_read_extract",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_extract.c"
+    },
+    {
+      "define_test": "test_read_file_nonexistent",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_file_nonexistent.c"
+    },
+    {
+      "define_test": "test_read_filter_compress_truncated",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_filter_compress.c"
+    },
+    {
+      "define_test": "test_read_filter_compress_empty2",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_filter_compress.c"
+    },
+    {
+      "define_test": "test_read_filter_compress_invalid",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_filter_compress.c"
+    },
+    {
+      "define_test": "test_read_filter_grzip",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_filter_grzip.c"
+    },
+    {
+      "define_test": "test_read_filter_lrzip",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_filter_lrzip.c"
+    },
+    {
+      "define_test": "test_read_filter_lzop",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_filter_lzop.c"
+    },
+    {
+      "define_test": "test_read_filter_lzop_multiple_parts",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_filter_lzop_multiple_parts.c"
+    },
+    {
+      "define_test": "test_read_filter_program",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_filter_program.c"
+    },
+    {
+      "define_test": "test_read_filter_program_signature",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_filter_program_signature.c"
+    },
+    {
+      "define_test": "test_read_filter_uudecode",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_filter_uudecode.c"
+    },
+    {
+      "define_test": "test_read_filter_uudecode_base64",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_filter_uudecode.c"
+    },
+    {
+      "define_test": "test_read_filter_uudecode_raw",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_filter_uudecode_raw.c"
+    },
+    {
+      "define_test": "test_read_filter_uudecode_base64_raw",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_filter_uudecode_raw.c"
+    },
+    {
+      "define_test": "test_read_format_7zip",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip.c"
+    },
+    {
+      "define_test": "test_read_format_7zip_bzip2",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip.c"
+    },
+    {
+      "define_test": "test_read_format_7zip_from_fd",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip.c"
+    },
+    {
+      "define_test": "test_read_format_7zip_copy",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip.c"
+    },
+    {
+      "define_test": "test_read_format_7zip_deflate",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip.c"
+    },
+    {
+      "define_test": "test_read_format_7zip_zstd",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip.c"
+    },
+    {
+      "define_test": "test_read_format_7zip_zstd_solid",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip.c"
+    },
+    {
+      "define_test": "test_read_format_7zip_zstd_bcj",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip.c"
+    },
+    {
+      "define_test": "test_read_format_7zip_zstd_nobcj",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip.c"
+    },
+    {
+      "define_test": "test_read_format_7zip_empty",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip.c"
+    },
+    {
+      "define_test": "test_read_format_7zip_lzma1",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip.c"
+    },
+    {
+      "define_test": "test_read_format_7zip_lzma2",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip.c"
+    },
+    {
+      "define_test": "test_read_format_7zip_zstd_arm",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip.c"
+    },
+    {
+      "define_test": "test_read_format_7zip_lzma2_arm",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip.c"
+    },
+    {
+      "define_test": "test_read_format_7zip_ppmd",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip.c"
+    },
+    {
+      "define_test": "test_read_format_7zip_lzma2_arm64",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip.c"
+    },
+    {
+      "define_test": "test_read_format_7zip_deflate_arm64",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip.c"
+    },
+    {
+      "define_test": "test_read_format_7zip_win_attrib",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip.c"
+    },
+    {
+      "define_test": "test_read_format_7zip_encryption_data",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip_encryption_data.c"
+    },
+    {
+      "define_test": "test_read_format_7zip_encryption_header",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip_encryption_header.c"
+    },
+    {
+      "define_test": "test_read_format_7zip_encryption_partially",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip_encryption_partially.c"
+    },
+    {
+      "define_test": "test_read_format_7zip_malformed",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip_malformed.c"
+    },
+    {
+      "define_test": "test_read_format_7zip_packinfo_digests",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_7zip_packinfo_digests.c"
+    },
+    {
+      "define_test": "test_read_format_ar",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_ar.c"
+    },
+    {
+      "define_test": "test_read_format_cab",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cab.c"
+    },
+    {
+      "define_test": "test_read_format_cab_filename",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cab_filename.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_afio",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_afio.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_bin",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_bin_Z",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin_Z.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_bin_be",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin_be.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_bin_bz2",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin_bz2.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_bin_gz",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin_gz.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_bin_le",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin_le.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_bin_lzip",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin_lzip.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_bin_lzma",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin_lzma.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_bin_xz",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_bin_xz.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_filename_eucJP_UTF8",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_filename.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_filename_UTF8_eucJP",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_filename.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_filename_UTF8_UTF8_jp",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_filename.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_filename_CP866_KOI8R",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_filename.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_filename_CP866_UTF8",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_filename.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_filename_KOI8R_CP866",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_filename.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_filename_KOI8R_UTF8",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_filename.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_filename_UTF8_KOI8R",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_filename.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_filename_UTF8_CP866",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_filename.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_filename_UTF8_UTF8_ru",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_filename.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_filename_eucJP_CP932",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_filename.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_filename_UTF8_CP932",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_filename.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_filename_CP866_CP1251",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_filename.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_filename_CP866_CP1251_win",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_filename.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_filename_KOI8R_CP1251",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_filename.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_filename_UTF8_CP1251",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_filename.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_odc",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_odc.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_svr4_bzip2_rpm",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_svr4_bzip2_rpm.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_svr4_gzip",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_svr4_gzip.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_svr4_gzip_rpm",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_svr4_gzip_rpm.c"
+    },
+    {
+      "define_test": "test_read_format_cpio_svr4c_Z",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_cpio_svr4c_Z.c"
+    },
+    {
+      "define_test": "test_read_format_empty",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_empty.c"
+    },
+    {
+      "define_test": "test_read_format_gtar_filename_eucJP_UTF8",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_gtar_filename.c"
+    },
+    {
+      "define_test": "test_read_format_gtar_filename_CP866_KOI8R",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_gtar_filename.c"
+    },
+    {
+      "define_test": "test_read_format_gtar_filename_CP866_UTF8",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_gtar_filename.c"
+    },
+    {
+      "define_test": "test_read_format_gtar_filename_KOI8R_CP866",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_gtar_filename.c"
+    },
+    {
+      "define_test": "test_read_format_gtar_filename_KOI8R_UTF8",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_gtar_filename.c"
+    },
+    {
+      "define_test": "test_read_format_gtar_filename_eucJP_CP932",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_gtar_filename.c"
+    },
+    {
+      "define_test": "test_read_format_gtar_filename_CP866_CP1251",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_gtar_filename.c"
+    },
+    {
+      "define_test": "test_read_format_gtar_filename_CP866_CP1251_win",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_gtar_filename.c"
+    },
+    {
+      "define_test": "test_read_format_gtar_filename_KOI8R_CP1251",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_gtar_filename.c"
+    },
+    {
+      "define_test": "test_read_format_gtar_gz",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_gtar_gz.c"
+    },
+    {
+      "define_test": "test_read_format_gtar_lzma",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_gtar_lzma.c"
+    },
+    {
+      "define_test": "test_read_format_gtar_sparse",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_gtar_sparse.c"
+    },
+    {
+      "define_test": "test_read_format_gtar_sparse_skip_entry",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_gtar_sparse_skip_entry.c"
+    },
+    {
+      "define_test": "test_read_format_iso_Z",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_iso_Z.c"
+    },
+    {
+      "define_test": "test_read_format_iso_multi_extent",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_iso_multi_extent.c"
+    },
+    {
+      "define_test": "test_read_format_iso_xorriso",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_iso_xorriso.c"
+    },
+    {
+      "define_test": "test_read_format_isojoliet_bz2",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_isojoliet_bz2.c"
+    },
+    {
+      "define_test": "test_read_format_isojoliet_long",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_isojoliet_long.c"
+    },
+    {
+      "define_test": "test_read_format_isojoliet_rr",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_isojoliet_rr.c"
+    },
+    {
+      "define_test": "test_read_format_isojoliet_versioned",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_isojoliet_versioned.c"
+    },
+    {
+      "define_test": "test_read_format_isorr_bz2",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_isorr_bz2.c"
+    },
+    {
+      "define_test": "test_read_format_isorr_ce",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_isorr_ce.c"
+    },
+    {
+      "define_test": "test_read_format_isorr_new_bz2",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_isorr_new_bz2.c"
+    },
+    {
+      "define_test": "test_read_format_isorr_rr_moved",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_isorr_rr_moved.c"
+    },
+    {
+      "define_test": "test_read_format_isozisofs_bz2",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_isozisofs_bz2.c"
+    },
+    {
+      "define_test": "test_read_format_lha",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_lha.c"
+    },
+    {
+      "define_test": "test_read_format_lha_bugfix_0",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_lha_bugfix_0.c"
+    },
+    {
+      "define_test": "test_read_format_lha_filename",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_lha_filename.c"
+    },
+    {
+      "define_test": "test_read_format_lha_filename_UTF16",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_lha_filename_utf16.c"
+    },
+    {
+      "define_test": "test_read_format_mtree",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_mtree.c"
+    },
+    {
+      "define_test": "test_read_format_mtree_filenames_only",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_mtree.c"
+    },
+    {
+      "define_test": "test_read_format_mtree_nochange",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_mtree.c"
+    },
+    {
+      "define_test": "test_read_format_mtree_nomagic_v1_form",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_mtree.c"
+    },
+    {
+      "define_test": "test_read_format_mtree_nomagic_v2_form",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_mtree.c"
+    },
+    {
+      "define_test": "test_read_format_mtree_nomagic_v2_netbsd_form",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_mtree.c"
+    },
+    {
+      "define_test": "test_read_format_mtree_nonexistent_contents_file",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_mtree.c"
+    },
+    {
+      "define_test": "test_read_format_mtree_noprint",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_mtree.c"
+    },
+    {
+      "define_test": "test_read_format_mtree_tab",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_mtree.c"
+    },
+    {
+      "define_test": "test_read_format_mtree_crash747",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_mtree_crash747.c"
+    },
+    {
+      "define_test": "test_read_format_pax_bz2",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_pax_bz2.c"
+    },
+    {
+      "define_test": "test_read_format_rar_set_format",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar.c"
+    },
+    {
+      "define_test": "test_read_format_rar_basic",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar.c"
+    },
+    {
+      "define_test": "test_read_format_rar_subblock",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar.c"
+    },
+    {
+      "define_test": "test_read_format_rar_noeof",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar.c"
+    },
+    {
+      "define_test": "test_read_format_rar_unicode_UTF8",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar.c"
+    },
+    {
+      "define_test": "test_read_format_rar_unicode_CP932",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar.c"
+    },
+    {
+      "define_test": "test_read_format_rar_compress_normal",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar.c"
+    },
+    {
+      "define_test": "test_read_format_rar_multi_lzss_blocks",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar.c"
+    },
+    {
+      "define_test": "test_read_format_rar_compress_best",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar.c"
+    },
+    {
+      "define_test": "test_read_format_rar_ppmd_lzss_conversion",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar.c"
+    },
+    {
+      "define_test": "test_read_format_rar_binary",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar.c"
+    },
+    {
+      "define_test": "test_read_format_rar_windows",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar.c"
+    },
+    {
+      "define_test": "test_read_format_rar_multivolume",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar.c"
+    },
+    {
+      "define_test": "test_read_format_rar_multivolume_skip",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar.c"
+    },
+    {
+      "define_test": "test_read_format_rar_sfx",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar.c"
+    },
+    {
+      "define_test": "test_read_format_rar_multivolume_stored_file",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar.c"
+    },
+    {
+      "define_test": "test_read_format_rar_multivolume_stored_file_skip",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar.c"
+    },
+    {
+      "define_test": "test_read_format_rar_multivolume_seek_data",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar.c"
+    },
+    {
+      "define_test": "test_read_format_rar_multivolume_seek_multiple_files",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar.c"
+    },
+    {
+      "define_test": "test_read_format_rar_multivolume_uncompressed_files",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar.c"
+    },
+    {
+      "define_test": "test_read_format_rar_ppmd_use_after_free",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar.c"
+    },
+    {
+      "define_test": "test_read_format_rar_ppmd_use_after_free2",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_set_format",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_stored",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_compressed",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_multiple_files",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_multiple_files_solid",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_multiarchive_skip_all",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_multiarchive_skip_all_but_first",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_multiarchive_skip_all_but_second",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_blake2",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_arm_filter",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_stored_skip_all",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_stored_skip_in_part",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_stored_skip_all_but_first",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_stored_skip_all_in_part",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_multiarchive_solid_extr_all",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_multiarchive_solid_skip_all",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_multiarchive_solid_skip_all_but_first",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_multiarchive_solid_skip_all_but_scnd",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_multiarchive_solid_skip_all_but_third",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_multiarchive_solid_skip_all_but_last",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_solid_skip_all",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_solid_skip_all_but_first",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_solid_skip_all_but_second",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_solid_skip_all_but_last",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_extract_win32",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_block_by_block",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_owner",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_symlink",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_hardlink",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_extra_field_version",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_readtables_overflow",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_leftshift1",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_leftshift2",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_truncated_huff",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_invalid_dict_reference",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_distance_overflow",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_nonempty_dir_stream",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_fileattr",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_different_window_size",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_window_buf_and_size_desync",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_arm_filter_on_window_boundary",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_different_solid_window_size",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_different_winsize_on_merge",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_block_size_is_too_small",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_sfx",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_decode_number_out_of_bounds_read",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_bad_window_size_in_multiarchive_file",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_read_data_block_uninitialized_offset",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5.c"
+    },
+    {
+      "define_test": "test_read_format_rar5_loop_bug",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar5_loop_bug.c"
+    },
+    {
+      "define_test": "test_read_format_rar_encryption_data",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar_encryption_data.c"
+    },
+    {
+      "define_test": "test_read_format_rar_encryption_header",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar_encryption_header.c"
+    },
+    {
+      "define_test": "test_read_format_rar_encryption_partially",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar_encryption_partially.c"
+    },
+    {
+      "define_test": "test_read_format_rar_filter",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar_filter.c"
+    },
+    {
+      "define_test": "test_read_format_rar_invalid1",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar_invalid1.c"
+    },
+    {
+      "define_test": "test_read_format_rar_overflow",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_rar_overflow.c"
+    },
+    {
+      "define_test": "test_read_format_raw",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_raw.c"
+    },
+    {
+      "define_test": "test_read_format_tar",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_tar.c"
+    },
+    {
+      "define_test": "test_read_format_tar_concatenated",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_tar_concatenated.c"
+    },
+    {
+      "define_test": "test_read_format_tar_empty_filename",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_tar_empty_filename.c"
+    },
+    {
+      "define_test": "test_read_format_tar_empty_pax",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_tar_empty_pax.c"
+    },
+    {
+      "define_test": "test_read_format_tar_empty_with_gnulabel",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_tar_empty_with_gnulabel.c"
+    },
+    {
+      "define_test": "test_read_format_tar_filename",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_tar_filename.c"
+    },
+    {
+      "define_test": "test_read_format_tar_invalid_pax_size",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_tar_invalid_pax_size.c"
+    },
+    {
+      "define_test": "test_read_format_tbz",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_tbz.c"
+    },
+    {
+      "define_test": "test_read_format_tgz",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_tgz.c"
+    },
+    {
+      "define_test": "test_read_format_tlz",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_tlz.c"
+    },
+    {
+      "define_test": "test_read_format_txz",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_txz.c"
+    },
+    {
+      "define_test": "test_read_format_tz",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_tz.c"
+    },
+    {
+      "define_test": "test_read_format_ustar_filename",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_ustar_filename.c"
+    },
+    {
+      "define_test": "test_read_format_warc",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_warc.c"
+    },
+    {
+      "define_test": "test_read_format_warc_incomplete",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_warc.c"
+    },
+    {
+      "define_test": "test_read_format_xar",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_xar.c"
+    },
+    {
+      "define_test": "test_read_format_zip",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_ppmd_one_file",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_ppmd_one_file_blockread",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_ppmd_multi",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_ppmd_multi_blockread",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_lzma_one_file",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_lzma_one_file_blockread",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_lzma_multi",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_lzma_multi_blockread",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_bzip2_one_file",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_bzip2_one_file_blockread",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_bzip2_multi",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_bzip2_multi_blockread",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_zstd_one_file",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_zstd_one_file_blockread",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_zstd_multi",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_zstd_multi_blockread",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_xz_multi",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_xz_multi_blockread",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_ppmd8_crash_1",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_bz2_hang_on_invalid",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_ppmd8_crash_2",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_lzma_alone_leak",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_lzma_stream_end",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_lzma_stream_end_blockread",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_7z_lzma",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_7z_deflate",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip.c"
+    },
+    {
+      "define_test": "test_read_format_zip_utf8_paths",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_7075_utf8_paths.c"
+    },
+    {
+      "define_test": "test_read_format_zip_comment_stored",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_comment_stored.c"
+    },
+    {
+      "define_test": "test_read_format_zip_encryption_data",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_encryption_data.c"
+    },
+    {
+      "define_test": "test_read_format_zip_encryption_header",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_encryption_header.c"
+    },
+    {
+      "define_test": "test_read_format_zip_encryption_partially",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_encryption_partially.c"
+    },
+    {
+      "define_test": "test_read_format_zip_extra_padding",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_extra_padding.c"
+    },
+    {
+      "define_test": "test_read_format_zip_filename_CP932_eucJP",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_filename.c"
+    },
+    {
+      "define_test": "test_read_format_zip_filename_CP932_UTF8",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_filename.c"
+    },
+    {
+      "define_test": "test_read_format_zip_filename_UTF8_eucJP",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_filename.c"
+    },
+    {
+      "define_test": "test_read_format_zip_filename_UTF8_UTF8",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_filename.c"
+    },
+    {
+      "define_test": "test_read_format_zip_filename_CP866_KOI8R",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_filename.c"
+    },
+    {
+      "define_test": "test_read_format_zip_filename_CP866_UTF8",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_filename.c"
+    },
+    {
+      "define_test": "test_read_format_zip_filename_KOI8R_CP866",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_filename.c"
+    },
+    {
+      "define_test": "test_read_format_zip_filename_KOI8R_UTF8",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_filename.c"
+    },
+    {
+      "define_test": "test_read_format_zip_filename_UTF8_KOI8R",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_filename.c"
+    },
+    {
+      "define_test": "test_read_format_zip_filename_UTF8_CP866",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_filename.c"
+    },
+    {
+      "define_test": "test_read_format_zip_filename_UTF8_UTF8_ru",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_filename.c"
+    },
+    {
+      "define_test": "test_read_format_zip_filename_CP932_CP932",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_filename.c"
+    },
+    {
+      "define_test": "test_read_format_zip_filename_UTF8_CP932",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_filename.c"
+    },
+    {
+      "define_test": "test_read_format_zip_filename_CP866_CP1251",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_filename.c"
+    },
+    {
+      "define_test": "test_read_format_zip_filename_CP866_CP1251_win",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_filename.c"
+    },
+    {
+      "define_test": "test_read_format_zip_filename_KOI8R_CP1251",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_filename.c"
+    },
+    {
+      "define_test": "test_read_format_zip_filename_UTF8_CP1251",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_filename.c"
+    },
+    {
+      "define_test": "test_read_format_zip_filename_KOI8R_UTF8_2",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_filename.c"
+    },
+    {
+      "define_test": "test_read_format_zip_high_compression",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_high_compression.c"
+    },
+    {
+      "define_test": "test_read_format_zip_high_compression2",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_high_compression.c"
+    },
+    {
+      "define_test": "test_read_format_zip_jar",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_jar.c"
+    },
+    {
+      "define_test": "test_read_format_zip_mac_metadata",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_mac_metadata.c"
+    },
+    {
+      "define_test": "test_read_format_zip_malformed",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_malformed.c"
+    },
+    {
+      "define_test": "test_read_format_zip_msdos",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_msdos.c"
+    },
+    {
+      "define_test": "test_read_format_zip_nested",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_nested.c"
+    },
+    {
+      "define_test": "test_read_format_zip_nofiletype",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_nofiletype.c"
+    },
+    {
+      "define_test": "test_read_format_zip_padded1",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_padded.c"
+    },
+    {
+      "define_test": "test_read_format_zip_padded2",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_padded.c"
+    },
+    {
+      "define_test": "test_read_format_zip_padded3",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_padded.c"
+    },
+    {
+      "define_test": "test_read_format_zip_sfx",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_sfx.c"
+    },
+    {
+      "define_test": "test_read_format_zip_traditional_encryption_data",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_traditional_encryption_data.c"
+    },
+    {
+      "define_test": "test_read_format_zip_winzip_aes128",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_winzip_aes.c"
+    },
+    {
+      "define_test": "test_read_format_zip_winzip_aes256",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_winzip_aes.c"
+    },
+    {
+      "define_test": "test_read_format_zip_winzip_aes256_stored",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_winzip_aes.c"
+    },
+    {
+      "define_test": "test_read_format_zip_winzip_aes256_large",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_winzip_aes_large.c"
+    },
+    {
+      "define_test": "test_read_format_zip_with_invalid_traditional_eocd",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_with_invalid_traditional_eocd.c"
+    },
+    {
+      "define_test": "test_read_format_zip_zip64a",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_zip64.c"
+    },
+    {
+      "define_test": "test_read_format_zip_zip64b",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_format_zip_zip64.c"
+    },
+    {
+      "define_test": "test_read_large",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_large.c"
+    },
+    {
+      "define_test": "test_read_pax_truncated",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_pax_truncated.c"
+    },
+    {
+      "define_test": "test_read_pax_xattr_rht_security_selinux",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_pax_xattr_rht_security_selinux.c"
+    },
+    {
+      "define_test": "test_read_pax_xattr_schily",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_pax_xattr_schily.c"
+    },
+    {
+      "define_test": "test_read_position",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_position.c"
+    },
+    {
+      "define_test": "test_read_set_format",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_set_format.c"
+    },
+    {
+      "define_test": "test_read_set_wrong_format",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_set_format.c"
+    },
+    {
+      "define_test": "test_read_append_filter",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_set_format.c"
+    },
+    {
+      "define_test": "test_read_append_wrong_filter",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_set_format.c"
+    },
+    {
+      "define_test": "test_read_append_filter_program",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_set_format.c"
+    },
+    {
+      "define_test": "test_read_append_filter_wrong_program",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_set_format.c"
+    },
+    {
+      "define_test": "test_read_too_many_filters",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_too_many_filters.c"
+    },
+    {
+      "define_test": "test_read_truncated",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_truncated.c"
+    },
+    {
+      "define_test": "test_read_truncated_filter_bzip2",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_truncated_filter.c"
+    },
+    {
+      "define_test": "test_read_truncated_filter_compress",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_truncated_filter.c"
+    },
+    {
+      "define_test": "test_read_truncated_filter_gzip",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_truncated_filter.c"
+    },
+    {
+      "define_test": "test_read_truncated_filter_lzip",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_truncated_filter.c"
+    },
+    {
+      "define_test": "test_read_truncated_filter_lzma",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_truncated_filter.c"
+    },
+    {
+      "define_test": "test_read_truncated_filter_lzop",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_truncated_filter.c"
+    },
+    {
+      "define_test": "test_read_truncated_filter_xz",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_read_truncated_filter.c"
+    },
+    {
+      "define_test": "test_short_writes",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_short_writes.c"
+    },
+    {
+      "define_test": "test_sparse_basic",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_sparse_basic.c"
+    },
+    {
+      "define_test": "test_fully_sparse_files",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_sparse_basic.c"
+    },
+    {
+      "define_test": "test_tar_filenames",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_tar_filenames.c"
+    },
+    {
+      "define_test": "test_tar_large",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_tar_large.c"
+    },
+    {
+      "define_test": "test_ustar_filename_encoding_UTF8_CP866",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_ustar_filename_encoding.c"
+    },
+    {
+      "define_test": "test_ustar_filename_encoding_KOI8R_UTF8",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_ustar_filename_encoding.c"
+    },
+    {
+      "define_test": "test_ustar_filename_encoding_KOI8R_CP866",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_ustar_filename_encoding.c"
+    },
+    {
+      "define_test": "test_ustar_filename_encoding_CP1251_UTF8",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_ustar_filename_encoding.c"
+    },
+    {
+      "define_test": "test_ustar_filename_encoding_ru_RU_CP1251",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_ustar_filename_encoding.c"
+    },
+    {
+      "define_test": "test_ustar_filename_encoding_Russian_Russia",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_ustar_filename_encoding.c"
+    },
+    {
+      "define_test": "test_ustar_filename_encoding_EUCJP_UTF8",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_ustar_filename_encoding.c"
+    },
+    {
+      "define_test": "test_ustar_filename_encoding_EUCJP_CP932",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_ustar_filename_encoding.c"
+    },
+    {
+      "define_test": "test_ustar_filename_encoding_CP932_UTF8",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_ustar_filename_encoding.c"
+    },
+    {
+      "define_test": "test_ustar_filenames",
+      "phase_group": "read_mainstream",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_ustar_filenames.c"
+    },
+    {
+      "define_test": "test_warn_missing_hardlink_target",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_warn_missing_hardlink_target.c"
+    },
+    {
+      "define_test": "test_write_disk",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_disk.c"
+    },
+    {
+      "define_test": "test_write_disk_appledouble",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_disk_appledouble.c"
+    },
+    {
+      "define_test": "test_write_disk_failures",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_disk_failures.c"
+    },
+    {
+      "define_test": "test_write_disk_fixup",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_disk_fixup.c"
+    },
+    {
+      "define_test": "test_write_disk_hardlink",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_disk_hardlink.c"
+    },
+    {
+      "define_test": "test_write_disk_hfs_compression",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_disk_hfs_compression.c"
+    },
+    {
+      "define_test": "test_write_disk_lookup",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_disk_lookup.c"
+    },
+    {
+      "define_test": "test_write_disk_mac_metadata",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_disk_mac_metadata.c"
+    },
+    {
+      "define_test": "test_write_disk_no_hfs_compression",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_disk_no_hfs_compression.c"
+    },
+    {
+      "define_test": "test_write_disk_perms",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_disk_perms.c"
+    },
+    {
+      "define_test": "test_write_disk_secure",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_disk_secure.c"
+    },
+    {
+      "define_test": "test_write_disk_secure744",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_disk_secure744.c"
+    },
+    {
+      "define_test": "test_write_disk_secure745",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_disk_secure745.c"
+    },
+    {
+      "define_test": "test_write_disk_secure746a",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_disk_secure746.c"
+    },
+    {
+      "define_test": "test_write_disk_secure746b",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_disk_secure746.c"
+    },
+    {
+      "define_test": "test_write_disk_sparse",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_disk_sparse.c"
+    },
+    {
+      "define_test": "test_write_disk_symlink",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_disk_symlink.c"
+    },
+    {
+      "define_test": "test_write_disk_times",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_disk_times.c"
+    },
+    {
+      "define_test": "test_write_filter_b64encode",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_filter_b64encode.c"
+    },
+    {
+      "define_test": "test_write_filter_bzip2",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_filter_bzip2.c"
+    },
+    {
+      "define_test": "test_write_filter_compress",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_filter_compress.c"
+    },
+    {
+      "define_test": "test_write_filter_gzip",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_filter_gzip.c"
+    },
+    {
+      "define_test": "test_write_filter_gzip_timestamp",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_filter_gzip_timestamp.c"
+    },
+    {
+      "define_test": "test_write_filter_lrzip",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_filter_lrzip.c"
+    },
+    {
+      "define_test": "test_write_filter_lz4",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_filter_lz4.c"
+    },
+    {
+      "define_test": "test_write_filter_lz4_disable_stream_checksum",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_filter_lz4.c"
+    },
+    {
+      "define_test": "test_write_filter_lz4_enable_block_checksum",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_filter_lz4.c"
+    },
+    {
+      "define_test": "test_write_filter_lz4_block_size_4",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_filter_lz4.c"
+    },
+    {
+      "define_test": "test_write_filter_lz4_block_size_5",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_filter_lz4.c"
+    },
+    {
+      "define_test": "test_write_filter_lz4_block_size_6",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_filter_lz4.c"
+    },
+    {
+      "define_test": "test_write_filter_lz4_block_dependence",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_filter_lz4.c"
+    },
+    {
+      "define_test": "test_write_filter_lzip",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_filter_lzip.c"
+    },
+    {
+      "define_test": "test_write_filter_lzma",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_filter_lzma.c"
+    },
+    {
+      "define_test": "test_write_filter_lzop",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_filter_lzop.c"
+    },
+    {
+      "define_test": "test_write_filter_program",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_filter_program.c"
+    },
+    {
+      "define_test": "test_write_filter_uuencode",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_filter_uuencode.c"
+    },
+    {
+      "define_test": "test_write_filter_xz",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_filter_xz.c"
+    },
+    {
+      "define_test": "test_write_filter_zstd",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_filter_zstd.c"
+    },
+    {
+      "define_test": "test_write_format_7zip",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_7zip.c"
+    },
+    {
+      "define_test": "test_write_format_7zip_basic_bzip2",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_7zip.c"
+    },
+    {
+      "define_test": "test_write_format_7zip_basic_copy",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_7zip.c"
+    },
+    {
+      "define_test": "test_write_format_7zip_basic_deflate",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_7zip.c"
+    },
+    {
+      "define_test": "test_write_format_7zip_basic_lzma1",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_7zip.c"
+    },
+    {
+      "define_test": "test_write_format_7zip_basic_lzma2",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_7zip.c"
+    },
+    {
+      "define_test": "test_write_format_7zip_basic_ppmd",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_7zip.c"
+    },
+    {
+      "define_test": "test_write_format_7zip_empty_archive",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_7zip_empty.c"
+    },
+    {
+      "define_test": "test_write_format_7zip_empty_files",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_7zip_empty.c"
+    },
+    {
+      "define_test": "test_write_format_7zip_large_bzip2",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_7zip_large.c"
+    },
+    {
+      "define_test": "test_write_format_7zip_large_copy",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_7zip_large.c"
+    },
+    {
+      "define_test": "test_write_format_7zip_large_deflate",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_7zip_large.c"
+    },
+    {
+      "define_test": "test_write_format_7zip_large_lzma1",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_7zip_large.c"
+    },
+    {
+      "define_test": "test_write_format_7zip_large_lzma2",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_7zip_large.c"
+    },
+    {
+      "define_test": "test_write_format_7zip_large_ppmd",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_7zip_large.c"
+    },
+    {
+      "define_test": "test_write_format_ar",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_ar.c"
+    },
+    {
+      "define_test": "test_write_format_cpio",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_cpio.c"
+    },
+    {
+      "define_test": "test_write_format_cpio_empty",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_cpio_empty.c"
+    },
+    {
+      "define_test": "test_write_format_cpio_newc",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_cpio_newc.c"
+    },
+    {
+      "define_test": "test_write_format_cpio_odc",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_cpio_odc.c"
+    },
+    {
+      "define_test": "test_write_format_gnutar",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_gnutar.c"
+    },
+    {
+      "define_test": "test_write_format_gnutar_filenames",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_gnutar_filenames.c"
+    },
+    {
+      "define_test": "test_write_format_gnutar_linknames",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_gnutar_filenames.c"
+    },
+    {
+      "define_test": "test_write_format_iso9660",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_iso9660.c"
+    },
+    {
+      "define_test": "test_write_format_iso9660_boot",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_iso9660_boot.c"
+    },
+    {
+      "define_test": "test_write_format_iso9660_empty",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_iso9660_empty.c"
+    },
+    {
+      "define_test": "test_write_format_iso9660_filename",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_iso9660_filename.c"
+    },
+    {
+      "define_test": "test_write_format_iso9660_zisofs",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_iso9660_zisofs.c"
+    },
+    {
+      "define_test": "test_write_format_mtree",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_mtree.c"
+    },
+    {
+      "define_test": "test_write_format_mtree_no_leading_dotslash",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_mtree.c"
+    },
+    {
+      "define_test": "test_write_format_mtree_absolute_path",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_mtree_absolute_path.c"
+    },
+    {
+      "define_test": "test_write_format_mtree_classic",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_mtree_classic.c"
+    },
+    {
+      "define_test": "test_write_format_mtree_classic_indent",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_mtree_classic_indent.c"
+    },
+    {
+      "define_test": "test_write_format_mtree_fflags",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_mtree_fflags.c"
+    },
+    {
+      "define_test": "test_write_format_mtree_no_separator",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_mtree_no_separator.c"
+    },
+    {
+      "define_test": "test_write_format_mtree_quoted_filename",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_mtree_quoted_filename.c"
+    },
+    {
+      "define_test": "test_write_format_pax",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_pax.c"
+    },
+    {
+      "define_test": "test_write_format_raw",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_raw.c"
+    },
+    {
+      "define_test": "test_write_format_raw_b64",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_raw_b64.c"
+    },
+    {
+      "define_test": "test_write_format_shar_empty",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_shar_empty.c"
+    },
+    {
+      "define_test": "test_write_format_tar",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_tar.c"
+    },
+    {
+      "define_test": "test_write_format_tar_empty",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_tar_empty.c"
+    },
+    {
+      "define_test": "test_write_format_tar_sparse",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_tar_sparse.c"
+    },
+    {
+      "define_test": "test_write_format_tar_ustar",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_tar_ustar.c"
+    },
+    {
+      "define_test": "test_write_format_tar_v7tar",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_tar_v7tar.c"
+    },
+    {
+      "define_test": "test_write_format_warc",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_warc.c"
+    },
+    {
+      "define_test": "test_write_format_warc_empty",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_warc_empty.c"
+    },
+    {
+      "define_test": "test_write_format_xar",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_xar.c"
+    },
+    {
+      "define_test": "test_write_format_xar_empty",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_xar_empty.c"
+    },
+    {
+      "define_test": "test_write_format_zip",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip.c"
+    },
+    {
+      "define_test": "test_write_format_zip64",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip.c"
+    },
+    {
+      "define_test": "test_write_format_zip_traditional_pkware_encryption",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip.c"
+    },
+    {
+      "define_test": "test_write_format_zip_winzip_aes128_encryption",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip.c"
+    },
+    {
+      "define_test": "test_write_format_zip_winzip_aes256_encryption",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip.c"
+    },
+    {
+      "define_test": "test_write_format_zip_compression_store",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip_compression_store.c"
+    },
+    {
+      "define_test": "test_write_format_zip_empty",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip_empty.c"
+    },
+    {
+      "define_test": "test_write_format_zip_empty_zip64",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip_empty_zip64.c"
+    },
+    {
+      "define_test": "test_write_format_zip_size_unset",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip_entry_size_unset.c"
+    },
+    {
+      "define_test": "test_write_format_zip_file",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip_file.c"
+    },
+    {
+      "define_test": "test_write_format_zip_file_zip64",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip_file_zip64.c"
+    },
+    {
+      "define_test": "test_write_format_zip_large",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip_large.c"
+    },
+    {
+      "define_test": "test_write_format_zip_zip64_oversize",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_format_zip_zip64.c"
+    },
+    {
+      "define_test": "test_write_open_memory",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_open_memory.c"
+    },
+    {
+      "define_test": "test_write_read_format_zip",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_read_format_zip.c"
+    },
+    {
+      "define_test": "test_write_read_format_zip_improved_streaming",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_read_format_zip.c"
+    },
+    {
+      "define_test": "test_write_read_format_zip64",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_read_format_zip.c"
+    },
+    {
+      "define_test": "test_write_read_format_zip64_improved_streaming",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_write_read_format_zip.c"
+    },
+    {
+      "define_test": "test_xattr_platform",
+      "phase_group": "write_disk",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_xattr_platform.c"
+    },
+    {
+      "define_test": "test_zip_filename_encoding_UTF8",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_zip_filename_encoding.c"
+    },
+    {
+      "define_test": "test_zip_filename_encoding_KOI8R",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_zip_filename_encoding.c"
+    },
+    {
+      "define_test": "test_zip_filename_encoding_ru_RU_CP1251",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_zip_filename_encoding.c"
+    },
+    {
+      "define_test": "test_zip_filename_encoding_Russian_Russia",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_zip_filename_encoding.c"
+    },
+    {
+      "define_test": "test_zip_filename_encoding_EUCJP",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_zip_filename_encoding.c"
+    },
+    {
+      "define_test": "test_zip_filename_encoding_CP932",
+      "phase_group": "advanced_formats",
+      "source_file": "original/libarchive-3.7.2/libarchive/test/test_zip_filename_encoding.c"
+    }
+  ],
+  "schema_version": 1
+}

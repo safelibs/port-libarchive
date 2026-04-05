@@ -1,0 +1,4577 @@
+{
+  "original_export_count": 421,
+  "rows": [
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_bzlib_version"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_clear_error"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_compression"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_compression_name"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_copy_error"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_acl"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_acl_add_entry"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_acl_add_entry_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_acl_clear"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_acl_count"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_acl_from_text"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_acl_from_text_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_acl_next"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_acl_reset"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_acl_text"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_acl_text_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_acl_to_text"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_acl_to_text_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_acl_types"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_atime"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_atime_is_set"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_atime_nsec"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_birthtime"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_birthtime_is_set"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_birthtime_nsec"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_clear"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_clone"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_copy_fflags_text"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_copy_fflags_text_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_copy_gname"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_copy_gname_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_copy_hardlink"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_copy_hardlink_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_copy_link"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_copy_link_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_copy_mac_metadata"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_copy_pathname"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_copy_pathname_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_copy_sourcepath"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_copy_sourcepath_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_copy_stat"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_copy_symlink"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_copy_symlink_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_copy_uname"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_copy_uname_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_ctime"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_ctime_is_set"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_ctime_nsec"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_dev"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_dev_is_set"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_devmajor"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_devminor"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_digest"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_fflags"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_fflags_text"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_filetype"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_free"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_gid"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_gname"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_gname_utf8"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_gname_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_hardlink"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_hardlink_utf8"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_hardlink_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_ino"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_ino64"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_ino_is_set"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_is_data_encrypted"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_is_encrypted"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_is_metadata_encrypted"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_linkify"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_linkresolver_free"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_linkresolver_new"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_linkresolver_set_strategy"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_mac_metadata"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_mode"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_mtime"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_mtime_is_set"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_mtime_nsec"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_new"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_new2"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_nlink"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_partial_links"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_pathname"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_pathname_utf8"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_pathname_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_perm"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_rdev"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_rdevmajor"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_rdevminor"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_atime"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_birthtime"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_ctime"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_dev"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_devmajor"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_devminor"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_fflags"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_filetype"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_gid"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_gname"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_gname_utf8"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_hardlink"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_hardlink_utf8"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_ino"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_ino64"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_is_data_encrypted"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_is_metadata_encrypted"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_link"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_link_utf8"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_mode"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_mtime"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_nlink"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_pathname"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_pathname_utf8"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_perm"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_rdev"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_rdevmajor"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_rdevminor"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_size"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_symlink"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_symlink_type"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_symlink_utf8"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_uid"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_uname"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_set_uname_utf8"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_size"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_size_is_set"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_sourcepath"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_sourcepath_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_sparse_add_entry"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_sparse_clear"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_sparse_count"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_sparse_next"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_sparse_reset"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_stat"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_strmode"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_symlink"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_symlink_type"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_symlink_utf8"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_symlink_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_uid"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_uname"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_uname_utf8"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_uname_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_unset_atime"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_unset_birthtime"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_unset_ctime"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_unset_mtime"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_unset_size"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_update_gname_utf8"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_update_hardlink_utf8"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_update_link_utf8"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_update_pathname_utf8"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_update_symlink_utf8"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_update_uname_utf8"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_xattr_add_entry"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_xattr_clear"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_xattr_count"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_xattr_next"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive_entry.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_entry_xattr_reset"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_errno"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_error_string"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_file_count"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_filter_bytes"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_filter_code"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_filter_count"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_filter_name"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_format"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_format_name"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_free"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_liblz4_version"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_liblzma_version"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_libzstd_version"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_exclude_entry"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_exclude_pattern"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_exclude_pattern_from_file"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_exclude_pattern_from_file_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_exclude_pattern_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_excluded"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_free"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_include_date"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_include_date_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_include_file_time"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_include_file_time_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_include_gid"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_include_gname"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_include_gname_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_include_pattern"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_include_pattern_from_file"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_include_pattern_from_file_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_include_pattern_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_include_time"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_include_uid"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_include_uname"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_include_uname_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_new"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_owner_excluded"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_path_excluded"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_path_unmatched_inclusions"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_path_unmatched_inclusions_next"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_path_unmatched_inclusions_next_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_set_inclusion_recursion"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_match_time_excluded"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_position_compressed"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_position_uncompressed"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_add_callback_data"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_add_passphrase"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_append_callback_data"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_append_filter"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_append_filter_program"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_append_filter_program_signature"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_close"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_data"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_data_block"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_data_into_fd"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_data_skip"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_disk_can_descend"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_disk_current_filesystem"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_disk_current_filesystem_is_remote"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_disk_current_filesystem_is_synthetic"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_disk_descend"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_disk_entry_from_file"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_disk_gname"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_disk_new"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_disk_open"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_disk_open_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_disk_set_atime_restored"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_disk_set_behavior"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_disk_set_gname_lookup"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_disk_set_matching"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_disk_set_metadata_filter_callback"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_disk_set_standard_lookup"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_disk_set_symlink_hybrid"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_disk_set_symlink_logical"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_disk_set_symlink_physical"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_disk_set_uname_lookup"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_disk_uname"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_extract"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_extract2"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_extract_set_progress_callback"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_extract_set_skip_file"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_finish"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_format_capabilities"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_free"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_has_encrypted_entries"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_header_position"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_new"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_next_header"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_next_header2"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_open"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_open1"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_open2"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_open_FILE"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_open_fd"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_open_file"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_open_filename"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_open_filename_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_open_filenames"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_open_memory"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_open_memory2"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_prepend_callback_data"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_set_callback_data"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_set_callback_data2"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_set_close_callback"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_set_filter_option"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_set_format"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_set_format_option"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_set_open_callback"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_set_option"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_set_options"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_set_passphrase_callback"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_set_read_callback"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_set_seek_callback"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_set_skip_callback"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_set_switch_callback"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_compression_all"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_compression_bzip2"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_compression_compress"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_compression_gzip"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_compression_lzip"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_compression_lzma"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_compression_none"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_compression_program"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_compression_program_signature"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_compression_rpm"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_compression_uu"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_compression_xz"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_filter_all"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_filter_by_code"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_filter_bzip2"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_filter_compress"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_filter_grzip"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_filter_gzip"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_filter_lrzip"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_filter_lz4"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_filter_lzip"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_filter_lzma"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_filter_lzop"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_filter_none"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_filter_program"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_filter_program_signature"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_filter_rpm"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_filter_uu"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_filter_xz"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_filter_zstd"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_format_7zip"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_format_all"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_format_ar"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_format_by_code"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_format_cab"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_format_cpio"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_format_empty"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_format_gnutar"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_format_iso9660"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_format_lha"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_format_mtree"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_format_rar"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_format_rar5"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_format_raw"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_format_tar"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_format_warc"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_format_xar"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_format_zip"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_format_zip_seekable"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_read_support_format_zip_streamable"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_seek_data"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_set_error"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_utility_string_sort"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_version_details"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_version_number"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_version_string"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_add_filter"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_add_filter_b64encode"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_add_filter_by_name"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_add_filter_bzip2"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_add_filter_compress"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_add_filter_grzip"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_add_filter_gzip"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_add_filter_lrzip"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_add_filter_lz4"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_add_filter_lzip"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_add_filter_lzma"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_add_filter_lzop"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_add_filter_none"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_add_filter_program"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_add_filter_uuencode"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_add_filter_xz"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_add_filter_zstd"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_close"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_data"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_data_block"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_disk_gid"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_disk_new"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_disk_set_group_lookup"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_disk_set_options"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_disk_set_skip_file"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_disk_set_standard_lookup"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_disk_set_user_lookup"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_disk_uid"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_fail"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_finish"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_finish_entry"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_free"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_get_bytes_in_last_block"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_get_bytes_per_block"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_header"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_new"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_open"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_open2"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_open_FILE"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_open_fd"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_open_file"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_open_filename"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_open_filename_w"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_open_memory"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_bytes_in_last_block"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_bytes_per_block"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_compression_bzip2"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_compression_compress"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_compression_gzip"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_compression_lzip"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_compression_lzma"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_compression_none"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_compression_program"
+    },
+    {
+      "classification": "live symbol-file-only export that still must remain link-compatible",
+      "deprecated": false,
+      "header_declared": false,
+      "headers": [],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_compression_xz"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_filter_option"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_7zip"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_ar_bsd"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_ar_svr4"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_by_name"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_cpio"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_cpio_bin"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_cpio_newc"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_cpio_odc"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_cpio_pwb"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_filter_by_ext"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_filter_by_ext_def"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_gnutar"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_iso9660"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_mtree"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_mtree_classic"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_option"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_pax"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_pax_restricted"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_raw"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_shar"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_shar_dump"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_ustar"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_v7tar"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_warc"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_xar"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_format_zip"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_option"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_options"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_passphrase"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_passphrase_callback"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_set_skip_file"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_zip_set_compression_deflate"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_write_zip_set_compression_store"
+    },
+    {
+      "classification": "header-declared public API",
+      "deprecated": false,
+      "header_declared": true,
+      "headers": [
+        "safe/include/archive.h"
+      ],
+      "listed_in_debian_symbols": true,
+      "present_in_original_exports": true,
+      "symbol": "archive_zlib_version"
+    }
+  ],
+  "schema_version": 1
+}

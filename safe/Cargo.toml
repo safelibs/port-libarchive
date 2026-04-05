@@ -1,0 +1,11 @@
+[package]
+name = "archive"
+version = "3.7.2"
+edition = "2021"
+build = "build.rs"
+
+[lib]
+name = "archive"
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[dependencies]
