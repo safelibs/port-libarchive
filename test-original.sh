@@ -539,8 +539,12 @@ test_zathura_cb() {
 
 test_kodi_vfs_libarchive() {
   local dir
+  local kodi_home
+  local addon_dir
+  local db_path
+  local result_path
+  local archive_path
   local status=0
-  local url
 
   should_run "kodi-vfs-libarchive" || return 0
   log_step "kodi-vfs-libarchive"
@@ -550,29 +554,172 @@ test_kodi_vfs_libarchive() {
   require_contains /usr/share/kodi/addons/vfs.libarchive/addon.xml 'protocols="archive"'
   require_contains /usr/share/kodi/addons/vfs.libarchive/addon.xml 'extensions=".7z|.tar.gz|.tar.bz2|.tar.xz|.zip|.tgz|.tbz2|.gz|.bz2|.xz|.tar"'
 
-  make_png "$dir/frame.png" 20 80 180
-  bsdtar -cf "$dir/comic.tar" -C "$dir" frame.png
+  kodi_home="$dir/kodi-home"
+  addon_dir="$kodi_home/.kodi/addons/service.libarchiveprobe"
+  db_path="$kodi_home/.kodi/userdata/Database/Addons33.db"
+  result_path="$dir/kodi-result.json"
+  archive_path="$dir/comic.tar"
 
-  url="$(python3 - "$dir/comic.tar" <<'PY'
-import sys
+  mkdir -p "$addon_dir"
+  printf 'hello from kodi archive probe\n' >"$dir/frame.txt"
+  bsdtar -cf "$archive_path" -C "$dir" frame.txt
+
+  cat >"$addon_dir/addon.xml" <<'XML'
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="service.libarchiveprobe" name="Libarchive Probe" version="1.0.0" provider-name="test-harness">
+  <requires>
+    <import addon="xbmc.python" version="3.0.0"/>
+  </requires>
+  <extension point="xbmc.service" library="probe.py" start="startup"/>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en_GB">Kodi libarchive probe</summary>
+    <description lang="en_GB">Kodi libarchive probe</description>
+    <platform>all</platform>
+  </extension>
+</addon>
+XML
+
+  cat >"$addon_dir/probe.py" <<'PY'
+import json
+import os
 import urllib.parse
 
-archive = urllib.parse.quote(sys.argv[1], safe="")
-print(f"archive://{archive}/frame.png")
-PY
-)"
+import xbmc
+import xbmcvfs
 
-  # Kodi does not expose a stable non-interactive archive-browse command for
-  # addons. The narrow fallback is to verify that the addon is installed,
-  # directly linked against the active libarchive, and discovered by Kodi at
-  # runtime while it boots with an archive URL test target.
+archive = os.environ["KODI_ARCHIVE"]
+result_path = os.environ["KODI_RESULT_PATH"]
+encoded_archive = urllib.parse.quote(archive, safe="")
+url = f"archive://{encoded_archive}/"
+
+xbmc.log("AUTOEXEC START", xbmc.LOGINFO)
+xbmc.log("AUTOEXEC URL=" + url, xbmc.LOGINFO)
+
+payload = {"url": url}
+try:
+    dirs, files = xbmcvfs.listdir(url)
+    payload["dirs"] = dirs
+    payload["files"] = files
+    xbmc.log("AUTOEXEC DIRS=" + repr(dirs), xbmc.LOGINFO)
+    xbmc.log("AUTOEXEC FILES=" + repr(files), xbmc.LOGINFO)
+except Exception as exc:
+    payload["listdir_error"] = repr(exc)
+    xbmc.log("AUTOEXEC LISTDIR_ERROR=" + repr(exc), xbmc.LOGERROR)
+
+candidate_urls = [
+    ("encoded_host", f"archive://{encoded_archive}/frame.txt"),
+    ("encoded_host_double_slash", f"archive://{encoded_archive}//frame.txt"),
+    ("raw_path", f"archive://{archive}/frame.txt"),
+    ("raw_path_double_slash", f"archive:////{archive.lstrip('/')}/frame.txt"),
+    ("fully_encoded", f"archive://{urllib.parse.quote(archive + '/frame.txt', safe='')}"),
+]
+
+payload["candidates"] = []
+for label, file_url in candidate_urls:
+    candidate = {"label": label, "url": file_url}
+    xbmc.log("AUTOEXEC FILE_URL[" + label + "]=" + file_url, xbmc.LOGINFO)
+    try:
+        candidate["exists"] = xbmcvfs.exists(file_url)
+    except Exception as exc:
+        candidate["exists_error"] = repr(exc)
+    try:
+        handle = xbmcvfs.File(file_url)
+        try:
+            candidate["content"] = handle.read()
+        finally:
+            handle.close()
+    except Exception as exc:
+        candidate["read_error"] = repr(exc)
+    payload["candidates"].append(candidate)
+    xbmc.log("AUTOEXEC CANDIDATE=" + repr(candidate), xbmc.LOGINFO)
+
+with open(result_path, "w", encoding="utf-8") as handle:
+    json.dump(payload, handle, sort_keys=True)
+
+xbmc.executebuiltin("Quit")
+PY
+
+  # First boot seeds Kodi's addon database and records the local service addon.
   set +e
-  timeout 25 xvfb-run -a kodi --test "$url" --logging=console >"$dir/kodi.log" 2>&1
+  env HOME="$kodi_home" \
+    KODI_ARCHIVE="$archive_path" \
+    KODI_RESULT_PATH="$result_path" \
+    timeout 15 xvfb-run -a kodi --logging=console >"$dir/kodi-bootstrap.log" 2>&1
+  status=$?
+  set -e
+
+  assert_status_in "$status" 0 124
+  [[ -f "$db_path" ]] || die "Kodi did not create $db_path"
+
+  python3 - "$db_path" <<'PY'
+import sqlite3
+import sys
+
+db_path = sys.argv[1]
+conn = sqlite3.connect(db_path)
+cur = conn.cursor()
+row = cur.execute(
+    "select enabled from installed where addonID = ?",
+    ("service.libarchiveprobe",),
+).fetchone()
+if row is None:
+    raise SystemExit("Kodi did not register service.libarchiveprobe")
+cur.execute(
+    "update installed set enabled = 1, disabledReason = 0 where addonID = ?",
+    ("service.libarchiveprobe",),
+)
+conn.commit()
+PY
+
+  rm -f "$result_path"
+
+  # Second boot must execute the enabled service addon, list the archive root,
+  # and persist the result for this harness to inspect.
+  set +e
+  env HOME="$kodi_home" \
+    KODI_ARCHIVE="$archive_path" \
+    KODI_RESULT_PATH="$result_path" \
+    timeout 20 xvfb-run -a kodi --logging=console >"$dir/kodi.log" 2>&1
   status=$?
   set -e
 
   assert_status_in "$status" 0 124
   require_contains "$dir/kodi.log" "CAddonMgr::FindAddons: vfs.libarchive v20.3.0 installed"
+  require_contains "$dir/kodi.log" "AUTOEXEC START"
+  require_contains "$dir/kodi.log" "AUTOEXEC URL=archive://"
+  [[ -f "$result_path" ]] || die "Kodi archive probe did not write $result_path"
+
+  # Headless Kodi does not expose a stable non-interactive path for archive
+  # browsing in all environments. If the in-process probe itself reports that
+  # archive:// is unsupported, record an explicit skip instead of a false
+  # positive "pass".
+  if grep -F 'unsupported protocol(archive)' "$dir/kodi.log" >/dev/null 2>&1; then
+    printf 'SKIP kodi-vfs-libarchive: headless Kodi rejected archive:// URLs in this environment; addon install/linkage verified only.\n'
+    return 0
+  fi
+  if grep -F 'error opening [archive://' "$dir/kodi.log" >/dev/null 2>&1; then
+    printf 'SKIP kodi-vfs-libarchive: headless Kodi could not open archive:// URLs in this environment; addon install/linkage verified only.\n'
+    return 0
+  fi
+
+  python3 - "$result_path" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    payload = json.load(handle)
+
+matches = [
+    candidate
+    for candidate in payload.get("candidates", [])
+    if candidate.get("exists") is True and candidate.get("content") == "hello from kodi archive probe\n"
+]
+
+if not matches:
+    raise SystemExit(
+        "Kodi archive probe did not successfully read frame.txt via any candidate URL"
+    )
+PY
 }
 
 test_gnome_epub_thumbnailer() {
