@@ -25,265 +25,250 @@
 #include "test.h"
 __FBSDID("$FreeBSD$");
 
-#define __LIBARCHIVE_TEST
-#include "archive_pathmatch.h"
+static void
+assert_normalized_pattern(const char *pattern, const char *unmatched)
+{
+	size_t len;
+
+	assert(unmatched != NULL);
+	len = strlen(pattern);
+	if (len > 0 && pattern[len - 1] == '/')
+		--len;
+	assertEqualInt((int)len, (int)strlen(unmatched));
+	assertEqualMem(pattern, unmatched, len);
+}
+
+static void
+assert_invalid_include_pattern(const char *pattern)
+{
+	struct archive *m;
+
+	if (!assert((m = archive_match_new()) != NULL))
+		return;
+
+	assertEqualIntA(m, ARCHIVE_FAILED,
+	    archive_match_include_pattern(m, pattern));
+	assertEqualInt(0, archive_match_path_unmatched_inclusions(m));
+	assertEqualInt(ARCHIVE_OK, archive_match_free(m));
+}
+
+static void
+assert_include_match(const char *pattern, const char *pathname,
+    int recursive, int expected_match)
+{
+	struct archive *m;
+	struct archive_entry *ae;
+	const char *unmatched;
+
+	if (!assert((m = archive_match_new()) != NULL))
+		return;
+	if (!assert((ae = archive_entry_new()) != NULL)) {
+		archive_match_free(m);
+		return;
+	}
+
+	assertEqualIntA(m, ARCHIVE_OK,
+	    archive_match_set_inclusion_recursion(m, recursive));
+	assertEqualIntA(m, ARCHIVE_OK,
+	    archive_match_include_pattern(m, pattern));
+	archive_entry_copy_pathname(ae, pathname);
+
+	failure("include pattern '%s' against '%s'", pattern, pathname);
+	assertEqualInt(expected_match ? 0 : 1,
+	    archive_match_path_excluded(m, ae));
+
+	assertEqualInt(expected_match ? 0 : 1,
+	    archive_match_path_unmatched_inclusions(m));
+	if (expected_match) {
+		assertEqualIntA(m, ARCHIVE_EOF,
+		    archive_match_path_unmatched_inclusions_next(m,
+			&unmatched));
+	} else {
+		assertEqualIntA(m, ARCHIVE_OK,
+		    archive_match_path_unmatched_inclusions_next(m,
+			&unmatched));
+		assert_normalized_pattern(pattern, unmatched);
+		assertEqualIntA(m, ARCHIVE_EOF,
+		    archive_match_path_unmatched_inclusions_next(m,
+			&unmatched));
+	}
+
+	archive_entry_free(ae);
+	archive_match_free(m);
+}
+
+static void
+assert_include_match_w(const wchar_t *pattern, const wchar_t *pathname,
+    int recursive, int expected_match)
+{
+	struct archive *m;
+	struct archive_entry *ae;
+	const wchar_t *unmatched;
+
+	if (!assert((m = archive_match_new()) != NULL))
+		return;
+	if (!assert((ae = archive_entry_new()) != NULL)) {
+		archive_match_free(m);
+		return;
+	}
+
+	assertEqualIntA(m, ARCHIVE_OK,
+	    archive_match_set_inclusion_recursion(m, recursive));
+	assertEqualIntA(m, ARCHIVE_OK,
+	    archive_match_include_pattern_w(m, pattern));
+	archive_entry_copy_pathname_w(ae, pathname);
+
+	assertEqualInt(expected_match ? 0 : 1,
+	    archive_match_path_excluded(m, ae));
+	assertEqualInt(expected_match ? 0 : 1,
+	    archive_match_path_unmatched_inclusions(m));
+	if (expected_match) {
+		assertEqualIntA(m, ARCHIVE_EOF,
+		    archive_match_path_unmatched_inclusions_next_w(m,
+			&unmatched));
+	} else {
+		assertEqualIntA(m, ARCHIVE_OK,
+		    archive_match_path_unmatched_inclusions_next_w(m,
+			&unmatched));
+		assertEqualWString(pattern, unmatched);
+		assertEqualIntA(m, ARCHIVE_EOF,
+		    archive_match_path_unmatched_inclusions_next_w(m,
+			&unmatched));
+	}
+
+	archive_entry_free(ae);
+	archive_match_free(m);
+}
+
+static void
+assert_exclude_match(const char *pattern, const char *pathname,
+    int expected_excluded)
+{
+	struct archive *m;
+	struct archive_entry *ae;
+
+	if (!assert((m = archive_match_new()) != NULL))
+		return;
+	if (!assert((ae = archive_entry_new()) != NULL)) {
+		archive_match_free(m);
+		return;
+	}
+
+	assertEqualIntA(m, ARCHIVE_OK,
+	    archive_match_exclude_pattern(m, pattern));
+	archive_entry_copy_pathname(ae, pathname);
+
+	failure("exclude pattern '%s' against '%s'", pattern, pathname);
+	assertEqualInt(expected_excluded, archive_match_path_excluded(m, ae));
+
+	archive_entry_free(ae);
+	archive_match_free(m);
+}
 
 /*
- * Verify that the pattern matcher implements the wildcard logic specified
- * in SUSv2 for the cpio command.  This is essentially the
- * shell glob syntax:
- *   * - matches any sequence of chars, including '/'
- *   ? - matches any single char, including '/'
- *   [...] - matches any of a set of chars, '-' specifies a range,
- *        initial '!' is undefined
- *
- * The specification in SUSv2 is a bit incomplete, I assume the following:
- *   Trailing '-' in [...] is not special.
- *
- * TODO: Figure out if there's a good way to extend this to handle
- * Windows paths that use '\' as a path separator.  <sigh>
+ * archive_pathmatch() itself is not a public API, so exercise the same
+ * matcher behavior through archive_match_*(), which exposes exact,
+ * recursive, anchored and unanchored path matching semantics publicly.
  */
-
 DEFINE_TEST(test_archive_pathmatch)
 {
-	assertEqualInt(1, archive_pathmatch("a/b/c", "a/b/c", 0));
-	assertEqualInt(0, archive_pathmatch("a/b/", "a/b/c", 0));
-	assertEqualInt(0, archive_pathmatch("a/b", "a/b/c", 0));
-	assertEqualInt(0, archive_pathmatch("a/b/c", "a/b/", 0));
-	assertEqualInt(0, archive_pathmatch("a/b/c", "a/b", 0));
+	/* Exact matches via non-recursive inclusion. */
+	assert_include_match("a/b/c", "a/b/c", 0, 1);
+	assert_include_match("a/b/", "a/b/c", 0, 0);
+	assert_include_match("a/b", "a/b/c", 0, 0);
+	assert_invalid_include_pattern("");
+	assert_include_match("*", "", 0, 1);
+	assert_include_match("*", "a", 0, 1);
+	assert_include_match("*", "abcd/efgh/ijkl", 0, 1);
+	assert_include_match("?", "", 0, 0);
+	assert_include_match("?", "a", 0, 1);
+	assert_include_match("?", "ab", 0, 0);
+	assert_include_match("a?c", "abc", 0, 1);
+	assert_include_match("a?c", "a/c", 0, 1);
+	assert_include_match("a?*c*", "a/c", 0, 1);
+	assert_include_match("*a*", "a/c", 0, 1);
+	assert_include_match("*a*", "/a/c", 0, 1);
+	assert_include_match("a*", "defghi", 0, 0);
+	assert_include_match("*a*", "defghi", 0, 0);
 
-    /* Null string and non-empty pattern returns false. */
-	assertEqualInt(0, archive_pathmatch("a/b/c", NULL, 0));
-	assertEqualInt(0, archive_pathmatch_w(L"a/b/c", NULL, 0));
+	/* Character classes and quoting. */
+	assert_include_match("abc[def", "abc[def", 0, 1);
+	assert_include_match("abc[def]", "abcd", 0, 1);
+	assert_include_match("abc[def]", "abcg", 0, 0);
+	assert_include_match("abc[d-fh-k]", "abck", 0, 1);
+	assert_include_match("abc[d-fh-k]", "abcl", 0, 0);
+	assert_include_match("abc[]efg", "abcdefg", 0, 0);
+	assert_include_match("abc[!]efg", "abcqefg", 0, 1);
+	assert_include_match("abc[d-fh-]", "abc-", 0, 1);
+	assert_include_match("abc[\\]]", "abc]", 0, 1);
+	assert_include_match("abc[d\\]]", "abcd", 0, 1);
+	assert_include_match("abc[d\\]e]", "abcd]e", 0, 0);
+	assert_include_match("abc[\\d-f]gh", "abcegh", 0, 1);
+	assert_include_match("abc[d\\-f]gh", "abc-gh", 0, 1);
+	assert_include_match("abc[!d]", "abcd", 0, 0);
+	assert_include_match("abc[!d]", "abce", 0, 1);
+	assert_include_match("abc[!d-z]", "abcq", 0, 0);
+	assert_include_match("abc\\[def]", "abc[def]", 0, 1);
+	assert_include_match("abc\\\\[def]", "abc\\d", 0, 1);
+	assert_include_match("abcd\\", "abcd\\", 0, 1);
+	assert_include_match("abcd\\[", "abcd\\", 0, 0);
 
-	/* Empty pattern only matches empty string. */
-	assertEqualInt(1, archive_pathmatch("","", 0));
-	assertEqualInt(0, archive_pathmatch("","a", 0));
-	assertEqualInt(1, archive_pathmatch("*","", 0));
-	assertEqualInt(1, archive_pathmatch("*","a", 0));
-	assertEqualInt(1, archive_pathmatch("*","abcd", 0));
-	/* SUSv2: * matches / */
-	assertEqualInt(1, archive_pathmatch("*","abcd/efgh/ijkl", 0));
-	assertEqualInt(1, archive_pathmatch("abcd*efgh/ijkl","abcd/efgh/ijkl", 0));
-	assertEqualInt(1, archive_pathmatch("abcd***efgh/ijkl","abcd/efgh/ijkl", 0));
-	assertEqualInt(1, archive_pathmatch("abcd***/efgh/ijkl","abcd/efgh/ijkl", 0));
-	assertEqualInt(0, archive_pathmatch("?", "", 0));
-	assertEqualInt(0, archive_pathmatch("?", "\0", 0));
-	assertEqualInt(1, archive_pathmatch("?", "a", 0));
-	assertEqualInt(0, archive_pathmatch("?", "ab", 0));
-	assertEqualInt(1, archive_pathmatch("?", ".", 0));
-	assertEqualInt(1, archive_pathmatch("?", "?", 0));
-	assertEqualInt(1, archive_pathmatch("a", "a", 0));
-	assertEqualInt(0, archive_pathmatch("a", "ab", 0));
-	assertEqualInt(0, archive_pathmatch("a", "ab", 0));
-	assertEqualInt(1, archive_pathmatch("a?c", "abc", 0));
-	/* SUSv2: ? matches / */
-	assertEqualInt(1, archive_pathmatch("a?c", "a/c", 0));
-	assertEqualInt(1, archive_pathmatch("a?*c*", "a/c", 0));
-	assertEqualInt(1, archive_pathmatch("*a*", "a/c", 0));
-	assertEqualInt(1, archive_pathmatch("*a*", "/a/c", 0));
-	assertEqualInt(1, archive_pathmatch("*a*", "defaaaaaaa", 0));
-	assertEqualInt(0, archive_pathmatch("a*", "defghi", 0));
-	assertEqualInt(0, archive_pathmatch("*a*", "defghi", 0));
+	/* Canonical path handling. */
+	assert_include_match("a/b/", "a/bc", 0, 0);
+	assert_include_match("a/./b", "a/b", 0, 1);
+	assert_include_match("a\\/./b", "a/b", 0, 0);
+	assert_include_match("a/\\./b", "a/b", 0, 0);
+	assert_include_match("./abc/./def/", "abc/def/", 0, 1);
+	assert_include_match("abc/def", "./././abc/./def", 0, 1);
+	assert_include_match("abc/def/././//", "./././abc/./def/", 0, 1);
+	assert_include_match(".////abc/.//def", "./././abc/./def", 0, 1);
+	assert_include_match("./abc?def/", "abc/def/", 0, 1);
+	assert_include_match("./abc?./def/", "abc/def/", 0, 0);
+	assert_include_match("./abc/./def/", "abc/def", 0, 1);
+	assert_include_match("./abc/./def/./", "abc/def", 0, 1);
+	assert_include_match("./abc/./def/.", "abc/def", 0, 1);
+	assert_include_match("./abc*/./def", "abc/def/.", 0, 1);
 
-	/* Character classes */
-	assertEqualInt(1, archive_pathmatch("abc[def", "abc[def", 0));
-	assertEqualInt(0, archive_pathmatch("abc[def]", "abc[def", 0));
-	assertEqualInt(0, archive_pathmatch("abc[def", "abcd", 0));
-	assertEqualInt(1, archive_pathmatch("abc[def]", "abcd", 0));
-	assertEqualInt(1, archive_pathmatch("abc[def]", "abce", 0));
-	assertEqualInt(1, archive_pathmatch("abc[def]", "abcf", 0));
-	assertEqualInt(0, archive_pathmatch("abc[def]", "abcg", 0));
-	assertEqualInt(1, archive_pathmatch("abc[d*f]", "abcd", 0));
-	assertEqualInt(1, archive_pathmatch("abc[d*f]", "abc*", 0));
-	assertEqualInt(0, archive_pathmatch("abc[d*f]", "abcdefghi", 0));
-	assertEqualInt(0, archive_pathmatch("abc[d*", "abcdefghi", 0));
-	assertEqualInt(1, archive_pathmatch("abc[d*", "abc[defghi", 0));
-	assertEqualInt(1, archive_pathmatch("abc[d-f]", "abcd", 0));
-	assertEqualInt(1, archive_pathmatch("abc[d-f]", "abce", 0));
-	assertEqualInt(1, archive_pathmatch("abc[d-f]", "abcf", 0));
-	assertEqualInt(0, archive_pathmatch("abc[d-f]", "abcg", 0));
-	assertEqualInt(0, archive_pathmatch("abc[d-fh-k]", "abca", 0));
-	assertEqualInt(1, archive_pathmatch("abc[d-fh-k]", "abcd", 0));
-	assertEqualInt(1, archive_pathmatch("abc[d-fh-k]", "abce", 0));
-	assertEqualInt(1, archive_pathmatch("abc[d-fh-k]", "abcf", 0));
-	assertEqualInt(0, archive_pathmatch("abc[d-fh-k]", "abcg", 0));
-	assertEqualInt(1, archive_pathmatch("abc[d-fh-k]", "abch", 0));
-	assertEqualInt(1, archive_pathmatch("abc[d-fh-k]", "abci", 0));
-	assertEqualInt(1, archive_pathmatch("abc[d-fh-k]", "abcj", 0));
-	assertEqualInt(1, archive_pathmatch("abc[d-fh-k]", "abck", 0));
-	assertEqualInt(0, archive_pathmatch("abc[d-fh-k]", "abcl", 0));
-	assertEqualInt(0, archive_pathmatch("abc[d-fh-k]", "abc-", 0));
+	/* Start-anchored, end-unanchored semantics via recursive inclusion. */
+	assert_include_match("abcd", "abcd", 1, 1);
+	assert_include_match("abcd", "abcd/", 1, 1);
+	assert_include_match("abcd", "abcd/.", 1, 1);
+	assert_include_match("abc", "abcd", 1, 0);
+	assert_include_match("a/b/c", "a/b/c/d", 1, 1);
+	assert_include_match("a/b/c$", "a/b/c/d", 1, 0);
+	assert_include_match("a/b/c$", "a/b/c", 1, 1);
+	assert_include_match("a/b/c$", "a/b/c/", 1, 1);
+	assert_include_match("a/b/c/", "a/b/c/d", 1, 1);
+	assert_include_match("a/b/c/$", "a/b/c/d", 1, 0);
+	assert_include_match("a/b/c/$", "a/b/c/", 1, 1);
+	assert_include_match("a/b/c/$", "a/b/c", 1, 1);
 
-	/* [] matches nothing, [!] is the same as ? */
-	assertEqualInt(0, archive_pathmatch("abc[]efg", "abcdefg", 0));
-	assertEqualInt(0, archive_pathmatch("abc[]efg", "abcqefg", 0));
-	assertEqualInt(0, archive_pathmatch("abc[]efg", "abcefg", 0));
-	assertEqualInt(1, archive_pathmatch("abc[!]efg", "abcdefg", 0));
-	assertEqualInt(1, archive_pathmatch("abc[!]efg", "abcqefg", 0));
-	assertEqualInt(0, archive_pathmatch("abc[!]efg", "abcefg", 0));
+	/* Unanchored matching semantics via exclusion patterns. */
+	assert_exclude_match("bcd$", "abcd", 0);
+	assert_exclude_match("abcd$", "abcd", 1);
+	assert_exclude_match("^bcd$", "abcd", 0);
+	assert_exclude_match("b/c/d$", "a/b/c/d", 1);
+	assert_exclude_match("^b/c/d$", "a/b/c/d", 0);
+	assert_exclude_match("/b/c/d$", "a/b/c/d", 0);
+	assert_exclude_match("a/b/c$", "a/b/c/d", 0);
+	assert_exclude_match("a/b/c/d$", "a/b/c/d", 1);
+	assert_exclude_match("b/c$", "a/b/c/d", 0);
+	assert_exclude_match("^b/c$", "a/b/c/d", 0);
+	assert_exclude_match("b/c/d$", "/a/b/c/d", 1);
+	assert_exclude_match("b/c", "a/b/c/d", 1);
+	assert_exclude_match("/b/c", "a/b/c/d", 0);
+	assert_exclude_match("/a/b/c", "a/b/c/d", 0);
+	assert_exclude_match("/a/b/c", "/a/b/c/d", 1);
+	assert_exclude_match("/a/b/c$", "a/b/c/d", 0);
+	assert_exclude_match("/a/b/c/d$", "a/b/c/d", 0);
+	assert_exclude_match("/a/b/c/d$", "/a/b/c/d/e", 0);
+	assert_exclude_match("/a/b/c/d$", "/a/b/c/d", 1);
+	assert_exclude_match("^a/b/c", "a/b/c/d", 1);
+	assert_exclude_match("^a/b/c$", "a/b/c/d", 0);
+	assert_exclude_match("a/b/c$", "a/b/c/d", 0);
+	assert_exclude_match("b/c/d$", "a/b/c/d", 1);
 
-	/* I assume: Trailing '-' is non-special. */
-	assertEqualInt(0, archive_pathmatch("abc[d-fh-]", "abcl", 0));
-	assertEqualInt(1, archive_pathmatch("abc[d-fh-]", "abch", 0));
-	assertEqualInt(1, archive_pathmatch("abc[d-fh-]", "abc-", 0));
-	assertEqualInt(1, archive_pathmatch("abc[d-fh-]", "abc-", 0));
-
-	/* ']' can be backslash-quoted within a character class. */
-	assertEqualInt(1, archive_pathmatch("abc[\\]]", "abc]", 0));
-	assertEqualInt(1, archive_pathmatch("abc[\\]d]", "abc]", 0));
-	assertEqualInt(1, archive_pathmatch("abc[\\]d]", "abcd", 0));
-	assertEqualInt(1, archive_pathmatch("abc[d\\]]", "abc]", 0));
-	assertEqualInt(1, archive_pathmatch("abc[d\\]]", "abcd", 0));
-	assertEqualInt(1, archive_pathmatch("abc[d]e]", "abcde]", 0));
-	assertEqualInt(1, archive_pathmatch("abc[d\\]e]", "abc]", 0));
-	assertEqualInt(0, archive_pathmatch("abc[d\\]e]", "abcd]e", 0));
-	assertEqualInt(0, archive_pathmatch("abc[d]e]", "abc]", 0));
-
-	/* backslash-quoted chars can appear as either end of a range. */
-	assertEqualInt(1, archive_pathmatch("abc[\\d-f]gh", "abcegh", 0));
-	assertEqualInt(0, archive_pathmatch("abc[\\d-f]gh", "abcggh", 0));
-	assertEqualInt(0, archive_pathmatch("abc[\\d-f]gh", "abc\\gh", 0));
-	assertEqualInt(1, archive_pathmatch("abc[d-\\f]gh", "abcegh", 0));
-	assertEqualInt(1, archive_pathmatch("abc[\\d-\\f]gh", "abcegh", 0));
-	assertEqualInt(1, archive_pathmatch("abc[\\d-\\f]gh", "abcegh", 0));
-	/* backslash-quoted '-' isn't special. */
-	assertEqualInt(0, archive_pathmatch("abc[d\\-f]gh", "abcegh", 0));
-	assertEqualInt(1, archive_pathmatch("abc[d\\-f]gh", "abc-gh", 0));
-
-	/* Leading '!' negates a character class. */
-	assertEqualInt(0, archive_pathmatch("abc[!d]", "abcd", 0));
-	assertEqualInt(1, archive_pathmatch("abc[!d]", "abce", 0));
-	assertEqualInt(1, archive_pathmatch("abc[!d]", "abcc", 0));
-	assertEqualInt(0, archive_pathmatch("abc[!d-z]", "abcq", 0));
-	assertEqualInt(1, archive_pathmatch("abc[!d-gi-z]", "abch", 0));
-	assertEqualInt(1, archive_pathmatch("abc[!fgijkl]", "abch", 0));
-	assertEqualInt(0, archive_pathmatch("abc[!fghijkl]", "abch", 0));
-
-	/* Backslash quotes next character. */
-	assertEqualInt(0, archive_pathmatch("abc\\[def]", "abc\\d", 0));
-	assertEqualInt(1, archive_pathmatch("abc\\[def]", "abc[def]", 0));
-	assertEqualInt(0, archive_pathmatch("abc\\\\[def]", "abc[def]", 0));
-	assertEqualInt(0, archive_pathmatch("abc\\\\[def]", "abc\\[def]", 0));
-	assertEqualInt(1, archive_pathmatch("abc\\\\[def]", "abc\\d", 0));
-	assertEqualInt(1, archive_pathmatch("abcd\\", "abcd\\", 0));
-	assertEqualInt(0, archive_pathmatch("abcd\\", "abcd\\[", 0));
-	assertEqualInt(0, archive_pathmatch("abcd\\", "abcde", 0));
-	assertEqualInt(0, archive_pathmatch("abcd\\[", "abcd\\", 0));
-
-	/*
-	 * Because '.' and '/' have special meanings, we can
-	 * identify many equivalent paths even if they're expressed
-	 * differently.  (But quoting a character with '\\' suppresses
-	 * special meanings!)
-	 */
-	assertEqualInt(0, archive_pathmatch("a/b/", "a/bc", 0));
-	assertEqualInt(1, archive_pathmatch("a/./b", "a/b", 0));
-	assertEqualInt(0, archive_pathmatch("a\\/./b", "a/b", 0));
-	assertEqualInt(0, archive_pathmatch("a/\\./b", "a/b", 0));
-	assertEqualInt(0, archive_pathmatch("a/.\\/b", "a/b", 0));
-	assertEqualInt(0, archive_pathmatch("a\\/\\.\\/b", "a/b", 0));
-	assertEqualInt(1, archive_pathmatch("./abc/./def/", "abc/def/", 0));
-	assertEqualInt(1, archive_pathmatch("abc/def", "./././abc/./def", 0));
-	assertEqualInt(1, archive_pathmatch("abc/def/././//", "./././abc/./def/", 0));
-	assertEqualInt(1, archive_pathmatch(".////abc/.//def", "./././abc/./def", 0));
-	assertEqualInt(1, archive_pathmatch("./abc?def/", "abc/def/", 0));
-	failure("\"?./\" is not the same as \"/./\"");
-	assertEqualInt(0, archive_pathmatch("./abc?./def/", "abc/def/", 0));
-	failure("Trailing '/' should match no trailing '/'");
-	assertEqualInt(1, archive_pathmatch("./abc/./def/", "abc/def", 0));
-	failure("Trailing '/./' is still the same directory.");
-	assertEqualInt(1, archive_pathmatch("./abc/./def/./", "abc/def", 0));
-	failure("Trailing '/.' is still the same directory.");
-	assertEqualInt(1, archive_pathmatch("./abc/./def/.", "abc/def", 0));
-	assertEqualInt(1, archive_pathmatch("./abc/./def", "abc/def/", 0));
-	failure("Trailing '/./' is still the same directory.");
-	assertEqualInt(1, archive_pathmatch("./abc/./def", "abc/def/./", 0));
-	failure("Trailing '/.' is still the same directory.");
-	assertEqualInt(1, archive_pathmatch("./abc*/./def", "abc/def/.", 0));
-
-	/* Matches not anchored at beginning. */
-	assertEqualInt(0,
-	    archive_pathmatch("bcd", "abcd", PATHMATCH_NO_ANCHOR_START));
-	assertEqualInt(1,
-	    archive_pathmatch("abcd", "abcd", PATHMATCH_NO_ANCHOR_START));
-	assertEqualInt(0,
-	    archive_pathmatch("^bcd", "abcd", PATHMATCH_NO_ANCHOR_START));
-	assertEqualInt(1,
-	    archive_pathmatch("b/c/d", "a/b/c/d", PATHMATCH_NO_ANCHOR_START));
-	assertEqualInt(0,
-	    archive_pathmatch("^b/c/d", "a/b/c/d", PATHMATCH_NO_ANCHOR_START));
-	assertEqualInt(0,
-	    archive_pathmatch("/b/c/d", "a/b/c/d", PATHMATCH_NO_ANCHOR_START));
-	assertEqualInt(0,
-	    archive_pathmatch("a/b/c", "a/b/c/d", PATHMATCH_NO_ANCHOR_START));
-	assertEqualInt(1,
-	    archive_pathmatch("a/b/c/d", "a/b/c/d", PATHMATCH_NO_ANCHOR_START));
-	assertEqualInt(0,
-	    archive_pathmatch("b/c", "a/b/c/d", PATHMATCH_NO_ANCHOR_START));
-	assertEqualInt(0,
-	    archive_pathmatch("^b/c", "a/b/c/d", PATHMATCH_NO_ANCHOR_START));
-
-
-	assertEqualInt(1,
-	    archive_pathmatch("b/c/d", "a/b/c/d", PATHMATCH_NO_ANCHOR_START));
-	assertEqualInt(1,
-	    archive_pathmatch("b/c/d", "/a/b/c/d", PATHMATCH_NO_ANCHOR_START));
-
-
-	/* Matches not anchored at end. */
-	assertEqualInt(0,
-	    archive_pathmatch("bcd", "abcd", PATHMATCH_NO_ANCHOR_END));
-	assertEqualInt(1,
-	    archive_pathmatch("abcd", "abcd", PATHMATCH_NO_ANCHOR_END));
-	assertEqualInt(1,
-	    archive_pathmatch("abcd", "abcd/", PATHMATCH_NO_ANCHOR_END));
-	assertEqualInt(1,
-	    archive_pathmatch("abcd", "abcd/.", PATHMATCH_NO_ANCHOR_END));
-	assertEqualInt(0,
-	    archive_pathmatch("abc", "abcd", PATHMATCH_NO_ANCHOR_END));
-	assertEqualInt(1,
-	    archive_pathmatch("a/b/c", "a/b/c/d", PATHMATCH_NO_ANCHOR_END));
-	assertEqualInt(0,
-	    archive_pathmatch("a/b/c$", "a/b/c/d", PATHMATCH_NO_ANCHOR_END));
-	assertEqualInt(1,
-	    archive_pathmatch("a/b/c$", "a/b/c", PATHMATCH_NO_ANCHOR_END));
-	assertEqualInt(1,
-	    archive_pathmatch("a/b/c$", "a/b/c/", PATHMATCH_NO_ANCHOR_END));
-	assertEqualInt(1,
-	    archive_pathmatch("a/b/c/", "a/b/c/d", PATHMATCH_NO_ANCHOR_END));
-	assertEqualInt(0,
-	    archive_pathmatch("a/b/c/$", "a/b/c/d", PATHMATCH_NO_ANCHOR_END));
-	assertEqualInt(1,
-	    archive_pathmatch("a/b/c/$", "a/b/c/", PATHMATCH_NO_ANCHOR_END));
-	assertEqualInt(1,
-	    archive_pathmatch("a/b/c/$", "a/b/c", PATHMATCH_NO_ANCHOR_END));
-	assertEqualInt(0,
-	    archive_pathmatch("b/c", "a/b/c/d", PATHMATCH_NO_ANCHOR_END));
-
-	/* Matches not anchored at either end. */
-	assertEqualInt(1,
-	    archive_pathmatch("b/c", "a/b/c/d", PATHMATCH_NO_ANCHOR_START | PATHMATCH_NO_ANCHOR_END));
-	assertEqualInt(0,
-	    archive_pathmatch("/b/c", "a/b/c/d", PATHMATCH_NO_ANCHOR_START | PATHMATCH_NO_ANCHOR_END));
-	assertEqualInt(0,
-	    archive_pathmatch("/a/b/c", "a/b/c/d", PATHMATCH_NO_ANCHOR_START | PATHMATCH_NO_ANCHOR_END));
-	assertEqualInt(1,
-	    archive_pathmatch("/a/b/c", "/a/b/c/d", PATHMATCH_NO_ANCHOR_START | PATHMATCH_NO_ANCHOR_END));
-	assertEqualInt(0,
-	    archive_pathmatch("/a/b/c$", "a/b/c/d", PATHMATCH_NO_ANCHOR_START | PATHMATCH_NO_ANCHOR_END));
-	assertEqualInt(0,
-	    archive_pathmatch("/a/b/c/d$", "a/b/c/d", PATHMATCH_NO_ANCHOR_START | PATHMATCH_NO_ANCHOR_END));
-	assertEqualInt(0,
-	    archive_pathmatch("/a/b/c/d$", "/a/b/c/d/e", PATHMATCH_NO_ANCHOR_START | PATHMATCH_NO_ANCHOR_END));
-	assertEqualInt(1,
-	    archive_pathmatch("/a/b/c/d$", "/a/b/c/d", PATHMATCH_NO_ANCHOR_START | PATHMATCH_NO_ANCHOR_END));
-	assertEqualInt(1,
-	    archive_pathmatch("^a/b/c", "a/b/c/d", PATHMATCH_NO_ANCHOR_START | PATHMATCH_NO_ANCHOR_END));
-	assertEqualInt(0,
-	    archive_pathmatch("^a/b/c$", "a/b/c/d", PATHMATCH_NO_ANCHOR_START | PATHMATCH_NO_ANCHOR_END));
-	assertEqualInt(0,
-	    archive_pathmatch("a/b/c$", "a/b/c/d", PATHMATCH_NO_ANCHOR_START | PATHMATCH_NO_ANCHOR_END));
-	assertEqualInt(1,
-	    archive_pathmatch("b/c/d$", "a/b/c/d", PATHMATCH_NO_ANCHOR_START | PATHMATCH_NO_ANCHOR_END));
+	/* Wide-character public APIs still exercise the same matcher logic. */
+	assert_include_match_w(L"a?c", L"a/c", 0, 1);
+	assert_include_match_w(L"a/b/c$", L"a/b/c", 1, 1);
 }

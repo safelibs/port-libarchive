@@ -23,12 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-
-/* Some tests will want to calculate some CRC32's, and this header can
- * help. */
-#define __LIBARCHIVE_BUILD
-#include <archive_crc32.h>
-#include <archive_endian.h>
+#include "test_crc32.h"
 
 #define PROLOGUE(reffile) \
 	struct archive_entry *ae; \
@@ -61,6 +56,17 @@
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a)); \
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a))
 
+static uint32_t
+test_le32dec(const void *pp)
+{
+	const uint8_t *p = (const uint8_t *)pp;
+
+	return ((uint32_t)p[0]) |
+	    ((uint32_t)p[1] << 8) |
+	    ((uint32_t)p[2] << 16) |
+	    ((uint32_t)p[3] << 24);
+}
+
 static
 int verify_data(const uint8_t* data_ptr, int magic, int size) {
 	int i = 0;
@@ -82,7 +88,7 @@ int verify_data(const uint8_t* data_ptr, int magic, int size) {
 		/* *lptr is a value inside unpacked test file, val is the
 		 * value that should be in the unpacked test file. */
 
-		if(archive_le32dec(lptr) != (uint32_t) val)
+		if(test_le32dec(lptr) != (uint32_t) val)
 			return 0;
 	}
 
@@ -107,7 +113,7 @@ int extract_one(struct archive* a, struct archive_entry* ae, uint32_t crc) {
 		goto fn_exit;
 	}
 
-	computed_crc = crc32(0, buf, fsize);
+	computed_crc = test_crc32(0, buf, fsize);
 	assertEqualInt(computed_crc, crc);
 	ret = 0;
 
@@ -336,7 +342,7 @@ DEFINE_TEST(test_read_format_rar5_blake2)
 	assertA(proper_size == archive_read_data(a, buf, proper_size));
 
 	/* To be extra pedantic, let's also check crc32 of the poem. */
-	assertEqualInt(crc32(0, buf, proper_size), 0x7E5EC49E);
+	assertEqualInt(test_crc32(0, buf, proper_size), 0x7E5EC49E);
 
 	assertA(ARCHIVE_EOF == archive_read_next_header(a, &ae));
 	EPILOGUE();
@@ -359,7 +365,7 @@ DEFINE_TEST(test_read_format_rar5_arm_filter)
 	/* Yes, RARv5 unpacker itself should calculate the CRC, but in case
 	 * the DONT_FAIL_ON_CRC_ERROR define option is enabled during compilation,
 	 * let's still fail the test if the unpacked data is wrong. */
-	assertEqualInt(crc32(0, buf, proper_size), 0x886F91EB);
+	assertEqualInt(test_crc32(0, buf, proper_size), 0x886F91EB);
 
 	assertA(ARCHIVE_EOF == archive_read_next_header(a, &ae));
 	EPILOGUE();
@@ -840,7 +846,7 @@ DEFINE_TEST(test_read_format_rar5_block_by_block)
 		if(bytes_read <= 0)
 			break;
 
-		computed_crc = crc32(computed_crc, buf, bytes_read);
+		computed_crc = test_crc32(computed_crc, buf, bytes_read);
 	}
 
 	assertEqualInt(computed_crc, 0x7CCA70CD);

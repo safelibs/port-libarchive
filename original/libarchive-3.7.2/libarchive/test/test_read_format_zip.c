@@ -26,8 +26,7 @@
 #include "test.h"
 __FBSDID("$FreeBSD: head/lib/libarchive/test/test_read_format_zip.c 189482 2009-03-07 03:30:35Z kientzle $");
 
-#define __LIBARCHIVE_BUILD
-#include <archive_crc32.h>
+#include "test_crc32.h"
 
 static
 int extract_one(struct archive* a, struct archive_entry* ae, uint32_t crc)
@@ -48,7 +47,7 @@ int extract_one(struct archive* a, struct archive_entry* ae, uint32_t crc)
 		goto fn_exit;
 	}
 
-	computed_crc = crc32(0, buf, fsize);
+	computed_crc = test_crc32(0, buf, fsize);
 	assertEqualInt(computed_crc, crc);
 	ret = 0;
 
@@ -85,7 +84,7 @@ int extract_one_using_blocks(struct archive* a, int block_size, uint32_t crc)
 			/* ok */
 		}
 
-		computed_crc = crc32(computed_crc, buf, bytes_read);
+		computed_crc = test_crc32(computed_crc, buf, bytes_read);
 	}
 
 	assertEqualInt(computed_crc, crc);
