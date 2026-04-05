@@ -34,11 +34,17 @@ impl ArchiveHandle {
     }
 
     pub fn read_disk() -> Self {
-        Self::new(unsafe { ffi::archive_read_disk_new() }, ffi::archive_read_free)
+        Self::new(
+            unsafe { ffi::archive_read_disk_new() },
+            ffi::archive_read_free,
+        )
     }
 
     pub fn write_disk() -> Self {
-        Self::new(unsafe { ffi::archive_write_disk_new() }, ffi::archive_write_free)
+        Self::new(
+            unsafe { ffi::archive_write_disk_new() },
+            ffi::archive_write_free,
+        )
     }
 
     fn new(raw: *mut archive, free_fn: unsafe extern "C" fn(*mut archive) -> i32) -> Self {

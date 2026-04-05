@@ -189,6 +189,7 @@ printf 'selected tests:\n'
 sed 's/^/  /' "$BUILD_DIR/tests.txt"
 
 cargo build >/dev/null
+ln -sf libarchive.so "$ROOT/target/debug/libarchive.so.13"
 
 CC_BIN="${CC:-cc}"
 TEST_MAIN_SRC="$ROOT/../original/libarchive-3.7.2/test_utils/test_main.c"
@@ -222,6 +223,22 @@ EXTRA_LIBS="$(<"$BUILD_DIR/extra_libs.txt")"
   -Wl,-rpath,"$ROOT/target/debug" \
   -larchive \
   $EXTRA_LIBS
+
+RESOLVED_ARCHIVE="$(
+  LD_LIBRARY_PATH="$ROOT/target/debug${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+    ldd "$TEST_BIN" | awk '/libarchive\.so\.13/ {print $3; exit}'
+)"
+EXPECTED_ARCHIVE="$(readlink -f "$ROOT/target/debug/libarchive.so.13")"
+if [[ -z "$RESOLVED_ARCHIVE" ]]; then
+  printf 'failed to resolve libarchive.so.13 for %s\n' "$TEST_BIN" >&2
+  exit 1
+fi
+if [[ "$(readlink -f "$RESOLVED_ARCHIVE")" != "$EXPECTED_ARCHIVE" ]]; then
+  printf 'test harness resolved libarchive to %s, expected %s\n' \
+    "$RESOLVED_ARCHIVE" \
+    "$EXPECTED_ARCHIVE" >&2
+  exit 1
+fi
 
 LD_LIBRARY_PATH="$ROOT/target/debug${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
   "$TEST_BIN" -r "$ORIGINAL_TEST_DIR"

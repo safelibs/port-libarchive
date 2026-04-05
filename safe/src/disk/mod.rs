@@ -1,14 +1,12 @@
 mod native;
 pub(crate) use native::{
     read_disk_can_descend as native_read_disk_can_descend,
-    read_disk_close as native_read_disk_close,
-    read_disk_data as native_read_disk_data,
+    read_disk_close as native_read_disk_close, read_disk_data as native_read_disk_data,
     read_disk_data_block as native_read_disk_data_block,
     read_disk_descend as native_read_disk_descend,
     read_disk_entry_from_file as native_read_disk_entry_from_file,
     read_disk_next_header as native_read_disk_next_header,
-    read_disk_open_path as native_read_disk_open_path,
-    write_disk_close as native_write_disk_close,
+    read_disk_open_path as native_read_disk_open_path, write_disk_close as native_write_disk_close,
     write_disk_data as native_write_disk_data,
     write_disk_data_block as native_write_disk_data_block,
     write_disk_finish_entry as native_write_disk_finish_entry,
@@ -523,9 +521,7 @@ pub extern "C" fn archive_read_disk_set_gname_lookup(
         handle.gname_lookup_private_data = private_data;
         handle.gname_lookup = lookup;
         handle.gname_lookup_cleanup = cleanup;
-        if lookup.is_some() {
-            handle.use_standard_lookup = false;
-        }
+        handle.use_standard_lookup = false;
         ARCHIVE_OK
     })
 }
@@ -545,9 +541,7 @@ pub extern "C" fn archive_read_disk_set_uname_lookup(
         handle.uname_lookup_private_data = private_data;
         handle.uname_lookup = lookup;
         handle.uname_lookup_cleanup = cleanup;
-        if lookup.is_some() {
-            handle.use_standard_lookup = false;
-        }
+        handle.use_standard_lookup = false;
         ARCHIVE_OK
     })
 }
@@ -562,7 +556,9 @@ pub extern "C" fn archive_read_disk_open(a: *mut archive, path: *const c_char) -
             return ARCHIVE_FATAL;
         }
         clear_error(&mut handle.core);
-        let path = from_optional_c_str(path).ok_or(ARCHIVE_FATAL).unwrap_or_default();
+        let path = from_optional_c_str(path)
+            .ok_or(ARCHIVE_FATAL)
+            .unwrap_or_default();
         handle.open_path = ReadDiskOpenPath::Utf8(path.clone());
         native_read_disk_open_path(handle, &path)
     })
@@ -578,7 +574,9 @@ pub extern "C" fn archive_read_disk_open_w(a: *mut archive, path: *const wchar_t
             return ARCHIVE_FATAL;
         }
         clear_error(&mut handle.core);
-        let path = from_optional_wide(path).ok_or(ARCHIVE_FATAL).unwrap_or_default();
+        let path = from_optional_wide(path)
+            .ok_or(ARCHIVE_FATAL)
+            .unwrap_or_default();
         handle.open_path = ReadDiskOpenPath::Wide(path.clone());
         native_read_disk_open_path(handle, &path)
     })
@@ -747,9 +745,7 @@ pub extern "C" fn archive_write_disk_set_group_lookup(
         handle.group_lookup_private_data = private_data;
         handle.group_lookup = lookup;
         handle.group_lookup_cleanup = cleanup;
-        if lookup.is_some() {
-            handle.use_standard_lookup = false;
-        }
+        handle.use_standard_lookup = false;
         ARCHIVE_OK
     })
 }
@@ -769,9 +765,7 @@ pub extern "C" fn archive_write_disk_set_user_lookup(
         handle.user_lookup_private_data = private_data;
         handle.user_lookup = lookup;
         handle.user_lookup_cleanup = cleanup;
-        if lookup.is_some() {
-            handle.use_standard_lookup = false;
-        }
+        handle.use_standard_lookup = false;
         ARCHIVE_OK
     })
 }

@@ -367,7 +367,12 @@ pub(crate) fn set_link_target(entry: &mut ArchiveEntryData, value: Option<String
     entry.strmode_cache = None;
 }
 
-pub(crate) fn add_xattr(entry: &mut ArchiveEntryData, name: *const c_char, value: *const c_void, size: size_t) {
+pub(crate) fn add_xattr(
+    entry: &mut ArchiveEntryData,
+    name: *const c_char,
+    value: *const c_void,
+    size: size_t,
+) {
     let Some(name) = from_optional_c_str(name) else {
         return;
     };
@@ -616,7 +621,11 @@ impl AclState {
 
     pub(crate) fn reset(&mut self, mode: mode_t, want_type: c_int) -> c_int {
         let count = self.count(want_type);
-        let cutoff = if (want_type & ARCHIVE_ENTRY_ACL_TYPE_ACCESS) != 0 { 3 } else { 0 };
+        let cutoff = if (want_type & ARCHIVE_ENTRY_ACL_TYPE_ACCESS) != 0 {
+            3
+        } else {
+            0
+        };
         self.iter_entries.clear();
         self.iter_index = 0;
         self.iter_name_cache = None;
@@ -775,9 +784,21 @@ impl AclState {
 
     fn format_mode_bits(permset: c_int) -> String {
         let mut text = String::with_capacity(3);
-        text.push(if (permset & ARCHIVE_ENTRY_ACL_READ) != 0 { 'r' } else { '-' });
-        text.push(if (permset & ARCHIVE_ENTRY_ACL_WRITE) != 0 { 'w' } else { '-' });
-        text.push(if (permset & ARCHIVE_ENTRY_ACL_EXECUTE) != 0 { 'x' } else { '-' });
+        text.push(if (permset & ARCHIVE_ENTRY_ACL_READ) != 0 {
+            'r'
+        } else {
+            '-'
+        });
+        text.push(if (permset & ARCHIVE_ENTRY_ACL_WRITE) != 0 {
+            'w'
+        } else {
+            '-'
+        });
+        text.push(if (permset & ARCHIVE_ENTRY_ACL_EXECUTE) != 0 {
+            'x'
+        } else {
+            '-'
+        });
         text
     }
 
@@ -841,10 +862,18 @@ impl AclState {
         let text = if want_type == ARCHIVE_ENTRY_ACL_TYPE_NFS4 {
             let compact = (flags & ARCHIVE_ENTRY_ACL_STYLE_COMPACT) != 0;
             let mut lines = Vec::new();
-            for entry in self.entries.iter().filter(|entry| is_nfs4_type(entry.entry_type)) {
+            for entry in self
+                .entries
+                .iter()
+                .filter(|entry| is_nfs4_type(entry.entry_type))
+            {
                 let tag = match entry.tag {
-                    ARCHIVE_ENTRY_ACL_USER => format!("user:{}", entry.name.clone().unwrap_or_default()),
-                    ARCHIVE_ENTRY_ACL_GROUP => format!("group:{}", entry.name.clone().unwrap_or_default()),
+                    ARCHIVE_ENTRY_ACL_USER => {
+                        format!("user:{}", entry.name.clone().unwrap_or_default())
+                    }
+                    ARCHIVE_ENTRY_ACL_GROUP => {
+                        format!("group:{}", entry.name.clone().unwrap_or_default())
+                    }
                     ARCHIVE_ENTRY_ACL_USER_OBJ => "owner@".to_string(),
                     ARCHIVE_ENTRY_ACL_GROUP_OBJ => "group@".to_string(),
                     ARCHIVE_ENTRY_ACL_EVERYONE => "everyone@".to_string(),
@@ -873,10 +902,9 @@ impl AclState {
             lines.join(separator)
         } else {
             let entries = self.posix_entries_for_text(mode, want_type);
-            let include_default_prefix =
-                (want_type & ARCHIVE_ENTRY_ACL_TYPE_ACCESS) != 0
-                    && (want_type & ARCHIVE_ENTRY_ACL_TYPE_DEFAULT) != 0
-                    || (flags & ARCHIVE_ENTRY_ACL_STYLE_MARK_DEFAULT) != 0;
+            let include_default_prefix = (want_type & ARCHIVE_ENTRY_ACL_TYPE_ACCESS) != 0
+                && (want_type & ARCHIVE_ENTRY_ACL_TYPE_DEFAULT) != 0
+                || (flags & ARCHIVE_ENTRY_ACL_STYLE_MARK_DEFAULT) != 0;
             let mut lines = Vec::new();
             for entry in entries {
                 let mut prefix = String::new();
@@ -892,13 +920,20 @@ impl AclState {
                     ARCHIVE_ENTRY_ACL_GROUP => "group",
                     _ => continue,
                 };
-                let name = entry.name.unwrap_or_default();
+                let name = entry.name.unwrap_or_else(|| {
+                    if matches!(entry.tag, ARCHIVE_ENTRY_ACL_USER | ARCHIVE_ENTRY_ACL_GROUP) {
+                        entry.qual.to_string()
+                    } else {
+                        String::new()
+                    }
+                });
                 let perm_text = Self::format_mode_bits(entry.permset);
-                let mut line = if matches!(entry.tag, ARCHIVE_ENTRY_ACL_USER | ARCHIVE_ENTRY_ACL_GROUP) {
-                    format!("{prefix}{tag}:{name}:{perm_text}")
-                } else {
-                    format!("{prefix}{tag}::{perm_text}")
-                };
+                let mut line =
+                    if matches!(entry.tag, ARCHIVE_ENTRY_ACL_USER | ARCHIVE_ENTRY_ACL_GROUP) {
+                        format!("{prefix}{tag}:{name}:{perm_text}")
+                    } else {
+                        format!("{prefix}{tag}::{perm_text}")
+                    };
                 if (flags & ARCHIVE_ENTRY_ACL_STYLE_EXTRA_ID) != 0
                     && matches!(entry.tag, ARCHIVE_ENTRY_ACL_USER | ARCHIVE_ENTRY_ACL_GROUP)
                 {
@@ -972,12 +1007,7 @@ impl AclState {
         malloc_wide(&wide)
     }
 
-    pub(crate) fn from_text(
-        &mut self,
-        mode: &mut mode_t,
-        text: &str,
-        want_type: c_int,
-    ) -> c_int {
+    pub(crate) fn from_text(&mut self, mode: &mut mode_t, text: &str, want_type: c_int) -> c_int {
         let mut status = ARCHIVE_OK;
         let separator = if text.contains('\n') { '\n' } else { ',' };
         for raw_line in text.split(separator) {
@@ -996,7 +1026,9 @@ impl AclState {
                     "owner@" => (ARCHIVE_ENTRY_ACL_USER_OBJ, None, 0),
                     "group@" => (ARCHIVE_ENTRY_ACL_GROUP_OBJ, None, 0),
                     "everyone@" => (ARCHIVE_ENTRY_ACL_EVERYONE, None, 0),
-                    "user" if parts.len() >= 5 => (ARCHIVE_ENTRY_ACL_USER, Some(parts[1].to_string()), 1),
+                    "user" if parts.len() >= 5 => {
+                        (ARCHIVE_ENTRY_ACL_USER, Some(parts[1].to_string()), 1)
+                    }
                     "group" if parts.len() >= 5 => {
                         (ARCHIVE_ENTRY_ACL_GROUP, Some(parts[1].to_string()), 1)
                     }
@@ -1133,11 +1165,13 @@ impl AclState {
             let qual = parts
                 .get(3)
                 .and_then(|part| part.parse::<c_int>().ok())
-                .unwrap_or(if matches!(tag, ARCHIVE_ENTRY_ACL_USER | ARCHIVE_ENTRY_ACL_GROUP) {
-                    0
-                } else {
-                    -1
-                });
+                .unwrap_or(
+                    if matches!(tag, ARCHIVE_ENTRY_ACL_USER | ARCHIVE_ENTRY_ACL_GROUP) {
+                        0
+                    } else {
+                        -1
+                    },
+                );
             let result = self.add_entry(mode, entry_type, permset, tag, qual, name);
             if result != ARCHIVE_OK {
                 status = result;

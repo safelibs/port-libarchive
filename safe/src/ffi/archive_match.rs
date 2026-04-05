@@ -56,11 +56,7 @@ unsafe extern "C" {
         sec: i64,
         nsec: c_long,
     ) -> c_int;
-    pub fn archive_match_include_date(
-        a: *mut archive,
-        flag: c_int,
-        date: *const c_char,
-    ) -> c_int;
+    pub fn archive_match_include_date(a: *mut archive, flag: c_int, date: *const c_char) -> c_int;
     pub fn archive_match_include_date_w(
         a: *mut archive,
         flag: c_int,

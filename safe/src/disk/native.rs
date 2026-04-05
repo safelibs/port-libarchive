@@ -15,7 +15,10 @@ use crate::common::state::{
 };
 use crate::entry::internal::{
     clear_entry, copy_stat, from_raw as entry_from_raw, AclState, AE_IFDIR, AE_IFIFO, AE_IFLNK,
-    AE_IFMT, AE_IFREG,
+    AE_IFMT, AE_IFREG, ARCHIVE_ENTRY_ACL_EXECUTE, ARCHIVE_ENTRY_ACL_GROUP,
+    ARCHIVE_ENTRY_ACL_GROUP_OBJ, ARCHIVE_ENTRY_ACL_MASK, ARCHIVE_ENTRY_ACL_OTHER,
+    ARCHIVE_ENTRY_ACL_READ, ARCHIVE_ENTRY_ACL_TYPE_ACCESS, ARCHIVE_ENTRY_ACL_TYPE_DEFAULT,
+    ARCHIVE_ENTRY_ACL_USER, ARCHIVE_ENTRY_ACL_USER_OBJ, ARCHIVE_ENTRY_ACL_WRITE,
 };
 use crate::ffi::archive_entry;
 
@@ -39,19 +42,45 @@ const ARCHIVE_READDISK_HONOR_NODUMP: c_int = 0x0002;
 const ARCHIVE_READDISK_NO_XATTR: c_int = 0x0010;
 const ARCHIVE_READDISK_NO_ACL: c_int = 0x0020;
 
+const ACL_FIRST_ENTRY: c_int = 0;
+const ACL_NEXT_ENTRY: c_int = 1;
+const ACL_EXECUTE: c_int = 0x01;
+const ACL_WRITE: c_int = 0x02;
+const ACL_READ: c_int = 0x04;
+const ACL_USER_OBJ: c_int = 0x01;
+const ACL_USER: c_int = 0x02;
+const ACL_GROUP_OBJ: c_int = 0x04;
+const ACL_GROUP: c_int = 0x08;
+const ACL_MASK: c_int = 0x10;
+const ACL_OTHER: c_int = 0x20;
 const ACL_TYPE_ACCESS: c_int = 0x8000;
 const ACL_TYPE_DEFAULT: c_int = 0x4000;
 const FS_IOC_GETFLAGS: libc::c_ulong = 0x8008_6601;
 const FS_NODUMP_FL: libc::c_long = 0x0000_0040;
 
 unsafe extern "C" {
+    fn acl_get_fd(fd: c_int) -> *mut c_void;
     fn acl_get_file(path_p: *const c_char, type_: c_int) -> *mut c_void;
-    fn acl_to_text(acl: *mut c_void, len_p: *mut libc::ssize_t) -> *mut c_char;
+    fn acl_get_entry(acl: *mut c_void, entry_id: c_int, entry_p: *mut *mut c_void) -> c_int;
+    fn acl_get_tag_type(entry_d: *mut c_void, tag_type_p: *mut c_int) -> c_int;
+    fn acl_get_qualifier(entry_d: *mut c_void) -> *mut c_void;
+    fn acl_get_permset(entry_d: *mut c_void, permset_p: *mut *mut c_void) -> c_int;
+    fn acl_get_perm(permset_d: *mut c_void, perm: c_int) -> c_int;
+    fn acl_init(count: c_int) -> *mut c_void;
+    fn acl_create_entry(acl_p: *mut *mut c_void, entry_p: *mut *mut c_void) -> c_int;
+    fn acl_set_tag_type(entry_d: *mut c_void, tag_type: c_int) -> c_int;
+    fn acl_set_qualifier(entry_d: *mut c_void, tag_qualifier_p: *const c_void) -> c_int;
+    fn acl_clear_perms(permset_d: *mut c_void) -> c_int;
+    fn acl_add_perm(permset_d: *mut c_void, perm: c_int) -> c_int;
+    fn acl_set_fd(fd: c_int, acl: *mut c_void) -> c_int;
+    fn acl_set_file(path_p: *const c_char, type_: c_int, acl: *mut c_void) -> c_int;
     fn acl_free(obj_p: *mut c_void) -> c_int;
 }
 
 fn last_errno() -> c_int {
-    std::io::Error::last_os_error().raw_os_error().unwrap_or(libc::EINVAL)
+    std::io::Error::last_os_error()
+        .raw_os_error()
+        .unwrap_or(libc::EINVAL)
 }
 
 fn c_path(path: &Path) -> Result<CString, c_int> {
@@ -97,13 +126,20 @@ fn filetype_from_mode(mode: mode_t) -> mode_t {
     mode & AE_IFMT
 }
 
-fn record_error(core: &mut crate::common::state::ArchiveCore, errno: c_int, message: impl Into<String>) -> c_int {
+fn record_error(
+    core: &mut crate::common::state::ArchiveCore,
+    errno: c_int,
+    message: impl Into<String>,
+) -> c_int {
     set_error_string(core, errno, message.into());
     ARCHIVE_FAILED
 }
 
 fn should_follow_root(mode: ReadDiskSymlinkMode) -> bool {
-    matches!(mode, ReadDiskSymlinkMode::Logical | ReadDiskSymlinkMode::Hybrid)
+    matches!(
+        mode,
+        ReadDiskSymlinkMode::Logical | ReadDiskSymlinkMode::Hybrid
+    )
 }
 
 fn should_follow_descendant(mode: ReadDiskSymlinkMode) -> bool {
@@ -115,7 +151,6 @@ fn reset_read_data(handle: &mut ReadDiskArchiveHandle) {
     handle.traversal.current_data_cursor = 0;
     handle.traversal.current_data_eof = false;
     handle.traversal.current_data_offset = 0;
-    handle.traversal.restore_atime = None;
 }
 
 fn restore_atime(spec: &ReadDiskAtimeRestore) {
@@ -226,26 +261,159 @@ fn load_xattrs(path: &Path, follow: bool) -> Vec<(CString, Vec<u8>)> {
     result
 }
 
-fn load_acl(path: &Path, entry_acl: &mut AclState, mode: &mut mode_t) {
+fn acl_tag_to_entry(tag: c_int) -> Option<c_int> {
+    match tag {
+        ACL_USER => Some(ARCHIVE_ENTRY_ACL_USER),
+        ACL_GROUP => Some(ARCHIVE_ENTRY_ACL_GROUP),
+        ACL_MASK => Some(ARCHIVE_ENTRY_ACL_MASK),
+        ACL_USER_OBJ => Some(ARCHIVE_ENTRY_ACL_USER_OBJ),
+        ACL_GROUP_OBJ => Some(ARCHIVE_ENTRY_ACL_GROUP_OBJ),
+        ACL_OTHER => Some(ARCHIVE_ENTRY_ACL_OTHER),
+        _ => None,
+    }
+}
+
+fn acl_entry_to_tag(tag: c_int) -> Option<c_int> {
+    match tag {
+        ARCHIVE_ENTRY_ACL_USER => Some(ACL_USER),
+        ARCHIVE_ENTRY_ACL_GROUP => Some(ACL_GROUP),
+        ARCHIVE_ENTRY_ACL_MASK => Some(ACL_MASK),
+        ARCHIVE_ENTRY_ACL_USER_OBJ => Some(ACL_USER_OBJ),
+        ARCHIVE_ENTRY_ACL_GROUP_OBJ => Some(ACL_GROUP_OBJ),
+        ARCHIVE_ENTRY_ACL_OTHER => Some(ACL_OTHER),
+        _ => None,
+    }
+}
+
+fn acl_permset_to_permset(permset: *mut c_void) -> Result<c_int, c_int> {
+    let mut ae_perm = 0;
+    for (archive_perm, acl_perm) in [
+        (ARCHIVE_ENTRY_ACL_READ, ACL_READ),
+        (ARCHIVE_ENTRY_ACL_WRITE, ACL_WRITE),
+        (ARCHIVE_ENTRY_ACL_EXECUTE, ACL_EXECUTE),
+    ] {
+        let rc = unsafe { acl_get_perm(permset, acl_perm) };
+        if rc < 0 {
+            return Err(last_errno());
+        }
+        if rc != 0 {
+            ae_perm |= archive_perm;
+        }
+    }
+    Ok(ae_perm)
+}
+
+fn add_acl_entries_from_system_acl(
+    handle: &mut ReadDiskArchiveHandle,
+    acl: *mut c_void,
+    entry_type: c_int,
+    entry_acl: &mut AclState,
+    mode: &mut mode_t,
+) {
+    let mut entry_ptr = ptr::null_mut();
+    let mut status = unsafe { acl_get_entry(acl, ACL_FIRST_ENTRY, &mut entry_ptr) };
+    while status == 1 {
+        let mut tag = 0;
+        if unsafe { acl_get_tag_type(entry_ptr, &mut tag) } != 0 {
+            break;
+        }
+        let Some(ae_tag) = acl_tag_to_entry(tag) else {
+            status = unsafe { acl_get_entry(acl, ACL_NEXT_ENTRY, &mut entry_ptr) };
+            continue;
+        };
+
+        let mut ae_id = -1;
+        let ae_name = match tag {
+            ACL_USER => {
+                let qualifier = unsafe { acl_get_qualifier(entry_ptr) };
+                if qualifier.is_null() {
+                    None
+                } else {
+                    ae_id = unsafe { *(qualifier.cast::<libc::uid_t>()) as c_int };
+                    let name = resolve_uname(handle, ae_id as i64);
+                    unsafe {
+                        let _ = acl_free(qualifier);
+                    }
+                    name
+                }
+            }
+            ACL_GROUP => {
+                let qualifier = unsafe { acl_get_qualifier(entry_ptr) };
+                if qualifier.is_null() {
+                    None
+                } else {
+                    ae_id = unsafe { *(qualifier.cast::<libc::gid_t>()) as c_int };
+                    let name = resolve_gname(handle, ae_id as i64);
+                    unsafe {
+                        let _ = acl_free(qualifier);
+                    }
+                    name
+                }
+            }
+            _ => None,
+        };
+
+        let mut permset = ptr::null_mut();
+        if unsafe { acl_get_permset(entry_ptr, &mut permset) } != 0 {
+            break;
+        }
+        let Ok(ae_perm) = acl_permset_to_permset(permset) else {
+            break;
+        };
+        let _ = entry_acl.add_entry(mode, entry_type, ae_perm, ae_tag, ae_id, ae_name);
+        status = unsafe { acl_get_entry(acl, ACL_NEXT_ENTRY, &mut entry_ptr) };
+    }
+}
+
+fn load_acl(
+    handle: &mut ReadDiskArchiveHandle,
+    path: &Path,
+    is_directory: bool,
+    follow: bool,
+    entry_acl: &mut AclState,
+    mode: &mut mode_t,
+) {
+    if !follow && !is_directory {
+        return;
+    }
     let Ok(c_path) = c_path(path) else {
         return;
     };
-    for acl_type in [ACL_TYPE_ACCESS, ACL_TYPE_DEFAULT] {
-        let acl = unsafe { acl_get_file(c_path.as_ptr(), acl_type) };
-        if acl.is_null() {
-            continue;
+
+    let access_acl = unsafe {
+        if follow {
+            acl_get_file(c_path.as_ptr(), ACL_TYPE_ACCESS)
+        } else {
+            ptr::null_mut()
         }
-        let mut text_len = 0isize;
-        let text = unsafe { acl_to_text(acl, &mut text_len) };
-        if !text.is_null() {
-            let acl_text = unsafe { CStr::from_ptr(text).to_string_lossy().into_owned() };
-            let _ = entry_acl.from_text(mode, &acl_text, acl_type);
-            unsafe {
-                let _ = acl_free(text.cast());
-            }
-        }
+    };
+    if !access_acl.is_null() {
+        add_acl_entries_from_system_acl(
+            handle,
+            access_acl,
+            ARCHIVE_ENTRY_ACL_TYPE_ACCESS,
+            entry_acl,
+            mode,
+        );
         unsafe {
-            let _ = acl_free(acl);
+            let _ = acl_free(access_acl);
+        }
+    }
+
+    if !is_directory {
+        return;
+    }
+    let default_acl = unsafe { acl_get_file(c_path.as_ptr(), ACL_TYPE_DEFAULT) };
+    if !default_acl.is_null() {
+        add_acl_entries_from_system_acl(
+            handle,
+            default_acl,
+            ARCHIVE_ENTRY_ACL_TYPE_DEFAULT,
+            entry_acl,
+            mode,
+        );
+        unsafe {
+            let _ = acl_free(default_acl);
         }
     }
 }
@@ -286,6 +454,7 @@ fn populate_entry_from_path(
     display_path: &str,
     filesystem_path: &Path,
     follow_final_symlink: bool,
+    ancestor_dirs: &[(u64, u64)],
     provided_stat: Option<stat>,
 ) -> Result<(PathBuf, stat, bool), c_int> {
     let Some(entry_data) = (unsafe { entry_from_raw(entry) }) else {
@@ -304,10 +473,11 @@ fn populate_entry_from_path(
 
     if filetype_from_mode(lstat_info.st_mode) == AE_IFLNK && follow_final_symlink {
         if let Ok(target_stat) = path_stat(filesystem_path, true) {
-            let candidate = fs::canonicalize(filesystem_path).unwrap_or_else(|_| filesystem_path.to_path_buf());
+            let candidate =
+                fs::canonicalize(filesystem_path).unwrap_or_else(|_| filesystem_path.to_path_buf());
             let candidate_key = (target_stat.st_dev, target_stat.st_ino);
             let is_dir = filetype_from_mode(target_stat.st_mode) == AE_IFDIR;
-            if !is_dir || !handle.traversal.visited_dirs.contains(&candidate_key) {
+            if !is_dir || !ancestor_dirs.contains(&candidate_key) {
                 effective_stat = target_stat;
                 effective_path = candidate;
                 followed = true;
@@ -327,11 +497,20 @@ fn populate_entry_from_path(
     if (handle.behavior_flags & ARCHIVE_READDISK_NO_XATTR) == 0 {
         entry_data.xattrs.clear();
         for (name, value) in load_xattrs(&effective_path, followed) {
-            entry_data.xattrs.push(crate::entry::internal::XattrEntry { name, value });
+            entry_data
+                .xattrs
+                .push(crate::entry::internal::XattrEntry { name, value });
         }
     }
     if (handle.behavior_flags & ARCHIVE_READDISK_NO_ACL) == 0 {
-        load_acl(&effective_path, &mut entry_data.acl, &mut entry_data.mode);
+        load_acl(
+            handle,
+            &effective_path,
+            filetype_from_mode(effective_stat.st_mode) == AE_IFDIR,
+            followed || filetype_from_mode(lstat_info.st_mode) != AE_IFLNK,
+            &mut entry_data.acl,
+            &mut entry_data.mode,
+        );
     }
     if let Some(uname) = resolve_uname(handle, entry_data.uid) {
         entry_data.uname.set(Some(uname));
@@ -357,14 +536,25 @@ fn push_children(handle: &mut ReadDiskArchiveHandle) -> c_int {
     let Some(current) = handle.traversal.current.clone() else {
         return ARCHIVE_OK;
     };
-
-    let key = if let Some(st) = handle.traversal.current_stat {
-        Some((st.st_dev, st.st_ino))
-    } else {
-        None
-    };
-    if let Some(key) = key {
-        handle.traversal.visited_dirs.insert(key);
+    let mut ancestor_dirs = current.ancestor_dirs.clone();
+    if let Some(st) = handle.traversal.current_stat {
+        ancestor_dirs.push((st.st_dev, st.st_ino));
+    }
+    if (handle.behavior_flags & ARCHIVE_READDISK_RESTORE_ATIME) != 0 {
+        if let Ok(atime_stat) = path_stat(&current_path, current.follow_final_symlink) {
+            handle.traversal.restore_atime = Some(ReadDiskAtimeRestore {
+                path: current_path.clone(),
+                atime: timespec {
+                    tv_sec: atime_stat.st_atime,
+                    tv_nsec: 0,
+                },
+                mtime: timespec {
+                    tv_sec: atime_stat.st_mtime,
+                    tv_nsec: 0,
+                },
+                follow_symlink: current.follow_final_symlink,
+            });
+        }
     }
 
     let entries = match fs::read_dir(&current_path) {
@@ -390,6 +580,7 @@ fn push_children(handle: &mut ReadDiskArchiveHandle) -> c_int {
                         display_path: join_display_path(&current.display_path, &name),
                         filesystem_path: current_path.join(&*name),
                         follow_final_symlink: should_follow_descendant(handle.symlink_mode),
+                        ancestor_dirs: ancestor_dirs.clone(),
                     },
                 )
             })
@@ -409,12 +600,13 @@ pub(crate) fn read_disk_open_path(handle: &mut ReadDiskArchiveHandle, path: &str
     handle.traversal.current = None;
     handle.traversal.current_resolved_path = None;
     handle.traversal.current_stat = None;
-    handle.traversal.visited_dirs.clear();
+    handle.traversal.restore_atime = None;
     reset_read_data(handle);
     handle.traversal.pending.push(ReadDiskNode {
         display_path: path.to_string(),
         filesystem_path: PathBuf::from(path),
         follow_final_symlink: should_follow_root(handle.symlink_mode),
+        ancestor_dirs: Vec::new(),
     });
     handle.backend_opened = true;
     ARCHIVE_OK
@@ -424,10 +616,15 @@ pub(crate) unsafe fn read_disk_next_header(
     handle: &mut ReadDiskArchiveHandle,
     entry: *mut archive_entry,
 ) -> c_int {
+    if let Some(spec) = handle.traversal.restore_atime.take() {
+        restore_atime(&spec);
+    }
     reset_read_data(handle);
 
     while let Some(node) = handle.traversal.pending.pop() {
-        if (handle.behavior_flags & ARCHIVE_READDISK_HONOR_NODUMP) != 0 && is_nodump(&node.filesystem_path) {
+        if (handle.behavior_flags & ARCHIVE_READDISK_HONOR_NODUMP) != 0
+            && is_nodump(&node.filesystem_path)
+        {
             continue;
         }
 
@@ -437,6 +634,7 @@ pub(crate) unsafe fn read_disk_next_header(
             &node.display_path,
             &node.filesystem_path,
             node.follow_final_symlink,
+            &node.ancestor_dirs,
             None,
         ) {
             Ok(result) => result,
@@ -539,13 +737,14 @@ fn ensure_current_data(handle: &mut ReadDiskArchiveHandle) -> Result<(), c_int> 
             format!("failed to open {}", path.display()),
         )
     })?;
-    file.read_to_end(&mut handle.traversal.current_data).map_err(|error| {
-        record_error(
-            &mut handle.core,
-            error.raw_os_error().unwrap_or(libc::EINVAL),
-            format!("failed to read {}", path.display()),
-        )
-    })?;
+    file.read_to_end(&mut handle.traversal.current_data)
+        .map_err(|error| {
+            record_error(
+                &mut handle.core,
+                error.raw_os_error().unwrap_or(libc::EINVAL),
+                format!("failed to read {}", path.display()),
+            )
+        })?;
     handle.traversal.current_data_offset = handle.traversal.current_data.len() as i64;
     Ok(())
 }
@@ -587,7 +786,9 @@ pub(crate) unsafe fn read_disk_data_block(
     if ensure_current_data(handle).is_err() {
         return ARCHIVE_FATAL;
     }
-    if handle.traversal.current_data_eof || handle.traversal.current_data_cursor >= handle.traversal.current_data.len() {
+    if handle.traversal.current_data_eof
+        || handle.traversal.current_data_cursor >= handle.traversal.current_data.len()
+    {
         if !size.is_null() {
             *size = 0;
         }
@@ -640,7 +841,11 @@ pub(crate) unsafe fn read_disk_entry_from_file(
         .get_str()
         .or_else(|| entry_data.pathname.get_str())
         .map(PathBuf::from);
-    let display_path = entry_data.pathname.get_str().unwrap_or_default().to_string();
+    let display_path = entry_data
+        .pathname
+        .get_str()
+        .unwrap_or_default()
+        .to_string();
     let follow = should_follow_root(handle.symlink_mode);
     let provided_stat = if let Some(st) = st.as_ref() {
         Some(*st)
@@ -662,6 +867,7 @@ pub(crate) unsafe fn read_disk_entry_from_file(
             &display_path,
             &path,
             follow,
+            &[],
             provided_stat,
         ) {
             Ok(_) => ARCHIVE_OK,
@@ -698,7 +904,6 @@ pub(crate) fn read_disk_close(handle: &mut ReadDiskArchiveHandle) -> c_int {
     handle.traversal.current = None;
     handle.traversal.current_resolved_path = None;
     handle.traversal.current_stat = None;
-    handle.traversal.visited_dirs.clear();
     reset_read_data(handle);
     handle.backend_opened = false;
     ARCHIVE_OK
@@ -716,8 +921,23 @@ fn process_umask() -> mode_t {
         .unwrap_or(0o022) as mode_t
 }
 
+fn current_time_pair() -> (i64, i64) {
+    let mut ts = timespec {
+        tv_sec: 0,
+        tv_nsec: 0,
+    };
+    unsafe {
+        if libc::clock_gettime(libc::CLOCK_REALTIME, &mut ts) == 0 {
+            (ts.tv_sec, ts.tv_nsec as i64)
+        } else {
+            (0, 0)
+        }
+    }
+}
+
 fn has_dotdot(path: &Path) -> bool {
-    path.components().any(|component| matches!(component, Component::ParentDir))
+    path.components()
+        .any(|component| matches!(component, Component::ParentDir))
 }
 
 struct WriteDiskResolvedTarget {
@@ -915,7 +1135,10 @@ fn advance_parent_fd(
                 record_error(
                     &mut handle.core,
                     remove_errno,
-                    format!("failed to replace path component for {}", display_path.display()),
+                    format!(
+                        "failed to replace path component for {}",
+                        display_path.display()
+                    ),
                 )
             })?;
             let mode = 0o777 & !process_umask();
@@ -937,7 +1160,10 @@ fn advance_parent_fd(
         Err(errno) => Err(record_error(
             &mut handle.core,
             errno,
-            format!("path component is not a directory: {}", display_path.display()),
+            format!(
+                "path component is not a directory: {}",
+                display_path.display()
+            ),
         )),
     }
 }
@@ -988,7 +1214,10 @@ fn resolve_write_target(
         record_error(
             &mut handle.core,
             errno,
-            format!("failed to duplicate extraction root for {}", raw_path.display()),
+            format!(
+                "failed to duplicate extraction root for {}",
+                raw_path.display()
+            ),
         )
     })?;
 
@@ -1001,7 +1230,10 @@ fn resolve_write_target(
                     record_error(
                         &mut handle.core,
                         errno,
-                        format!("failed to duplicate extraction root for {}", raw_path.display()),
+                        format!(
+                            "failed to duplicate extraction root for {}",
+                            raw_path.display()
+                        ),
                     )
                 })?;
             }
@@ -1020,7 +1252,10 @@ fn resolve_write_target(
                     return Err(record_error(
                         &mut handle.core,
                         last_errno(),
-                        format!("failed to traverse parent directory for {}", raw_path.display()),
+                        format!(
+                            "failed to traverse parent directory for {}",
+                            raw_path.display()
+                        ),
                     ));
                 }
                 close_fd_if_valid(current_fd);
@@ -1038,8 +1273,13 @@ fn resolve_write_target(
                         format!("entry path contains NUL bytes: {}", raw_path.display()),
                     )
                 })?;
-                let next_fd =
-                    advance_parent_fd(handle, current_fd, component.as_c_str(), create_intermediate, raw_path)?;
+                let next_fd = advance_parent_fd(
+                    handle,
+                    current_fd,
+                    component.as_c_str(),
+                    create_intermediate,
+                    raw_path,
+                )?;
                 close_fd_if_valid(current_fd);
                 current_fd = next_fd;
             }
@@ -1054,11 +1294,16 @@ fn resolve_write_target(
     })
 }
 
-fn entry_uid(handle: &WriteDiskArchiveHandle, entry: &crate::entry::internal::ArchiveEntryData) -> i64 {
+fn entry_uid(
+    handle: &WriteDiskArchiveHandle,
+    entry: &crate::entry::internal::ArchiveEntryData,
+) -> i64 {
     if let Some(lookup) = handle.user_lookup {
         if let Some(name) = entry.uname.get_str() {
             if let Ok(name) = CString::new(name) {
-                return unsafe { lookup(handle.user_lookup_private_data, name.as_ptr(), entry.uid) };
+                return unsafe {
+                    lookup(handle.user_lookup_private_data, name.as_ptr(), entry.uid)
+                };
             }
         }
     }
@@ -1077,11 +1322,16 @@ fn entry_uid(handle: &WriteDiskArchiveHandle, entry: &crate::entry::internal::Ar
     entry.uid
 }
 
-fn entry_gid(handle: &WriteDiskArchiveHandle, entry: &crate::entry::internal::ArchiveEntryData) -> i64 {
+fn entry_gid(
+    handle: &WriteDiskArchiveHandle,
+    entry: &crate::entry::internal::ArchiveEntryData,
+) -> i64 {
     if let Some(lookup) = handle.group_lookup {
         if let Some(name) = entry.gname.get_str() {
             if let Ok(name) = CString::new(name) {
-                return unsafe { lookup(handle.group_lookup_private_data, name.as_ptr(), entry.gid) };
+                return unsafe {
+                    lookup(handle.group_lookup_private_data, name.as_ptr(), entry.gid)
+                };
             }
         }
     }
@@ -1098,6 +1348,259 @@ fn entry_gid(handle: &WriteDiskArchiveHandle, entry: &crate::entry::internal::Ar
         }
     }
     entry.gid
+}
+
+fn lookup_write_uid(handle: &WriteDiskArchiveHandle, name: Option<&str>, uid: i64) -> i64 {
+    let Some(name) = name.filter(|name| !name.is_empty()) else {
+        return uid;
+    };
+    if let Some(lookup) = handle.user_lookup {
+        if let Ok(name) = CString::new(name) {
+            return unsafe { lookup(handle.user_lookup_private_data, name.as_ptr(), uid) };
+        }
+    }
+    if handle.use_standard_lookup {
+        if let Ok(name) = CString::new(name) {
+            unsafe {
+                let user = libc::getpwnam(name.as_ptr());
+                if !user.is_null() {
+                    return (*user).pw_uid as i64;
+                }
+            }
+        }
+    }
+    uid
+}
+
+fn lookup_write_gid(handle: &WriteDiskArchiveHandle, name: Option<&str>, gid: i64) -> i64 {
+    let Some(name) = name.filter(|name| !name.is_empty()) else {
+        return gid;
+    };
+    if let Some(lookup) = handle.group_lookup {
+        if let Ok(name) = CString::new(name) {
+            return unsafe { lookup(handle.group_lookup_private_data, name.as_ptr(), gid) };
+        }
+    }
+    if handle.use_standard_lookup {
+        if let Ok(name) = CString::new(name) {
+            unsafe {
+                let group = libc::getgrnam(name.as_ptr());
+                if !group.is_null() {
+                    return (*group).gr_gid as i64;
+                }
+            }
+        }
+    }
+    gid
+}
+
+fn proc_fd_path(fd: c_int) -> CString {
+    CString::new(format!("/proc/self/fd/{fd}")).expect("proc fd path")
+}
+
+fn build_posix_acl(
+    handle: &WriteDiskArchiveHandle,
+    acl_state: &AclState,
+    mode: mode_t,
+    want_type: c_int,
+) -> Result<*mut c_void, c_int> {
+    let mut acl_state = acl_state.clone();
+    let entry_count = acl_state.count(want_type);
+    if entry_count == 0 {
+        return Ok(ptr::null_mut());
+    }
+
+    let mut acl = unsafe { acl_init(entry_count) };
+    if acl.is_null() {
+        return Err(last_errno());
+    }
+
+    let iter_count = acl_state.reset(mode, want_type);
+    if iter_count <= 0 {
+        unsafe {
+            let _ = acl_free(acl);
+        }
+        return Ok(ptr::null_mut());
+    }
+
+    loop {
+        let mut entry_type = 0;
+        let mut permset = 0;
+        let mut tag = 0;
+        let mut qual = -1;
+        let mut name = ptr::null();
+        let status = unsafe {
+            acl_state.next(
+                &mut entry_type,
+                &mut permset,
+                &mut tag,
+                &mut qual,
+                &mut name,
+            )
+        };
+        if status == ARCHIVE_EOF {
+            break;
+        }
+        if status != ARCHIVE_OK {
+            unsafe {
+                let _ = acl_free(acl);
+            }
+            return Err(libc::EINVAL);
+        }
+
+        let Some(tag_type) = acl_entry_to_tag(tag) else {
+            unsafe {
+                let _ = acl_free(acl);
+            }
+            return Err(libc::EINVAL);
+        };
+
+        let mut acl_entry = ptr::null_mut();
+        if unsafe { acl_create_entry(&mut acl, &mut acl_entry) } != 0 {
+            let errno = last_errno();
+            unsafe {
+                let _ = acl_free(acl);
+            }
+            return Err(errno);
+        }
+        if unsafe { acl_set_tag_type(acl_entry, tag_type) } != 0 {
+            let errno = last_errno();
+            unsafe {
+                let _ = acl_free(acl);
+            }
+            return Err(errno);
+        }
+
+        match tag {
+            ARCHIVE_ENTRY_ACL_USER => {
+                let resolved =
+                    lookup_write_uid(handle, from_optional_c_str(name).as_deref(), qual as i64)
+                        as libc::uid_t;
+                if unsafe { acl_set_qualifier(acl_entry, ptr::addr_of!(resolved).cast::<c_void>()) }
+                    != 0
+                {
+                    let errno = last_errno();
+                    unsafe {
+                        let _ = acl_free(acl);
+                    }
+                    return Err(errno);
+                }
+            }
+            ARCHIVE_ENTRY_ACL_GROUP => {
+                let resolved =
+                    lookup_write_gid(handle, from_optional_c_str(name).as_deref(), qual as i64)
+                        as libc::gid_t;
+                if unsafe { acl_set_qualifier(acl_entry, ptr::addr_of!(resolved).cast::<c_void>()) }
+                    != 0
+                {
+                    let errno = last_errno();
+                    unsafe {
+                        let _ = acl_free(acl);
+                    }
+                    return Err(errno);
+                }
+            }
+            _ => {}
+        }
+
+        let mut acl_permset = ptr::null_mut();
+        if unsafe { acl_get_permset(acl_entry, &mut acl_permset) } != 0 {
+            let errno = last_errno();
+            unsafe {
+                let _ = acl_free(acl);
+            }
+            return Err(errno);
+        }
+        if unsafe { acl_clear_perms(acl_permset) } != 0 {
+            let errno = last_errno();
+            unsafe {
+                let _ = acl_free(acl);
+            }
+            return Err(errno);
+        }
+        for (archive_perm, acl_perm) in [
+            (ARCHIVE_ENTRY_ACL_READ, ACL_READ),
+            (ARCHIVE_ENTRY_ACL_WRITE, ACL_WRITE),
+            (ARCHIVE_ENTRY_ACL_EXECUTE, ACL_EXECUTE),
+        ] {
+            if (permset & archive_perm) != 0 && unsafe { acl_add_perm(acl_permset, acl_perm) } != 0
+            {
+                let errno = last_errno();
+                unsafe {
+                    let _ = acl_free(acl);
+                }
+                return Err(errno);
+            }
+        }
+        let _ = entry_type;
+    }
+
+    Ok(acl)
+}
+
+fn apply_acl_fixup(handle: &mut WriteDiskArchiveHandle, fixup: &WriteDiskPendingFixup) -> c_int {
+    if (handle.options & ARCHIVE_EXTRACT_ACL) == 0 || fixup.acl.types() == 0 {
+        return ARCHIVE_OK;
+    }
+    if filetype_from_mode(fixup.mode) == AE_IFLNK {
+        return ARCHIVE_OK;
+    }
+
+    let mut status = ARCHIVE_OK;
+    for want_type in [
+        ARCHIVE_ENTRY_ACL_TYPE_ACCESS,
+        ARCHIVE_ENTRY_ACL_TYPE_DEFAULT,
+    ] {
+        if want_type == ARCHIVE_ENTRY_ACL_TYPE_DEFAULT && filetype_from_mode(fixup.mode) != AE_IFDIR
+        {
+            continue;
+        }
+        let acl = match build_posix_acl(handle, &fixup.acl, fixup.mode, want_type) {
+            Ok(acl) => acl,
+            Err(errno) => {
+                set_error_string(
+                    &mut handle.core,
+                    errno,
+                    format!("failed to build ACL for {}", fixup.display_path.display()),
+                );
+                return ARCHIVE_WARN;
+            }
+        };
+        if acl.is_null() {
+            continue;
+        }
+
+        let rc = unsafe {
+            if want_type == ARCHIVE_ENTRY_ACL_TYPE_ACCESS {
+                if fixup.target_fd >= 0 {
+                    acl_set_fd(fixup.target_fd, acl)
+                } else {
+                    -1
+                }
+            } else if fixup.target_fd >= 0 {
+                acl_set_file(
+                    proc_fd_path(fixup.target_fd).as_ptr(),
+                    ACL_TYPE_DEFAULT,
+                    acl,
+                )
+            } else {
+                -1
+            }
+        };
+        let errno = if rc == 0 { 0 } else { last_errno() };
+        unsafe {
+            let _ = acl_free(acl);
+        }
+        if rc != 0 && errno != libc::EOPNOTSUPP {
+            set_error_string(
+                &mut handle.core,
+                errno,
+                format!("failed to set ACL on {}", fixup.display_path.display()),
+            );
+            status = ARCHIVE_WARN;
+        }
+    }
+    status
 }
 
 fn owner_mismatch(target_uid: i64, target_gid: i64) -> (bool, bool) {
@@ -1134,16 +1637,28 @@ fn make_fixup(
 ) -> WriteDiskPendingFixup {
     let uid = entry_uid(handle, entry);
     let gid = entry_gid(handle, entry);
+    let apply_time = (handle.options & ARCHIVE_EXTRACT_TIME) != 0;
+    let now = apply_time.then(current_time_pair);
     WriteDiskPendingFixup {
         display_path,
         mode: desired_file_mode(handle, entry.mode, uid, gid),
         uid,
         gid,
-        atime: entry.atime.set.then_some((entry.atime.sec, entry.atime.nsec)),
-        mtime: entry.mtime.set.then_some((entry.mtime.sec, entry.mtime.nsec)),
-        apply_perm: (handle.options & ARCHIVE_EXTRACT_PERM) != 0 || filetype_from_mode(entry.mode) == AE_IFDIR,
+        atime: if entry.atime.set {
+            Some((entry.atime.sec, entry.atime.nsec))
+        } else {
+            now
+        },
+        mtime: if entry.mtime.set {
+            Some((entry.mtime.sec, entry.mtime.nsec))
+        } else {
+            now
+        },
+        apply_perm: (handle.options & ARCHIVE_EXTRACT_PERM) != 0
+            || filetype_from_mode(entry.mode) == AE_IFDIR,
         apply_owner: (handle.options & ARCHIVE_EXTRACT_OWNER) != 0,
-        apply_time: (handle.options & ARCHIVE_EXTRACT_TIME) != 0,
+        apply_time,
+        acl: entry.acl.clone(),
         xattrs: entry
             .xattrs
             .iter()
@@ -1169,6 +1684,7 @@ fn close_fixup(fixup: &mut WriteDiskPendingFixup) {
 
 fn apply_fixup(handle: &mut WriteDiskArchiveHandle, mut fixup: WriteDiskPendingFixup) -> c_int {
     let mut status = ARCHIVE_OK;
+    let mut mode = fixup.mode;
     if fixup.apply_owner {
         let rc = unsafe {
             if fixup.target_fd >= 0 && fixup.follow {
@@ -1187,12 +1703,13 @@ fn apply_fixup(handle: &mut WriteDiskArchiveHandle, mut fixup: WriteDiskPendingF
         };
         if rc != 0 {
             status = ARCHIVE_WARN;
+            mode &= !(libc::S_ISUID | libc::S_ISGID);
         }
     }
     if fixup.apply_perm {
         let rc = unsafe {
             if fixup.target_fd >= 0 && fixup.follow {
-                libc::fchmod(fixup.target_fd, fixup.mode & 0o7777)
+                libc::fchmod(fixup.target_fd, mode & 0o7777)
             } else {
                 -1
             }
@@ -1252,6 +1769,9 @@ fn apply_fixup(handle: &mut WriteDiskArchiveHandle, mut fixup: WriteDiskPendingF
             }
         }
     }
+    if apply_acl_fixup(handle, &fixup) != ARCHIVE_OK {
+        status = ARCHIVE_WARN;
+    }
     close_fixup(&mut fixup);
     status
 }
@@ -1290,13 +1810,13 @@ fn target_exists(parent_fd: c_int, name: &CStr) -> bool {
     stat_at(parent_fd, name, libc::AT_SYMLINK_NOFOLLOW).is_ok()
 }
 
-fn open_created_file_at(parent_fd: c_int, name: &CStr) -> Result<c_int, c_int> {
+fn open_created_file_at(parent_fd: c_int, name: &CStr, mode: mode_t) -> Result<c_int, c_int> {
     let fd = unsafe {
         libc::openat(
             parent_fd,
             name.as_ptr(),
             libc::O_WRONLY | libc::O_CREAT | libc::O_EXCL | libc::O_CLOEXEC | libc::O_NOFOLLOW,
-            0o600,
+            mode,
         )
     };
     if fd >= 0 {
@@ -1306,10 +1826,7 @@ fn open_created_file_at(parent_fd: c_int, name: &CStr) -> Result<c_int, c_int> {
     }
 }
 
-fn next_safe_temp_name(
-    handle: &mut WriteDiskArchiveHandle,
-    name: &CStr,
-) -> Result<CString, c_int> {
+fn next_safe_temp_name(handle: &mut WriteDiskArchiveHandle, name: &CStr) -> Result<CString, c_int> {
     handle.extraction.temp_counter = handle.extraction.temp_counter.wrapping_add(1);
     CString::new(format!(
         ".{}.safe-tmp-{}",
@@ -1324,16 +1841,21 @@ fn prepare_directory_fixup(
     target: &WriteDiskResolvedTarget,
     entry_data: &crate::entry::internal::ArchiveEntryData,
 ) -> Result<WriteDiskPendingFixup, c_int> {
-    match stat_at(target.parent_fd, target.name.as_c_str(), libc::AT_SYMLINK_NOFOLLOW) {
+    match stat_at(
+        target.parent_fd,
+        target.name.as_c_str(),
+        libc::AT_SYMLINK_NOFOLLOW,
+    ) {
         Ok(st) if filetype_from_mode(st.st_mode) == AE_IFDIR => {
-            let fd = open_dir_at(target.parent_fd, target.name.as_c_str(), true).map_err(|errno| {
-                record_error(
-                    &mut handle.core,
-                    errno,
-                    format!("failed to open directory {}", target.display_path.display()),
-                )
-            })?;
-            Ok(make_fixup(
+            let fd =
+                open_dir_at(target.parent_fd, target.name.as_c_str(), true).map_err(|errno| {
+                    record_error(
+                        &mut handle.core,
+                        errno,
+                        format!("failed to open directory {}", target.display_path.display()),
+                    )
+                })?;
+            let mut fixup = make_fixup(
                 handle,
                 target.display_path.clone(),
                 entry_data,
@@ -1341,27 +1863,27 @@ fn prepare_directory_fixup(
                 -1,
                 None,
                 true,
-            ))
+            );
+            fixup.apply_perm = (handle.options & ARCHIVE_EXTRACT_PERM) != 0;
+            fixup.apply_owner = false;
+            Ok(fixup)
         }
         Ok(st) if filetype_from_mode(st.st_mode) == AE_IFLNK => {
             if (handle.options & ARCHIVE_EXTRACT_SECURE_SYMLINKS) == 0 {
-                let fd =
-                    open_dir_at(target.parent_fd, target.name.as_c_str(), false).map_err(|errno| {
-                        record_error(
-                            &mut handle.core,
-                            errno,
-                            format!("failed to open directory {}", target.display_path.display()),
-                        )
-                    })?;
-                return Ok(make_fixup(
-                    handle,
-                    target.display_path.clone(),
-                    entry_data,
-                    fd,
-                    -1,
-                    None,
-                    true,
-                ));
+                if let Ok(fd) = open_dir_at(target.parent_fd, target.name.as_c_str(), false) {
+                    let mut fixup = make_fixup(
+                        handle,
+                        target.display_path.clone(),
+                        entry_data,
+                        fd,
+                        -1,
+                        None,
+                        true,
+                    );
+                    fixup.apply_perm = (handle.options & ARCHIVE_EXTRACT_PERM) != 0;
+                    fixup.apply_owner = false;
+                    return Ok(fixup);
+                }
             }
             remove_entry_at(target.parent_fd, target.name.as_c_str()).map_err(|errno| {
                 record_error(
@@ -1375,16 +1897,20 @@ fn prepare_directory_fixup(
                 return Err(record_error(
                     &mut handle.core,
                     last_errno(),
-                    format!("failed to create directory {}", target.display_path.display()),
+                    format!(
+                        "failed to create directory {}",
+                        target.display_path.display()
+                    ),
                 ));
             }
-            let fd = open_dir_at(target.parent_fd, target.name.as_c_str(), true).map_err(|errno| {
-                record_error(
-                    &mut handle.core,
-                    errno,
-                    format!("failed to open directory {}", target.display_path.display()),
-                )
-            })?;
+            let fd =
+                open_dir_at(target.parent_fd, target.name.as_c_str(), true).map_err(|errno| {
+                    record_error(
+                        &mut handle.core,
+                        errno,
+                        format!("failed to open directory {}", target.display_path.display()),
+                    )
+                })?;
             Ok(make_fixup(
                 handle,
                 target.display_path.clone(),
@@ -1396,13 +1922,6 @@ fn prepare_directory_fixup(
             ))
         }
         Ok(_) => {
-            if (handle.options & ARCHIVE_EXTRACT_UNLINK) == 0 {
-                return Err(record_error(
-                    &mut handle.core,
-                    libc::EEXIST,
-                    format!("failed to create directory {}", target.display_path.display()),
-                ));
-            }
             remove_entry_at(target.parent_fd, target.name.as_c_str()).map_err(|errno| {
                 record_error(
                     &mut handle.core,
@@ -1415,16 +1934,20 @@ fn prepare_directory_fixup(
                 return Err(record_error(
                     &mut handle.core,
                     last_errno(),
-                    format!("failed to create directory {}", target.display_path.display()),
+                    format!(
+                        "failed to create directory {}",
+                        target.display_path.display()
+                    ),
                 ));
             }
-            let fd = open_dir_at(target.parent_fd, target.name.as_c_str(), true).map_err(|errno| {
-                record_error(
-                    &mut handle.core,
-                    errno,
-                    format!("failed to open directory {}", target.display_path.display()),
-                )
-            })?;
+            let fd =
+                open_dir_at(target.parent_fd, target.name.as_c_str(), true).map_err(|errno| {
+                    record_error(
+                        &mut handle.core,
+                        errno,
+                        format!("failed to open directory {}", target.display_path.display()),
+                    )
+                })?;
             Ok(make_fixup(
                 handle,
                 target.display_path.clone(),
@@ -1441,16 +1964,20 @@ fn prepare_directory_fixup(
                 return Err(record_error(
                     &mut handle.core,
                     last_errno(),
-                    format!("failed to create directory {}", target.display_path.display()),
+                    format!(
+                        "failed to create directory {}",
+                        target.display_path.display()
+                    ),
                 ));
             }
-            let fd = open_dir_at(target.parent_fd, target.name.as_c_str(), true).map_err(|errno| {
-                record_error(
-                    &mut handle.core,
-                    errno,
-                    format!("failed to open directory {}", target.display_path.display()),
-                )
-            })?;
+            let fd =
+                open_dir_at(target.parent_fd, target.name.as_c_str(), true).map_err(|errno| {
+                    record_error(
+                        &mut handle.core,
+                        errno,
+                        format!("failed to open directory {}", target.display_path.display()),
+                    )
+                })?;
             Ok(make_fixup(
                 handle,
                 target.display_path.clone(),
@@ -1491,7 +2018,11 @@ pub(crate) unsafe fn write_disk_header(
     };
 
     if let Some((skip_dev, skip_ino)) = handle.skip_file {
-        if let Ok(st) = stat_at(target.parent_fd, target.name.as_c_str(), libc::AT_SYMLINK_NOFOLLOW) {
+        if let Ok(st) = stat_at(
+            target.parent_fd,
+            target.name.as_c_str(),
+            libc::AT_SYMLINK_NOFOLLOW,
+        ) {
             if st.st_dev == skip_dev as _ && st.st_ino == skip_ino as _ {
                 close_fd_if_valid(target.parent_fd);
                 handle.extraction.last_header_failed = true;
@@ -1513,8 +2044,10 @@ pub(crate) unsafe fn write_disk_header(
         return ARCHIVE_OK;
     }
     if (handle.options & ARCHIVE_EXTRACT_NO_OVERWRITE_NEWER) != 0 {
-        if let (Ok(existing), true) = (stat_at(target.parent_fd, target.name.as_c_str(), 0), entry_data.mtime.set)
-        {
+        if let (Ok(existing), true) = (
+            stat_at(target.parent_fd, target.name.as_c_str(), 0),
+            entry_data.mtime.set,
+        ) {
             if existing.st_mtime > entry_data.mtime.sec {
                 handle.extraction.current = Some(skip_current_state(target.display_path.clone()));
                 close_fd_if_valid(target.parent_fd);
@@ -1561,7 +2094,10 @@ pub(crate) unsafe fn write_disk_header(
             None => Err(record_error(
                 &mut handle.core,
                 libc::EINVAL,
-                format!("symlink target is missing for {}", target.display_path.display()),
+                format!(
+                    "symlink target is missing for {}",
+                    target.display_path.display()
+                ),
             )),
         };
         let Ok(link_target) = link_target else {
@@ -1628,10 +2164,21 @@ pub(crate) unsafe fn write_disk_header(
             close_fd_if_valid(hardlink_target.parent_fd);
             close_fd_if_valid(target.parent_fd);
             handle.extraction.last_header_failed = true;
+            let errno = last_errno();
+            if errno == libc::ENOENT {
+                return record_error(
+                    &mut handle.core,
+                    errno,
+                    format!("Hard-link target '{}' does not exist.", link_target),
+                );
+            }
             return record_error(
                 &mut handle.core,
-                last_errno(),
-                format!("failed to create hardlink {}", target.display_path.display()),
+                errno,
+                format!(
+                    "failed to create hardlink {}",
+                    target.display_path.display()
+                ),
             );
         }
         close_fd_if_valid(hardlink_target.parent_fd);
@@ -1672,7 +2219,7 @@ pub(crate) unsafe fn write_disk_header(
             accept_data: authoritative,
             close_fd_on_finish: fd >= 0,
             fixup: authoritative.then(|| {
-                make_fixup(
+                let mut fixup = make_fixup(
                     handle,
                     target.display_path.clone(),
                     entry_data,
@@ -1680,13 +2227,21 @@ pub(crate) unsafe fn write_disk_header(
                     -1,
                     None,
                     true,
-                )
+                );
+                fixup.apply_perm = true;
+                fixup
             }),
         });
         return ARCHIVE_OK;
     }
 
     let use_safe_writes = (handle.options & ARCHIVE_EXTRACT_SAFE_WRITES) != 0;
+    let create_mode = (desired_file_mode(
+        handle,
+        entry_data.mode,
+        entry_uid(handle, entry_data),
+        entry_gid(handle, entry_data),
+    ) & 0o777) as mode_t;
     let (fd, current_name, final_name) = if use_safe_writes {
         let mut opened = None;
         let mut temp_name = None;
@@ -1699,11 +2254,14 @@ pub(crate) unsafe fn write_disk_header(
                     return record_error(
                         &mut handle.core,
                         errno,
-                        format!("failed to create temp name for {}", target.display_path.display()),
+                        format!(
+                            "failed to create temp name for {}",
+                            target.display_path.display()
+                        ),
                     );
                 }
             };
-            match open_created_file_at(target.parent_fd, candidate.as_c_str()) {
+            match open_created_file_at(target.parent_fd, candidate.as_c_str(), create_mode) {
                 Ok(fd) => {
                     opened = Some(fd);
                     temp_name = Some(candidate);
@@ -1727,7 +2285,10 @@ pub(crate) unsafe fn write_disk_header(
             return record_error(
                 &mut handle.core,
                 libc::EEXIST,
-                format!("failed to allocate temp name for {}", target.display_path.display()),
+                format!(
+                    "failed to allocate temp name for {}",
+                    target.display_path.display()
+                ),
             );
         };
         (fd, temp_name, Some(target.name.clone()))
@@ -1735,7 +2296,7 @@ pub(crate) unsafe fn write_disk_header(
         if target_exists(target.parent_fd, target.name.as_c_str()) {
             let _ = remove_entry_at(target.parent_fd, target.name.as_c_str());
         }
-        let fd = match open_created_file_at(target.parent_fd, target.name.as_c_str()) {
+        let fd = match open_created_file_at(target.parent_fd, target.name.as_c_str(), create_mode) {
             Ok(fd) => fd,
             Err(errno) => {
                 close_fd_if_valid(target.parent_fd);
@@ -1753,7 +2314,11 @@ pub(crate) unsafe fn write_disk_header(
 
     handle.extraction.current = Some(WriteDiskCurrentState {
         display_path: target.display_path.clone(),
-        current_parent_fd: if use_safe_writes { target.parent_fd } else { -1 },
+        current_parent_fd: if use_safe_writes {
+            target.parent_fd
+        } else {
+            -1
+        },
         current_name,
         final_parent_fd: None,
         final_name,
@@ -1792,6 +2357,9 @@ pub(crate) unsafe fn write_disk_data(
         let remaining = (limit - current.written).max(0) as usize;
         to_write = to_write.min(remaining);
     }
+    if size != 0 && to_write == 0 {
+        return ARCHIVE_WARN as isize;
+    }
     let slice = std::slice::from_raw_parts(buffer.cast::<u8>(), to_write);
     let rc = libc::write(current.fd, slice.as_ptr().cast(), slice.len());
     if rc < 0 {
@@ -1818,7 +2386,7 @@ pub(crate) unsafe fn write_disk_data_block(
     let mut to_write = size as usize;
     if let Some(limit) = current.size_limit {
         if offset >= limit {
-            return 0;
+            return ARCHIVE_OK as isize;
         }
         to_write = to_write.min((limit - offset) as usize);
     }
@@ -1829,11 +2397,14 @@ pub(crate) unsafe fn write_disk_data_block(
         return ARCHIVE_FATAL as isize;
     }
     current.written = current.written.max(offset + rc as i64);
-    rc as isize
+    ARCHIVE_OK as isize
 }
 
 pub(crate) fn write_disk_finish_entry(handle: &mut WriteDiskArchiveHandle) -> c_int {
     let Some(mut current) = handle.extraction.current.take() else {
+        if handle.extraction.last_header_failed {
+            handle.extraction.last_header_failed = false;
+        }
         return ARCHIVE_OK;
     };
 
@@ -1845,6 +2416,20 @@ pub(crate) fn write_disk_finish_entry(handle: &mut WriteDiskArchiveHandle) -> c_
     }
 
     let mut status = ARCHIVE_OK;
+    let truncate_fd = if current.fd >= 0 {
+        current.fd
+    } else {
+        fixup
+            .as_ref()
+            .map_or(-1, |entry_fixup| entry_fixup.target_fd)
+    };
+    if truncate_fd >= 0 {
+        if let Some(limit) = current.size_limit {
+            if unsafe { libc::ftruncate(truncate_fd, limit) } != 0 {
+                status = ARCHIVE_WARN;
+            }
+        }
+    }
     if let Some(final_name) = current.final_name.as_ref() {
         let Some(current_name) = current.current_name.as_ref() else {
             if let Some(mut fixup) = fixup {
@@ -1854,7 +2439,10 @@ pub(crate) fn write_disk_finish_entry(handle: &mut WriteDiskArchiveHandle) -> c_
             return record_error(
                 &mut handle.core,
                 libc::EINVAL,
-                format!("missing temporary name for {}", current.display_path.display()),
+                format!(
+                    "missing temporary name for {}",
+                    current.display_path.display()
+                ),
             );
         };
         if target_exists(current.current_parent_fd, final_name.as_c_str()) {
@@ -1896,6 +2484,8 @@ pub(crate) fn write_disk_close(handle: &mut WriteDiskArchiveHandle) -> c_int {
     let mut status = ARCHIVE_OK;
     if handle.extraction.current.is_some() {
         status = write_disk_finish_entry(handle);
+    } else if handle.extraction.last_header_failed {
+        status = ARCHIVE_FATAL;
     }
     while let Some(fixup) = handle.extraction.deferred_dirs.pop() {
         if apply_fixup(handle, fixup) != ARCHIVE_OK {

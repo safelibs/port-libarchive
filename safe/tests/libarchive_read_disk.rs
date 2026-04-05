@@ -233,3 +233,159 @@ fn read_disk_metadata_filter_can_descend_and_exclude_entries() {
         assert_eq!(ARCHIVE_OK, common::archive_read_free(disk));
     }
 }
+
+#[test]
+fn read_disk_lookup_deregistration_restores_null_defaults() {
+    unsafe {
+        let disk = read_disk::archive_read_disk_new();
+        assert!(!disk.is_null());
+
+        assert!(
+            read_disk::archive_read_disk_gname(disk, 0).is_null(),
+            "default gname lookup should be null"
+        );
+        assert!(
+            read_disk::archive_read_disk_uname(disk, 0).is_null(),
+            "default uname lookup should be null"
+        );
+
+        assert_eq!(
+            ARCHIVE_OK,
+            read_disk::archive_read_disk_set_standard_lookup(disk)
+        );
+        assert!(
+            !read_disk::archive_read_disk_gname(disk, 0).is_null(),
+            "standard lookup should resolve gname"
+        );
+        assert!(
+            !read_disk::archive_read_disk_uname(disk, 0).is_null(),
+            "standard lookup should resolve uname"
+        );
+
+        assert_eq!(
+            ARCHIVE_OK,
+            read_disk::archive_read_disk_set_gname_lookup(disk, ptr::null_mut(), None, None)
+        );
+        assert_eq!(
+            ARCHIVE_OK,
+            read_disk::archive_read_disk_set_uname_lookup(disk, ptr::null_mut(), None, None)
+        );
+        assert!(
+            read_disk::archive_read_disk_gname(disk, 0).is_null(),
+            "clearing gname lookup should disable standard lookup"
+        );
+        assert!(
+            read_disk::archive_read_disk_uname(disk, 0).is_null(),
+            "clearing uname lookup should disable standard lookup"
+        );
+
+        assert_eq!(ARCHIVE_OK, common::archive_read_free(disk));
+    }
+}
+
+#[test]
+fn read_disk_logical_mode_descends_into_non_ancestor_symlink_dirs() {
+    let temp = support::TempDir::new("read-disk-logical");
+    let _cwd = support::pushd(temp.path());
+    support::make_dir(std::path::Path::new("root/dir"));
+    support::write_file(std::path::Path::new("root/dir/file1"), b"file1");
+    support::write_file(std::path::Path::new("root/dir/file2"), b"file2");
+    support::symlink(
+        std::path::Path::new("root/linkdir"),
+        std::path::Path::new("dir"),
+    );
+
+    unsafe {
+        let disk = read_disk::archive_read_disk_new();
+        assert!(!disk.is_null());
+        assert_eq!(
+            ARCHIVE_OK,
+            read_disk::archive_read_disk_set_symlink_logical(disk)
+        );
+        assert_eq!(
+            ARCHIVE_OK,
+            read_disk::archive_read_disk_open(disk, c"root".as_ptr())
+        );
+
+        let mut entry_ptr = ptr::null_mut();
+        let mut seen = Vec::new();
+        loop {
+            let status = read::archive_read_next_header(disk, &mut entry_ptr);
+            if status == ARCHIVE_EOF {
+                break;
+            }
+            assert_eq!(ARCHIVE_OK, status);
+            assert!(!entry_ptr.is_null());
+            let path = CStr::from_ptr(entry::archive_entry_pathname(entry_ptr))
+                .to_string_lossy()
+                .into_owned();
+            seen.push(path.clone());
+            if entry::archive_entry_filetype(entry_ptr) == libc::S_IFDIR as u32 {
+                assert_eq!(ARCHIVE_OK, read_disk::archive_read_disk_descend(disk));
+            }
+        }
+
+        assert_eq!(
+            seen,
+            vec![
+                String::from("root"),
+                String::from("root/dir"),
+                String::from("root/dir/file1"),
+                String::from("root/dir/file2"),
+                String::from("root/linkdir"),
+                String::from("root/linkdir/file1"),
+                String::from("root/linkdir/file2"),
+            ]
+        );
+        assert_eq!(ARCHIVE_OK, common::archive_read_free(disk));
+    }
+}
+
+#[test]
+fn read_disk_entries_respect_archive_match_path_time_exclusions() {
+    let temp = support::TempDir::new("read-disk-match-time");
+    let _cwd = support::pushd(temp.path());
+    support::write_file(std::path::Path::new("match.txt"), b"x");
+
+    unsafe {
+        let disk = read_disk::archive_read_disk_new();
+        let matcher = match_api::archive_match_new();
+        let entry_ptr = entry::archive_entry_new();
+        assert!(!disk.is_null());
+        assert!(!matcher.is_null());
+        assert!(!entry_ptr.is_null());
+
+        entry::archive_entry_copy_pathname(entry_ptr, c"match.txt".as_ptr());
+        assert_eq!(
+            ARCHIVE_OK,
+            read_disk::archive_read_disk_entry_from_file(disk, entry_ptr, -1, ptr::null())
+        );
+        assert_eq!(
+            ARCHIVE_OK,
+            match_api::archive_match_exclude_entry(
+                matcher,
+                archive::ffi::archive_common::ARCHIVE_MATCH_MTIME
+                    | archive::ffi::archive_common::ARCHIVE_MATCH_EQUAL,
+                entry_ptr,
+            )
+        );
+        entry::archive_entry_set_mtime(
+            entry_ptr,
+            entry::archive_entry_mtime(entry_ptr),
+            entry::archive_entry_mtime_nsec(entry_ptr) as i64,
+        );
+        assert_eq!(
+            ARCHIVE_OK,
+            read_disk::archive_read_disk_entry_from_file(disk, entry_ptr, -1, ptr::null())
+        );
+        assert_eq!(
+            1,
+            match_api::archive_match_time_excluded(matcher, entry_ptr)
+        );
+        assert_eq!(1, match_api::archive_match_excluded(matcher, entry_ptr));
+
+        entry::archive_entry_free(entry_ptr);
+        assert_eq!(ARCHIVE_OK, common::archive_free(matcher));
+        assert_eq!(ARCHIVE_OK, common::archive_read_free(disk));
+    }
+}

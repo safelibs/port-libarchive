@@ -53,11 +53,10 @@ pub const ARCHIVE_ENTRY_ACL_TYPE_AUDIT: c_int = 0x0000_1000;
 pub const ARCHIVE_ENTRY_ACL_TYPE_ALARM: c_int = 0x0000_2000;
 pub const ARCHIVE_ENTRY_ACL_TYPE_POSIX1E: c_int =
     ARCHIVE_ENTRY_ACL_TYPE_ACCESS | ARCHIVE_ENTRY_ACL_TYPE_DEFAULT;
-pub const ARCHIVE_ENTRY_ACL_TYPE_NFS4: c_int =
-    ARCHIVE_ENTRY_ACL_TYPE_ALLOW
-        | ARCHIVE_ENTRY_ACL_TYPE_DENY
-        | ARCHIVE_ENTRY_ACL_TYPE_AUDIT
-        | ARCHIVE_ENTRY_ACL_TYPE_ALARM;
+pub const ARCHIVE_ENTRY_ACL_TYPE_NFS4: c_int = ARCHIVE_ENTRY_ACL_TYPE_ALLOW
+    | ARCHIVE_ENTRY_ACL_TYPE_DENY
+    | ARCHIVE_ENTRY_ACL_TYPE_AUDIT
+    | ARCHIVE_ENTRY_ACL_TYPE_ALARM;
 
 pub const ARCHIVE_ENTRY_ACL_USER: c_int = 10001;
 pub const ARCHIVE_ENTRY_ACL_USER_OBJ: c_int = 10002;
@@ -94,11 +93,7 @@ unsafe extern "C" {
     pub fn archive_entry_devmajor(entry: *mut archive_entry) -> dev_t;
     pub fn archive_entry_devminor(entry: *mut archive_entry) -> dev_t;
     pub fn archive_entry_filetype(entry: *mut archive_entry) -> mode_t;
-    pub fn archive_entry_fflags(
-        entry: *mut archive_entry,
-        set: *mut c_ulong,
-        clear: *mut c_ulong,
-    );
+    pub fn archive_entry_fflags(entry: *mut archive_entry, set: *mut c_ulong, clear: *mut c_ulong);
     pub fn archive_entry_fflags_text(entry: *mut archive_entry) -> *const c_char;
     pub fn archive_entry_gid(entry: *mut archive_entry) -> i64;
     pub fn archive_entry_gname(entry: *mut archive_entry) -> *const c_char;
@@ -113,7 +108,10 @@ unsafe extern "C" {
     pub fn archive_entry_is_data_encrypted(entry: *mut archive_entry) -> c_int;
     pub fn archive_entry_is_encrypted(entry: *mut archive_entry) -> c_int;
     pub fn archive_entry_is_metadata_encrypted(entry: *mut archive_entry) -> c_int;
-    pub fn archive_entry_mac_metadata(entry: *mut archive_entry, size: *mut size_t) -> *const c_void;
+    pub fn archive_entry_mac_metadata(
+        entry: *mut archive_entry,
+        size: *mut size_t,
+    ) -> *const c_void;
     pub fn archive_entry_mode(entry: *mut archive_entry) -> mode_t;
     pub fn archive_entry_mtime(entry: *mut archive_entry) -> i64;
     pub fn archive_entry_mtime_nsec(entry: *mut archive_entry) -> c_long;
@@ -166,7 +164,8 @@ unsafe extern "C" {
     pub fn archive_entry_set_gname_utf8(entry: *mut archive_entry, name: *const c_char);
     pub fn archive_entry_copy_gname(entry: *mut archive_entry, name: *const c_char);
     pub fn archive_entry_copy_gname_w(entry: *mut archive_entry, name: *const wchar_t);
-    pub fn archive_entry_update_gname_utf8(entry: *mut archive_entry, name: *const c_char) -> c_int;
+    pub fn archive_entry_update_gname_utf8(entry: *mut archive_entry, name: *const c_char)
+        -> c_int;
     pub fn archive_entry_set_hardlink(entry: *mut archive_entry, target: *const c_char);
     pub fn archive_entry_set_hardlink_utf8(entry: *mut archive_entry, target: *const c_char);
     pub fn archive_entry_copy_hardlink(entry: *mut archive_entry, target: *const c_char);
@@ -181,7 +180,10 @@ unsafe extern "C" {
     pub fn archive_entry_set_link_utf8(entry: *mut archive_entry, target: *const c_char);
     pub fn archive_entry_copy_link(entry: *mut archive_entry, target: *const c_char);
     pub fn archive_entry_copy_link_w(entry: *mut archive_entry, target: *const wchar_t);
-    pub fn archive_entry_update_link_utf8(entry: *mut archive_entry, target: *const c_char) -> c_int;
+    pub fn archive_entry_update_link_utf8(
+        entry: *mut archive_entry,
+        target: *const c_char,
+    ) -> c_int;
     pub fn archive_entry_set_mode(entry: *mut archive_entry, mode: mode_t);
     pub fn archive_entry_set_mtime(entry: *mut archive_entry, t: i64, ns: c_long);
     pub fn archive_entry_unset_mtime(entry: *mut archive_entry);
@@ -190,8 +192,10 @@ unsafe extern "C" {
     pub fn archive_entry_set_pathname_utf8(entry: *mut archive_entry, name: *const c_char);
     pub fn archive_entry_copy_pathname(entry: *mut archive_entry, name: *const c_char);
     pub fn archive_entry_copy_pathname_w(entry: *mut archive_entry, name: *const wchar_t);
-    pub fn archive_entry_update_pathname_utf8(entry: *mut archive_entry, name: *const c_char)
-        -> c_int;
+    pub fn archive_entry_update_pathname_utf8(
+        entry: *mut archive_entry,
+        name: *const c_char,
+    ) -> c_int;
     pub fn archive_entry_set_perm(entry: *mut archive_entry, perm: mode_t);
     pub fn archive_entry_set_rdev(entry: *mut archive_entry, rdev: dev_t);
     pub fn archive_entry_set_rdevmajor(entry: *mut archive_entry, rdev: dev_t);
@@ -214,7 +218,8 @@ unsafe extern "C" {
     pub fn archive_entry_set_uname_utf8(entry: *mut archive_entry, name: *const c_char);
     pub fn archive_entry_copy_uname(entry: *mut archive_entry, name: *const c_char);
     pub fn archive_entry_copy_uname_w(entry: *mut archive_entry, name: *const wchar_t);
-    pub fn archive_entry_update_uname_utf8(entry: *mut archive_entry, name: *const c_char) -> c_int;
+    pub fn archive_entry_update_uname_utf8(entry: *mut archive_entry, name: *const c_char)
+        -> c_int;
     pub fn archive_entry_set_is_data_encrypted(entry: *mut archive_entry, encrypted: c_char);
     pub fn archive_entry_set_is_metadata_encrypted(entry: *mut archive_entry, encrypted: c_char);
     pub fn archive_entry_copy_mac_metadata(

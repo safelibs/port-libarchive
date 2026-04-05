@@ -6,15 +6,19 @@ use std::ptr;
 
 use libc::{mode_t, size_t, stat, wchar_t};
 
-use crate::ffi::{archive, archive_entry};
 use crate::ffi::archive_entry_api as ffi;
+use crate::ffi::{archive, archive_entry};
 
 fn to_cstring(value: &str) -> CString {
     CString::new(value).expect("input must not contain interior NUL bytes")
 }
 
 pub fn to_wide_null(value: &str) -> Vec<wchar_t> {
-    value.encode_utf16().map(|unit| unit as wchar_t).chain([0]).collect()
+    value
+        .encode_utf16()
+        .map(|unit| unit as wchar_t)
+        .chain([0])
+        .collect()
 }
 
 pub fn c_str(ptr: *const i8) -> Option<String> {
@@ -237,7 +241,16 @@ impl EntryHandle {
         name: &str,
     ) -> i32 {
         let name = to_cstring(name);
-        unsafe { ffi::archive_entry_acl_add_entry(self.raw, entry_type, permset, tag, qual, name.as_ptr()) }
+        unsafe {
+            ffi::archive_entry_acl_add_entry(
+                self.raw,
+                entry_type,
+                permset,
+                tag,
+                qual,
+                name.as_ptr(),
+            )
+        }
     }
 
     pub fn acl_to_text(&self, flags: i32) -> Option<String> {

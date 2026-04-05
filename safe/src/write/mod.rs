@@ -14,8 +14,8 @@ use crate::common::state::{
     WriteOpenConfig, WriteOptionConfig,
 };
 use crate::disk::{
-    custom_entry_to_backend, native_write_disk_data, native_write_disk_data_block,
-    native_write_disk_finish_entry, native_write_disk_header,
+    backend_entry_to_custom, custom_entry_to_backend, native_write_disk_data,
+    native_write_disk_data_block, native_write_disk_finish_entry, native_write_disk_header,
 };
 use crate::ffi::{archive, archive_entry};
 
@@ -188,7 +188,9 @@ unsafe fn apply_write_filter(
     filter: &WriteFilterConfig,
 ) -> c_int {
     match filter {
-        WriteFilterConfig::Code(code) => (backend_api().archive_write_add_filter)(handle.backend, *code),
+        WriteFilterConfig::Code(code) => {
+            (backend_api().archive_write_add_filter)(handle.backend, *code)
+        }
         WriteFilterConfig::Name(name) => with_c_string(name, |name| {
             (backend_api().archive_write_add_filter_by_name)(handle.backend, name)
         }),
@@ -433,18 +435,22 @@ unsafe fn apply_write_option(
     }
 }
 
-unsafe fn ensure_write_backend(
-    handle: &mut crate::common::state::WriteArchiveHandle,
-) -> c_int {
+unsafe fn ensure_write_backend(handle: &mut crate::common::state::WriteArchiveHandle) -> c_int {
     if handle.backend.is_null() {
         handle.backend = (backend_api().archive_write_new)();
         if handle.backend.is_null() {
-            set_error_string(&mut handle.core, libc::ENOMEM, "failed to create writer backend".to_string());
+            set_error_string(
+                &mut handle.core,
+                libc::ENOMEM,
+                "failed to create writer backend".to_string(),
+            );
             return ARCHIVE_FATAL;
         }
 
-        let mut status =
-            (backend_api().archive_write_set_bytes_per_block)(handle.backend, handle.bytes_per_block);
+        let mut status = (backend_api().archive_write_set_bytes_per_block)(
+            handle.backend,
+            handle.bytes_per_block,
+        );
         if status != ARCHIVE_OK {
             return status;
         }
@@ -499,7 +505,8 @@ unsafe fn ensure_write_backend_open(
             handle.backend,
             (handle as *mut crate::common::state::WriteArchiveHandle).cast(),
             handle.open_cb.map(|_| {
-                open_callback_shim as unsafe extern "C" fn(*mut BackendArchive, *mut c_void) -> c_int
+                open_callback_shim
+                    as unsafe extern "C" fn(*mut BackendArchive, *mut c_void) -> c_int
             }),
             handle.write_cb.map(|_| {
                 write_callback_shim
@@ -537,12 +544,15 @@ fn push_or_apply_filter(
     filter: WriteFilterConfig,
 ) -> c_int {
     unsafe {
-        if handle.backend.is_null() {
-            handle.filters.push(filter);
-            ARCHIVE_OK
-        } else {
-            apply_write_filter(handle, &filter)
+        let status = ensure_write_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
         }
+        let status = apply_write_filter(handle, &filter);
+        if status == ARCHIVE_OK {
+            handle.filters.push(filter);
+        }
+        status
     }
 }
 
@@ -551,16 +561,15 @@ fn set_or_apply_format(
     format: WriteFormatConfig,
 ) -> c_int {
     unsafe {
-        if handle.backend.is_null() {
-            handle.format = Some(format);
-            ARCHIVE_OK
-        } else {
-            let status = apply_write_format(handle, &format);
-            if status == ARCHIVE_OK {
-                handle.format = Some(format);
-            }
-            status
+        let status = ensure_write_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
         }
+        let status = apply_write_format(handle, &format);
+        if status == ARCHIVE_OK {
+            handle.format = Some(format);
+        }
+        status
     }
 }
 
@@ -569,16 +578,15 @@ fn push_or_apply_option(
     option: WriteOptionConfig,
 ) -> c_int {
     unsafe {
-        if handle.backend.is_null() {
-            handle.options.push(option);
-            ARCHIVE_OK
-        } else {
-            let status = apply_write_option(handle, &option);
-            if status == ARCHIVE_OK {
-                handle.options.push(option);
-            }
-            status
+        let status = ensure_write_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
         }
+        let status = apply_write_option(handle, &option);
+        if status == ARCHIVE_OK {
+            handle.options.push(option);
+        }
+        status
     }
 }
 
@@ -655,7 +663,10 @@ writer_filter_call0!(
     WriteFilterConfig::B64Encode
 );
 writer_filter_call0!(archive_write_add_filter_bzip2, WriteFilterConfig::Bzip2);
-writer_filter_call0!(archive_write_add_filter_compress, WriteFilterConfig::Compress);
+writer_filter_call0!(
+    archive_write_add_filter_compress,
+    WriteFilterConfig::Compress
+);
 writer_filter_call0!(archive_write_add_filter_grzip, WriteFilterConfig::Grzip);
 writer_filter_call0!(archive_write_add_filter_gzip, WriteFilterConfig::Gzip);
 writer_filter_call0!(archive_write_add_filter_lrzip, WriteFilterConfig::Lrzip);
@@ -664,17 +675,32 @@ writer_filter_call0!(archive_write_add_filter_lzip, WriteFilterConfig::Lzip);
 writer_filter_call0!(archive_write_add_filter_lzma, WriteFilterConfig::Lzma);
 writer_filter_call0!(archive_write_add_filter_lzop, WriteFilterConfig::Lzop);
 writer_filter_call0!(archive_write_add_filter_none, WriteFilterConfig::None);
-writer_filter_call0!(archive_write_add_filter_uuencode, WriteFilterConfig::Uuencode);
+writer_filter_call0!(
+    archive_write_add_filter_uuencode,
+    WriteFilterConfig::Uuencode
+);
 writer_filter_call0!(archive_write_add_filter_xz, WriteFilterConfig::Xz);
 writer_filter_call0!(archive_write_add_filter_zstd, WriteFilterConfig::Zstd);
 
 writer_format_call0!(archive_write_set_format_ar_bsd, WriteFormatConfig::ArBsd);
 writer_format_call0!(archive_write_set_format_ar_svr4, WriteFormatConfig::ArSvr4);
 writer_format_call0!(archive_write_set_format_cpio, WriteFormatConfig::Cpio);
-writer_format_call0!(archive_write_set_format_cpio_bin, WriteFormatConfig::CpioBin);
-writer_format_call0!(archive_write_set_format_cpio_newc, WriteFormatConfig::CpioNewc);
-writer_format_call0!(archive_write_set_format_cpio_odc, WriteFormatConfig::CpioOdc);
-writer_format_call0!(archive_write_set_format_cpio_pwb, WriteFormatConfig::CpioPwb);
+writer_format_call0!(
+    archive_write_set_format_cpio_bin,
+    WriteFormatConfig::CpioBin
+);
+writer_format_call0!(
+    archive_write_set_format_cpio_newc,
+    WriteFormatConfig::CpioNewc
+);
+writer_format_call0!(
+    archive_write_set_format_cpio_odc,
+    WriteFormatConfig::CpioOdc
+);
+writer_format_call0!(
+    archive_write_set_format_cpio_pwb,
+    WriteFormatConfig::CpioPwb
+);
 writer_format_call0!(archive_write_set_format_gnutar, WriteFormatConfig::Gnutar);
 writer_format_call0!(archive_write_set_format_pax, WriteFormatConfig::Pax);
 writer_format_call0!(
@@ -683,7 +709,10 @@ writer_format_call0!(
 );
 writer_format_call0!(archive_write_set_format_raw, WriteFormatConfig::Raw);
 writer_format_call0!(archive_write_set_format_shar, WriteFormatConfig::Shar);
-writer_format_call0!(archive_write_set_format_shar_dump, WriteFormatConfig::SharDump);
+writer_format_call0!(
+    archive_write_set_format_shar_dump,
+    WriteFormatConfig::SharDump
+);
 writer_format_call0!(archive_write_set_format_ustar, WriteFormatConfig::Ustar);
 writer_format_call0!(archive_write_set_format_v7tar, WriteFormatConfig::V7tar);
 
@@ -956,11 +985,7 @@ pub extern "C" fn archive_write_open(
         handle.close_cb = close_cb;
         handle.free_cb = None;
         handle.open_target = WriteOpenConfig::Callbacks;
-        if handle.backend.is_null() {
-            ARCHIVE_OK
-        } else {
-            ensure_write_backend_open(handle)
-        }
+        ensure_write_backend_open(handle)
     })
 }
 
@@ -983,11 +1008,7 @@ pub extern "C" fn archive_write_open2(
         handle.close_cb = close_cb;
         handle.free_cb = free_cb;
         handle.open_target = WriteOpenConfig::Callbacks;
-        if handle.backend.is_null() {
-            ARCHIVE_OK
-        } else {
-            ensure_write_backend_open(handle)
-        }
+        ensure_write_backend_open(handle)
     })
 }
 
@@ -1002,11 +1023,7 @@ pub extern "C" fn archive_write_open_filename(a: *mut archive, file: *const c_ch
         };
         clear_error(&mut handle.core);
         handle.open_target = WriteOpenConfig::Filename(file);
-        if handle.backend.is_null() {
-            ARCHIVE_OK
-        } else {
-            ensure_write_backend_open(handle)
-        }
+        ensure_write_backend_open(handle)
     })
 }
 
@@ -1023,11 +1040,7 @@ pub extern "C" fn archive_write_open_memory(
         };
         clear_error(&mut handle.core);
         handle.open_target = WriteOpenConfig::Memory { buffer, size, used };
-        if handle.backend.is_null() {
-            ARCHIVE_OK
-        } else {
-            ensure_write_backend_open(handle)
-        }
+        ensure_write_backend_open(handle)
     })
 }
 
@@ -1043,7 +1056,18 @@ pub extern "C" fn archive_write_header(a: *mut archive, entry: *mut archive_entr
 
         let status = match &mut handle {
             WriteLike::Archive(handle) => ensure_write_backend_open(handle),
-            WriteLike::Disk(handle) => native_write_disk_header(handle, entry),
+            WriteLike::Disk(handle) => {
+                if handle.extraction.current.is_some() {
+                    let finish_status = native_write_disk_finish_entry(handle);
+                    if finish_status < ARCHIVE_OK {
+                        finish_status
+                    } else {
+                        native_write_disk_header(handle, entry)
+                    }
+                } else {
+                    native_write_disk_header(handle, entry)
+                }
+            }
         };
         if status != ARCHIVE_OK {
             return status;
@@ -1058,7 +1082,17 @@ pub extern "C" fn archive_write_header(a: *mut archive, entry: *mut archive_entr
                 let result = if custom_entry_to_backend(entry, backend_entry) != ARCHIVE_OK {
                     ARCHIVE_FATAL
                 } else {
-                    (backend_api().archive_write_header)(writer.backend, backend_entry)
+                    let result =
+                        (backend_api().archive_write_header)(writer.backend, backend_entry);
+                    if matches!(result, ARCHIVE_OK | crate::common::error::ARCHIVE_WARN) {
+                        let sync_status = backend_entry_to_custom(backend_entry, entry);
+                        if sync_status != ARCHIVE_OK {
+                            (backend_api().archive_entry_free)(backend_entry);
+                            sync_backend_core(a);
+                            return sync_status;
+                        }
+                    }
+                    result
                 };
                 (backend_api().archive_entry_free)(backend_entry);
                 sync_backend_core(a);

@@ -1,7 +1,7 @@
-#[path = "support/mod.rs"]
-mod support;
 #[path = "libarchive/foundation/mod.rs"]
 mod foundation;
+#[path = "support/mod.rs"]
+mod support;
 
 use std::ptr;
 
@@ -36,8 +36,14 @@ fn entry_round_trips_core_fields_and_materialized_stat() {
     assert_eq!(7, entry.uid());
     assert_eq!(9, entry.gid());
     assert_eq!((13_581, 1), entry.atime());
-    assert_eq!(unsafe { ffi::archive_entry_birthtime(entry.as_ptr()) }, 17_580);
-    assert_eq!(unsafe { ffi::archive_entry_birthtime_nsec(entry.as_ptr()) }, 999_975_010);
+    assert_eq!(
+        unsafe { ffi::archive_entry_birthtime(entry.as_ptr()) },
+        17_580
+    );
+    assert_eq!(
+        unsafe { ffi::archive_entry_birthtime_nsec(entry.as_ptr()) },
+        999_975_010
+    );
 
     let stat = entry.stat();
     assert_eq!(123, stat.st_size);
@@ -94,7 +100,10 @@ fn linkresolver_supports_tar_and_new_cpio_strategies() {
     unsafe {
         let resolver = ffi::archive_entry_linkresolver_new();
         assert!(!resolver.is_null());
-        ffi::archive_entry_linkresolver_set_strategy(resolver, common_ffi::ARCHIVE_FORMAT_TAR_USTAR);
+        ffi::archive_entry_linkresolver_set_strategy(
+            resolver,
+            common_ffi::ARCHIVE_FORMAT_TAR_USTAR,
+        );
 
         let mut tar_entry = foundation::regular_entry("test2", 0o644).into_raw();
         ffi::archive_entry_set_ino(tar_entry, 2);
@@ -104,13 +113,19 @@ fn linkresolver_supports_tar_and_new_cpio_strategies() {
         let mut spare = ptr::null_mut();
         ffi::archive_entry_linkify(resolver, &mut tar_entry, &mut spare);
         assert!(spare.is_null());
-        assert_eq!(Some(String::from("test2")), support::c_str(ffi::archive_entry_pathname(tar_entry)));
+        assert_eq!(
+            Some(String::from("test2")),
+            support::c_str(ffi::archive_entry_pathname(tar_entry))
+        );
         assert_eq!(None, support::c_str(ffi::archive_entry_hardlink(tar_entry)));
         assert_eq!(10, ffi::archive_entry_size(tar_entry));
 
         ffi::archive_entry_linkify(resolver, &mut tar_entry, &mut spare);
         assert!(spare.is_null());
-        assert_eq!(Some(String::from("test2")), support::c_str(ffi::archive_entry_hardlink(tar_entry)));
+        assert_eq!(
+            Some(String::from("test2")),
+            support::c_str(ffi::archive_entry_hardlink(tar_entry))
+        );
         assert_eq!(0, ffi::archive_entry_size(tar_entry));
         ffi::archive_entry_free(tar_entry);
         ffi::archive_entry_linkresolver_free(resolver);
@@ -139,7 +154,10 @@ fn linkresolver_supports_tar_and_new_cpio_strategies() {
         ffi::archive_entry_set_size(second, 10);
         ffi::archive_entry_linkify(resolver, &mut second, &mut spare);
         assert!(spare.is_null());
-        assert_eq!(Some(String::from("test2")), support::c_str(ffi::archive_entry_pathname(second)));
+        assert_eq!(
+            Some(String::from("test2")),
+            support::c_str(ffi::archive_entry_pathname(second))
+        );
         assert_eq!(0, ffi::archive_entry_size(second));
         ffi::archive_entry_free(second);
 
@@ -149,9 +167,15 @@ fn linkresolver_supports_tar_and_new_cpio_strategies() {
         ffi::archive_entry_set_nlink(third, 3);
         ffi::archive_entry_set_size(third, 10);
         ffi::archive_entry_linkify(resolver, &mut third, &mut spare);
-        assert_eq!(Some(String::from("test3")), support::c_str(ffi::archive_entry_pathname(third)));
+        assert_eq!(
+            Some(String::from("test3")),
+            support::c_str(ffi::archive_entry_pathname(third))
+        );
         assert_eq!(0, ffi::archive_entry_size(third));
-        assert_eq!(Some(String::from("test4")), support::c_str(ffi::archive_entry_pathname(spare)));
+        assert_eq!(
+            Some(String::from("test4")),
+            support::c_str(ffi::archive_entry_pathname(spare))
+        );
         assert_eq!(10, ffi::archive_entry_size(spare));
 
         ffi::archive_entry_free(third);

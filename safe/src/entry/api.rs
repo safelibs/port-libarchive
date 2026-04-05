@@ -8,21 +8,26 @@ use crate::common::helpers::{bool_to_int, from_optional_c_str, from_optional_wid
 use crate::entry::internal::{
     add_sparse, add_xattr, clear_acl, clear_entry, clone_entry, copy_stat, entry_has_acl,
     free_linkresolver, free_raw_entry, from_raw, linkify, materialize_stat, new_raw_entry,
-    next_sparse, next_xattr, partial_links, reset_sparse, reset_xattrs, set_filetype, set_link_target,
-    set_mode, set_perm, strmode, update_c_text, update_text, update_wide_text, AclState,
-    ArchiveEntryData, LinkResolverData, ARCHIVE_ENTRY_ACL_ENTRY_DIRECTORY_INHERIT,
-    ARCHIVE_ENTRY_ACL_ENTRY_FAILED_ACCESS, ARCHIVE_ENTRY_ACL_ENTRY_FILE_INHERIT,
-    ARCHIVE_ENTRY_ACL_ENTRY_INHERIT_ONLY, ARCHIVE_ENTRY_ACL_ENTRY_INHERITED,
-    ARCHIVE_ENTRY_ACL_ENTRY_NO_PROPAGATE_INHERIT, ARCHIVE_ENTRY_ACL_ENTRY_SUCCESSFUL_ACCESS,
-    ARCHIVE_ENTRY_ACL_EXECUTE, ARCHIVE_ENTRY_ACL_READ, ARCHIVE_ENTRY_ACL_READ_ACL,
-    ARCHIVE_ENTRY_ACL_READ_ATTRIBUTES, ARCHIVE_ENTRY_ACL_READ_DATA,
+    next_sparse, next_xattr, partial_links, reset_sparse, reset_xattrs, set_filetype,
+    set_link_target, set_mode, set_perm, strmode, update_c_text, update_text, update_wide_text,
+    AclState, ArchiveEntryData, LinkResolverData, AE_IFMT,
+    ARCHIVE_ENTRY_ACL_ENTRY_DIRECTORY_INHERIT, ARCHIVE_ENTRY_ACL_ENTRY_FAILED_ACCESS,
+    ARCHIVE_ENTRY_ACL_ENTRY_FILE_INHERIT, ARCHIVE_ENTRY_ACL_ENTRY_INHERITED,
+    ARCHIVE_ENTRY_ACL_ENTRY_INHERIT_ONLY, ARCHIVE_ENTRY_ACL_ENTRY_NO_PROPAGATE_INHERIT,
+    ARCHIVE_ENTRY_ACL_ENTRY_SUCCESSFUL_ACCESS, ARCHIVE_ENTRY_ACL_EXECUTE, ARCHIVE_ENTRY_ACL_READ,
+    ARCHIVE_ENTRY_ACL_READ_ACL, ARCHIVE_ENTRY_ACL_READ_ATTRIBUTES, ARCHIVE_ENTRY_ACL_READ_DATA,
     ARCHIVE_ENTRY_ACL_READ_NAMED_ATTRS, ARCHIVE_ENTRY_ACL_SYNCHRONIZE,
     ARCHIVE_ENTRY_ACL_TYPE_ACCESS, ARCHIVE_ENTRY_ACL_TYPE_ALLOW, ARCHIVE_ENTRY_ACL_TYPE_DEFAULT,
     ARCHIVE_ENTRY_ACL_TYPE_DENY, ARCHIVE_ENTRY_ACL_WRITE, ARCHIVE_ENTRY_ACL_WRITE_ACL,
     ARCHIVE_ENTRY_ACL_WRITE_ATTRIBUTES, ARCHIVE_ENTRY_ACL_WRITE_DATA,
-    ARCHIVE_ENTRY_ACL_WRITE_NAMED_ATTRS, ARCHIVE_ENTRY_ACL_WRITE_OWNER, AE_IFMT,
+    ARCHIVE_ENTRY_ACL_WRITE_NAMED_ATTRS, ARCHIVE_ENTRY_ACL_WRITE_OWNER,
 };
 use crate::ffi::{archive, archive_acl, archive_entry, archive_entry_linkresolver};
+
+const AE_SET_ATIME: c_int = 4;
+const AE_SET_CTIME: c_int = 8;
+const AE_SET_MTIME: c_int = 16;
+const AE_SET_BIRTHTIME: c_int = 32;
 
 fn mark_dirty(entry: &mut ArchiveEntryData) {
     entry.stat_dirty = true;
@@ -49,7 +54,11 @@ fn parse_fflags_text(text: &str) -> (c_ulong, c_ulong) {
 
     let mut set = 0;
     let mut clear = 0;
-    for token in text.split(',').map(str::trim).filter(|token| !token.is_empty()) {
+    for token in text
+        .split(',')
+        .map(str::trim)
+        .filter(|token| !token.is_empty())
+    {
         let (negated, name) = token
             .strip_prefix("no")
             .map_or((false, token), |name| (true, name));
@@ -129,18 +138,21 @@ time_nsec_getters!(archive_entry_ctime_nsec, ctime);
 time_nsec_getters!(archive_entry_mtime_nsec, mtime);
 
 macro_rules! time_is_set {
-    ($name:ident, $field:ident) => {
+    ($name:ident, $field:ident, $flag:expr) => {
         #[no_mangle]
         pub unsafe extern "C" fn $name(entry: *mut archive_entry) -> c_int {
-            from_raw(entry).map_or(0, |entry_data| bool_to_int(entry_data.$field.set))
+            from_raw(entry).map_or(
+                0,
+                |entry_data| if entry_data.$field.set { $flag } else { 0 },
+            )
         }
     };
 }
 
-time_is_set!(archive_entry_atime_is_set, atime);
-time_is_set!(archive_entry_birthtime_is_set, birthtime);
-time_is_set!(archive_entry_ctime_is_set, ctime);
-time_is_set!(archive_entry_mtime_is_set, mtime);
+time_is_set!(archive_entry_atime_is_set, atime, AE_SET_ATIME);
+time_is_set!(archive_entry_birthtime_is_set, birthtime, AE_SET_BIRTHTIME);
+time_is_set!(archive_entry_ctime_is_set, ctime, AE_SET_CTIME);
+time_is_set!(archive_entry_mtime_is_set, mtime, AE_SET_MTIME);
 
 macro_rules! time_setters {
     ($name:ident, $field:ident) => {
@@ -399,24 +411,49 @@ macro_rules! int_setters {
     };
 }
 
-int_setters!(archive_entry_set_gid, gid, i64, |entry_data: &mut ArchiveEntryData| {
-    mark_dirty(entry_data);
-});
-int_setters!(archive_entry_set_uid, uid, i64, |entry_data: &mut ArchiveEntryData| {
-    mark_dirty(entry_data);
-});
-int_setters!(archive_entry_set_ino, ino, i64, |entry_data: &mut ArchiveEntryData| {
-    entry_data.ino_set = true;
-    mark_dirty(entry_data);
-});
-int_setters!(archive_entry_set_ino64, ino, i64, |entry_data: &mut ArchiveEntryData| {
-    entry_data.ino_set = true;
-    mark_dirty(entry_data);
-});
-int_setters!(archive_entry_set_size, size, i64, |entry_data: &mut ArchiveEntryData| {
-    entry_data.size_set = true;
-    mark_dirty(entry_data);
-});
+int_setters!(
+    archive_entry_set_gid,
+    gid,
+    i64,
+    |entry_data: &mut ArchiveEntryData| {
+        mark_dirty(entry_data);
+    }
+);
+int_setters!(
+    archive_entry_set_uid,
+    uid,
+    i64,
+    |entry_data: &mut ArchiveEntryData| {
+        mark_dirty(entry_data);
+    }
+);
+int_setters!(
+    archive_entry_set_ino,
+    ino,
+    i64,
+    |entry_data: &mut ArchiveEntryData| {
+        entry_data.ino_set = true;
+        mark_dirty(entry_data);
+    }
+);
+int_setters!(
+    archive_entry_set_ino64,
+    ino,
+    i64,
+    |entry_data: &mut ArchiveEntryData| {
+        entry_data.ino_set = true;
+        mark_dirty(entry_data);
+    }
+);
+int_setters!(
+    archive_entry_set_size,
+    size,
+    i64,
+    |entry_data: &mut ArchiveEntryData| {
+        entry_data.size_set = true;
+        mark_dirty(entry_data);
+    }
+);
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_unset_size(entry: *mut archive_entry) {
@@ -714,9 +751,14 @@ pub unsafe extern "C" fn archive_entry_acl_add_entry(
     let Some(entry_data) = from_raw(entry) else {
         return ARCHIVE_FATAL;
     };
-    let status = entry_data
-        .acl
-        .add_entry(&mut entry_data.mode, entry_type, permset, tag, qual, from_optional_c_str(name));
+    let status = entry_data.acl.add_entry(
+        &mut entry_data.mode,
+        entry_type,
+        permset,
+        tag,
+        qual,
+        from_optional_c_str(name),
+    );
     entry_data.strmode_cache = None;
     status
 }
@@ -733,9 +775,14 @@ pub unsafe extern "C" fn archive_entry_acl_add_entry_w(
     let Some(entry_data) = from_raw(entry) else {
         return ARCHIVE_FATAL;
     };
-    let status = entry_data
-        .acl
-        .add_entry(&mut entry_data.mode, entry_type, permset, tag, qual, from_optional_wide(name));
+    let status = entry_data.acl.add_entry(
+        &mut entry_data.mode,
+        entry_type,
+        permset,
+        tag,
+        qual,
+        from_optional_wide(name),
+    );
     entry_data.strmode_cache = None;
     status
 }
@@ -753,7 +800,9 @@ pub unsafe extern "C" fn archive_entry_acl_reset(
     entry: *mut archive_entry,
     want_type: c_int,
 ) -> c_int {
-    from_raw(entry).map_or(0, |entry_data| entry_data.acl.reset(entry_data.mode, want_type))
+    from_raw(entry).map_or(0, |entry_data| {
+        entry_data.acl.reset(entry_data.mode, want_type)
+    })
 }
 
 #[no_mangle]
@@ -767,9 +816,7 @@ pub unsafe extern "C" fn archive_entry_acl_next(
     name: *mut *const c_char,
 ) -> c_int {
     from_raw(entry).map_or(ARCHIVE_EOF, |entry_data| {
-        entry_data
-            .acl
-            .next(entry_type, permset, tag, qual, name)
+        entry_data.acl.next(entry_type, permset, tag, qual, name)
     })
 }
 
@@ -800,7 +847,11 @@ pub unsafe extern "C" fn archive_entry_acl_to_text(
     flags: c_int,
 ) -> *mut c_char {
     from_raw(entry)
-        .map(|entry_data| entry_data.acl.to_text_malloc(entry_data.mode, flags, text_len))
+        .map(|entry_data| {
+            entry_data
+                .acl
+                .to_text_malloc(entry_data.mode, flags, text_len)
+        })
         .unwrap_or(ptr::null_mut())
 }
 
@@ -811,7 +862,11 @@ pub unsafe extern "C" fn archive_entry_acl_to_text_w(
     flags: c_int,
 ) -> *mut wchar_t {
     from_raw(entry)
-        .map(|entry_data| entry_data.acl.to_text_w_malloc(entry_data.mode, flags, text_len))
+        .map(|entry_data| {
+            entry_data
+                .acl
+                .to_text_w_malloc(entry_data.mode, flags, text_len)
+        })
         .unwrap_or(ptr::null_mut())
 }
 
@@ -830,7 +885,9 @@ pub unsafe extern "C" fn archive_entry_acl_from_text(
         return ARCHIVE_FATAL;
     };
     let text = from_optional_c_str(text).unwrap_or_default();
-    let status = entry_data.acl.from_text(&mut entry_data.mode, &text, want_type);
+    let status = entry_data
+        .acl
+        .from_text(&mut entry_data.mode, &text, want_type);
     entry_data.strmode_cache = None;
     status
 }
@@ -845,7 +902,9 @@ pub unsafe extern "C" fn archive_entry_acl_from_text_w(
         return ARCHIVE_FATAL;
     };
     let text = from_optional_wide(text).unwrap_or_default();
-    let status = entry_data.acl.from_text(&mut entry_data.mode, &text, want_type);
+    let status = entry_data
+        .acl
+        .from_text(&mut entry_data.mode, &text, want_type);
     entry_data.strmode_cache = None;
     status
 }

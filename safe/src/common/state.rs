@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::ffi::{c_char, c_int, c_void, CString};
 use std::path::PathBuf;
 use std::ptr;
@@ -8,14 +7,14 @@ use libc::{mode_t, size_t, stat, timespec};
 use crate::common::api::ensure_variadic_shim_initialized;
 use crate::common::backend::{
     api as backend_api, BackendArchive, BackendEntry, BackendReadDiskCleanupCallback,
-    BackendReadDiskLookupCallback, BackendWriteDiskCleanupCallback,
-    BackendWriteDiskLookupCallback,
+    BackendReadDiskLookupCallback, BackendWriteDiskCleanupCallback, BackendWriteDiskLookupCallback,
 };
 use crate::common::error::{
     ARCHIVE_FATAL, ARCHIVE_MATCH_MAGIC, ARCHIVE_OK, ARCHIVE_READ_DISK_MAGIC, ARCHIVE_READ_MAGIC,
-    ARCHIVE_STATE_CLOSED, ARCHIVE_STATE_FATAL, ARCHIVE_STATE_NEW,
-    ARCHIVE_WRITE_DISK_MAGIC, ARCHIVE_WRITE_MAGIC,
+    ARCHIVE_STATE_CLOSED, ARCHIVE_STATE_FATAL, ARCHIVE_STATE_NEW, ARCHIVE_WRITE_DISK_MAGIC,
+    ARCHIVE_WRITE_MAGIC,
 };
+use crate::entry::internal::AclState;
 use crate::ffi::{archive, archive_entry};
 
 #[repr(u32)]
@@ -179,6 +178,7 @@ pub(crate) struct ReadDiskNode {
     pub(crate) display_path: String,
     pub(crate) filesystem_path: PathBuf,
     pub(crate) follow_final_symlink: bool,
+    pub(crate) ancestor_dirs: Vec<(u64, u64)>,
 }
 
 pub(crate) struct ReadDiskAtimeRestore {
@@ -199,7 +199,6 @@ pub(crate) struct ReadDiskTraversalState {
     pub(crate) current_data_offset: i64,
     pub(crate) current_can_descend: bool,
     pub(crate) restore_atime: Option<ReadDiskAtimeRestore>,
-    pub(crate) visited_dirs: HashSet<(u64, u64)>,
     pub(crate) current_stat: Option<stat>,
 }
 
@@ -213,6 +212,7 @@ pub(crate) struct WriteDiskPendingFixup {
     pub(crate) apply_perm: bool,
     pub(crate) apply_owner: bool,
     pub(crate) apply_time: bool,
+    pub(crate) acl: AclState,
     pub(crate) xattrs: Vec<(CString, Vec<u8>)>,
     pub(crate) target_fd: c_int,
     pub(crate) parent_fd: c_int,

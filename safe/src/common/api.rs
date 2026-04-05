@@ -98,41 +98,11 @@ pub unsafe extern "C" fn archive_free(a: *mut archive) -> c_int {
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_read_free(a: *mut archive) -> c_int {
-    let magic = archive_magic(a);
-    let expected = if magic == crate::common::error::ARCHIVE_READ_DISK_MAGIC {
-        crate::common::error::ARCHIVE_READ_DISK_MAGIC
-    } else {
-        crate::common::error::ARCHIVE_READ_MAGIC
-    };
-    if archive_check_magic(
-        a,
-        expected,
-        crate::common::error::ARCHIVE_STATE_ANY,
-        "archive_read_free",
-    ) == ARCHIVE_FATAL
-    {
-        return ARCHIVE_FATAL;
-    }
     free_archive(a)
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_write_free(a: *mut archive) -> c_int {
-    let magic = archive_magic(a);
-    let expected = if magic == crate::common::error::ARCHIVE_WRITE_DISK_MAGIC {
-        crate::common::error::ARCHIVE_WRITE_DISK_MAGIC
-    } else {
-        crate::common::error::ARCHIVE_WRITE_MAGIC
-    };
-    if archive_check_magic(
-        a,
-        expected,
-        crate::common::error::ARCHIVE_STATE_ANY,
-        "archive_write_free",
-    ) == ARCHIVE_FATAL
-    {
-        return ARCHIVE_FATAL;
-    }
     free_archive(a)
 }
 

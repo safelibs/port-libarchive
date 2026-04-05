@@ -6,8 +6,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use libc::{stat, wchar_t};
 
 use crate::common::error::{
-    ARCHIVE_EOF, ARCHIVE_FAILED, ARCHIVE_FATAL, ARCHIVE_MATCH_MAGIC, ARCHIVE_OK,
-    ARCHIVE_STATE_ANY, ARCHIVE_STATE_NEW, ARCHIVE_WARN,
+    ARCHIVE_EOF, ARCHIVE_FAILED, ARCHIVE_FATAL, ARCHIVE_MATCH_MAGIC, ARCHIVE_OK, ARCHIVE_STATE_ANY,
+    ARCHIVE_STATE_NEW, ARCHIVE_WARN,
 };
 use crate::common::helpers::{from_optional_c_str, from_optional_wide, to_wide_null};
 use crate::common::state::{
@@ -49,7 +49,10 @@ impl MatchList {
     }
 
     pub(crate) fn unmatched_count(&self) -> c_int {
-        self.patterns.iter().filter(|pattern| pattern.matches == 0).count() as c_int
+        self.patterns
+            .iter()
+            .filter(|pattern| pattern.matches == 0)
+            .count() as c_int
     }
 
     pub(crate) fn unmatched_next(&mut self, wide: bool) -> Option<(*const i8, *const wchar_t)> {
@@ -169,7 +172,10 @@ pub(crate) fn add_pattern_from_file(
         return ARCHIVE_FAILED;
     };
     let parts = if null_separator != 0 {
-        bytes.split(|byte| *byte == 0).map(|part| part.to_vec()).collect::<Vec<_>>()
+        bytes
+            .split(|byte| *byte == 0)
+            .map(|part| part.to_vec())
+            .collect::<Vec<_>>()
     } else {
         bytes
             .split(|byte| *byte == b'\n' || *byte == b'\r')
@@ -409,14 +415,19 @@ fn match_path_exclusion(pattern: &str, path: &str) -> bool {
 }
 
 fn match_path_inclusion(pattern: &str, path: &str, recursive: bool) -> bool {
-    let flags = if recursive { PATHMATCH_NO_ANCHOR_END } else { 0 };
+    let flags = if recursive {
+        PATHMATCH_NO_ANCHOR_END
+    } else {
+        0
+    };
     archive_pathmatch(pattern, path, flags)
 }
 
 pub(crate) fn path_excluded(matcher: &mut MatchArchive, path: &str) -> c_int {
     let mut matched_index = None;
     for (index, inclusion) in matcher.inclusions.patterns.iter_mut().enumerate() {
-        if inclusion.matches == 0 && match_path_inclusion(&inclusion.text, path, matcher.recursive_include)
+        if inclusion.matches == 0
+            && match_path_inclusion(&inclusion.text, path, matcher.recursive_include)
         {
             inclusion.matches += 1;
             matched_index = Some(index);
@@ -435,7 +446,9 @@ pub(crate) fn path_excluded(matcher: &mut MatchArchive, path: &str) -> c_int {
     }
 
     for inclusion in &mut matcher.inclusions.patterns {
-        if inclusion.matches > 0 && match_path_inclusion(&inclusion.text, path, matcher.recursive_include) {
+        if inclusion.matches > 0
+            && match_path_inclusion(&inclusion.text, path, matcher.recursive_include)
+        {
             inclusion.matches += 1;
             return 0;
         }
@@ -486,8 +499,16 @@ pub(crate) fn time_excluded(matcher: &MatchArchive, entry: *mut archive_entry) -
         return ARCHIVE_FAILED;
     };
 
-    let ctime_sec = if entry.ctime.set { entry.ctime.sec } else { entry.mtime.sec };
-    let ctime_nsec = if entry.ctime.set { entry.ctime.nsec as i64 } else { entry.mtime.nsec as i64 };
+    let ctime_sec = if entry.ctime.set {
+        entry.ctime.sec
+    } else {
+        entry.mtime.sec
+    };
+    let ctime_nsec = if entry.ctime.set {
+        entry.ctime.nsec as i64
+    } else {
+        entry.mtime.nsec as i64
+    };
     let mtime_sec = entry.mtime.sec;
     let mtime_nsec = entry.mtime.nsec as i64;
 
@@ -515,32 +536,44 @@ pub(crate) fn time_excluded(matcher: &MatchArchive, entry: *mut archive_entry) -
     if let Some(path) = entry.pathname.get_str() {
         if let Some(filter) = matcher.path_time_filters.get(path) {
             if (filter.flag & crate::ffi::archive_common::ARCHIVE_MATCH_CTIME) != 0 {
-                let ctime_filter = TimeFilter {
-                    flag: filter.flag,
-                    sec: filter.ctime_sec,
-                    nsec: filter.ctime_nsec,
-                };
-                let newer = (filter.flag & crate::ffi::archive_common::ARCHIVE_MATCH_NEWER) != 0;
-                let older = (filter.flag & crate::ffi::archive_common::ARCHIVE_MATCH_OLDER) != 0;
-                if newer && compare_time(ctime_sec, ctime_nsec, ctime_filter, false) {
-                    return 1;
-                }
-                if older && compare_time(ctime_sec, ctime_nsec, ctime_filter, true) {
+                if filter.ctime_sec > ctime_sec {
+                    if (filter.flag & crate::ffi::archive_common::ARCHIVE_MATCH_OLDER) != 0 {
+                        return 1;
+                    }
+                } else if filter.ctime_sec < ctime_sec {
+                    if (filter.flag & crate::ffi::archive_common::ARCHIVE_MATCH_NEWER) != 0 {
+                        return 1;
+                    }
+                } else if filter.ctime_nsec > ctime_nsec {
+                    if (filter.flag & crate::ffi::archive_common::ARCHIVE_MATCH_OLDER) != 0 {
+                        return 1;
+                    }
+                } else if filter.ctime_nsec < ctime_nsec {
+                    if (filter.flag & crate::ffi::archive_common::ARCHIVE_MATCH_NEWER) != 0 {
+                        return 1;
+                    }
+                } else if (filter.flag & crate::ffi::archive_common::ARCHIVE_MATCH_EQUAL) != 0 {
                     return 1;
                 }
             }
             if (filter.flag & crate::ffi::archive_common::ARCHIVE_MATCH_MTIME) != 0 {
-                let mtime_filter = TimeFilter {
-                    flag: filter.flag,
-                    sec: filter.mtime_sec,
-                    nsec: filter.mtime_nsec,
-                };
-                let newer = (filter.flag & crate::ffi::archive_common::ARCHIVE_MATCH_NEWER) != 0;
-                let older = (filter.flag & crate::ffi::archive_common::ARCHIVE_MATCH_OLDER) != 0;
-                if newer && compare_time(mtime_sec, mtime_nsec, mtime_filter, false) {
-                    return 1;
-                }
-                if older && compare_time(mtime_sec, mtime_nsec, mtime_filter, true) {
+                if filter.mtime_sec > mtime_sec {
+                    if (filter.flag & crate::ffi::archive_common::ARCHIVE_MATCH_OLDER) != 0 {
+                        return 1;
+                    }
+                } else if filter.mtime_sec < mtime_sec {
+                    if (filter.flag & crate::ffi::archive_common::ARCHIVE_MATCH_NEWER) != 0 {
+                        return 1;
+                    }
+                } else if filter.mtime_nsec > mtime_nsec {
+                    if (filter.flag & crate::ffi::archive_common::ARCHIVE_MATCH_OLDER) != 0 {
+                        return 1;
+                    }
+                } else if filter.mtime_nsec < mtime_nsec {
+                    if (filter.flag & crate::ffi::archive_common::ARCHIVE_MATCH_NEWER) != 0 {
+                        return 1;
+                    }
+                } else if (filter.flag & crate::ffi::archive_common::ARCHIVE_MATCH_EQUAL) != 0 {
                     return 1;
                 }
             }
@@ -564,7 +597,10 @@ pub(crate) fn owner_excluded(matcher: &mut MatchArchive, entry: *mut archive_ent
         let Some(name) = entry.uname.get_str() else {
             return 1;
         };
-        if let Some(pattern) = matcher.inclusion_unames.iter_mut().find(|pattern| pattern.text == name)
+        if let Some(pattern) = matcher
+            .inclusion_unames
+            .iter_mut()
+            .find(|pattern| pattern.text == name)
         {
             pattern.matches += 1;
         } else {
@@ -575,7 +611,10 @@ pub(crate) fn owner_excluded(matcher: &mut MatchArchive, entry: *mut archive_ent
         let Some(name) = entry.gname.get_str() else {
             return 1;
         };
-        if let Some(pattern) = matcher.inclusion_gnames.iter_mut().find(|pattern| pattern.text == name)
+        if let Some(pattern) = matcher
+            .inclusion_gnames
+            .iter_mut()
+            .find(|pattern| pattern.text == name)
         {
             pattern.matches += 1;
         } else {
@@ -592,12 +631,24 @@ pub(crate) fn validate_time_flag(matcher: &mut MatchArchive, flag: c_int) -> c_i
         | crate::ffi::archive_common::ARCHIVE_MATCH_OLDER
         | crate::ffi::archive_common::ARCHIVE_MATCH_EQUAL;
 
+    if (flag & !(time_bits | comparison_bits)) != 0 {
+        set_error_string(
+            &mut matcher.core,
+            libc::EINVAL,
+            "Invalid time flag".to_string(),
+        );
+        return ARCHIVE_FAILED;
+    }
     if (flag & time_bits) == 0 {
         set_error_string(&mut matcher.core, libc::EINVAL, "No time flag".to_string());
         return ARCHIVE_FAILED;
     }
     if (flag & comparison_bits) == 0 {
-        set_error_string(&mut matcher.core, libc::EINVAL, "No comparison flag".to_string());
+        set_error_string(
+            &mut matcher.core,
+            libc::EINVAL,
+            "No comparison flag".to_string(),
+        );
         return ARCHIVE_FAILED;
     }
     ARCHIVE_OK
@@ -605,11 +656,11 @@ pub(crate) fn validate_time_flag(matcher: &mut MatchArchive, flag: c_int) -> c_i
 
 pub(crate) fn set_timefilter(matcher: &mut MatchArchive, flag: c_int, sec: i64, nsec: i64) {
     let filter = TimeFilter { flag, sec, nsec };
-    let equal_only =
-        (flag & (crate::ffi::archive_common::ARCHIVE_MATCH_EQUAL
+    let equal_only = (flag
+        & (crate::ffi::archive_common::ARCHIVE_MATCH_EQUAL
             | crate::ffi::archive_common::ARCHIVE_MATCH_NEWER
             | crate::ffi::archive_common::ARCHIVE_MATCH_OLDER))
-            == crate::ffi::archive_common::ARCHIVE_MATCH_EQUAL;
+        == crate::ffi::archive_common::ARCHIVE_MATCH_EQUAL;
     if (flag & crate::ffi::archive_common::ARCHIVE_MATCH_MTIME) != 0 {
         if (flag & crate::ffi::archive_common::ARCHIVE_MATCH_NEWER) != 0 || equal_only {
             matcher.newer_mtime = Some(filter);
@@ -672,7 +723,11 @@ fn parse_signed_hhmm(zone: &str) -> Option<i64> {
 
 fn normalize_year(year: i64) -> i64 {
     if year < 100 {
-        if year >= 69 { 1900 + year } else { 2000 + year }
+        if year >= 69 {
+            1900 + year
+        } else {
+            2000 + year
+        }
     } else {
         year
     }
@@ -723,7 +778,10 @@ fn parse_relative_date(now: i64, text: &str) -> Option<i64> {
     }
 
     let ago = rest.contains("ago");
-    let tokens: Vec<_> = rest.split_whitespace().filter(|token| *token != "ago").collect();
+    let tokens: Vec<_> = rest
+        .split_whitespace()
+        .filter(|token| *token != "ago")
+        .collect();
     let mut index = 0;
     let mut total = 0i64;
     while index < tokens.len() {
@@ -766,7 +824,10 @@ fn parse_relative_date(now: i64, text: &str) -> Option<i64> {
 
 fn parse_time_token(token: &str) -> Option<(u32, u32, u32, Option<i64>)> {
     let token = token.trim();
-    if let Some(value) = token.strip_suffix("am").or_else(|| token.strip_suffix("pm")) {
+    if let Some(value) = token
+        .strip_suffix("am")
+        .or_else(|| token.strip_suffix("pm"))
+    {
         let pm = token.ends_with("pm");
         let (mut hour, minute, second, _) = parse_time_token(value)?;
         if hour == 12 {
@@ -832,11 +893,21 @@ pub(crate) fn parse_date(now: i64, text: &str) -> Option<i64> {
         let year0: i64 = date_parts[0].parse().ok()?;
         let year2: i64 = date_parts[2].parse().ok()?;
         let (year, month, day) = if year0 >= 13 {
-            (normalize_year(year0), date_parts[1].parse().ok()?, date_parts[2].parse().ok()?)
+            (
+                normalize_year(year0),
+                date_parts[1].parse().ok()?,
+                date_parts[2].parse().ok()?,
+            )
         } else {
-            (normalize_year(year2), date_parts[0].parse().ok()?, date_parts[1].parse().ok()?)
+            (
+                normalize_year(year2),
+                date_parts[0].parse().ok()?,
+                date_parts[1].parse().ok()?,
+            )
         };
-        return Some(epoch_from_components(year, month, day, time.0, time.1, time.2, offset));
+        return Some(epoch_from_components(
+            year, month, day, time.0, time.1, time.2, offset,
+        ));
     }
 
     if tokens.len() == 4 && tokens[0].contains('/') {
@@ -846,11 +917,21 @@ pub(crate) fn parse_date(now: i64, text: &str) -> Option<i64> {
         let year0: i64 = date_parts[0].parse().ok()?;
         let year2: i64 = date_parts[2].parse().ok()?;
         let (year, month, day) = if year0 >= 13 {
-            (normalize_year(year0), date_parts[1].parse().ok()?, date_parts[2].parse().ok()?)
+            (
+                normalize_year(year0),
+                date_parts[1].parse().ok()?,
+                date_parts[2].parse().ok()?,
+            )
         } else {
-            (normalize_year(year2), date_parts[0].parse().ok()?, date_parts[1].parse().ok()?)
+            (
+                normalize_year(year2),
+                date_parts[0].parse().ok()?,
+                date_parts[1].parse().ok()?,
+            )
         };
-        return Some(epoch_from_components(year, month, day, time.0, time.1, time.2, offset));
+        return Some(epoch_from_components(
+            year, month, day, time.0, time.1, time.2, offset,
+        ));
     }
 
     if tokens.len() == 5 && month_number(tokens[1]).is_some() {

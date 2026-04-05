@@ -1,7 +1,7 @@
-#[path = "support/mod.rs"]
-mod support;
 #[path = "libarchive/foundation/mod.rs"]
 mod foundation;
+#[path = "support/mod.rs"]
+mod support;
 
 use archive::common::error::{ARCHIVE_EOF, ARCHIVE_OK};
 use archive::entry::EntryHandle;
@@ -19,7 +19,10 @@ fn match_handles_include_exclude_patterns_and_unmatched_tracking() {
     entry.set_pathname("a/b/c");
     assert_eq!(1, matcher.path_excluded(&entry));
     assert_eq!(1, matcher.unmatched_inclusions());
-    assert_eq!(Some(String::from("a/b")), matcher.unmatched_inclusions_next());
+    assert_eq!(
+        Some(String::from("a/b")),
+        matcher.unmatched_inclusions_next()
+    );
     assert_eq!(None, matcher.unmatched_inclusions_next());
 
     let mut matcher = MatchHandle::new();

@@ -4,7 +4,7 @@ use std::ptr;
 use libc::{size_t, wchar_t};
 
 use crate::common::backend::{api as backend_api, BackendArchive, BackendEntry};
-use crate::common::error::{ARCHIVE_EOF, ARCHIVE_FAILED, ARCHIVE_FATAL, ARCHIVE_OK};
+use crate::common::error::{ARCHIVE_EOF, ARCHIVE_FAILED, ARCHIVE_FATAL, ARCHIVE_OK, ARCHIVE_WARN};
 use crate::common::helpers::{from_optional_c_str, from_optional_wide, to_wide_null};
 use crate::common::panic_boundary::ffi_int;
 use crate::common::state::{
@@ -16,6 +16,7 @@ use crate::disk::{
     backend_entry_to_custom, custom_entry_to_backend, native_read_disk_data,
     native_read_disk_data_block, native_read_disk_next_header,
 };
+use crate::entry::internal::{clear_entry, from_raw};
 use crate::ffi::{archive, archive_entry};
 
 enum ReadLike<'a> {
@@ -83,6 +84,10 @@ impl<'a> ReadLike<'a> {
     }
 }
 
+fn header_status_has_entry(status: c_int) -> bool {
+    matches!(status, ARCHIVE_OK | ARCHIVE_WARN)
+}
+
 fn validate_read(
     a: *mut archive,
     function: &str,
@@ -145,7 +150,9 @@ unsafe fn apply_read_filter(
                 ReadFilterRegistration::Zstd,
             ],
         ),
-        ReadFilterRegistration::None => (backend_api().archive_read_support_filter_none)(handle.backend),
+        ReadFilterRegistration::None => {
+            (backend_api().archive_read_support_filter_none)(handle.backend)
+        }
         ReadFilterRegistration::Bzip2 => {
             (backend_api().archive_read_support_filter_bzip2)(handle.backend)
         }
@@ -161,7 +168,9 @@ unsafe fn apply_read_filter(
         ReadFilterRegistration::Lrzip => {
             (backend_api().archive_read_support_filter_lrzip)(handle.backend)
         }
-        ReadFilterRegistration::Lz4 => (backend_api().archive_read_support_filter_lz4)(handle.backend),
+        ReadFilterRegistration::Lz4 => {
+            (backend_api().archive_read_support_filter_lz4)(handle.backend)
+        }
         ReadFilterRegistration::Lzip => {
             (backend_api().archive_read_support_filter_lzip)(handle.backend)
         }
@@ -171,8 +180,12 @@ unsafe fn apply_read_filter(
         ReadFilterRegistration::Lzop => {
             (backend_api().archive_read_support_filter_lzop)(handle.backend)
         }
-        ReadFilterRegistration::Uu => (backend_api().archive_read_support_filter_uu)(handle.backend),
-        ReadFilterRegistration::Xz => (backend_api().archive_read_support_filter_xz)(handle.backend),
+        ReadFilterRegistration::Uu => {
+            (backend_api().archive_read_support_filter_uu)(handle.backend)
+        }
+        ReadFilterRegistration::Xz => {
+            (backend_api().archive_read_support_filter_xz)(handle.backend)
+        }
         ReadFilterRegistration::Zstd => {
             (backend_api().archive_read_support_filter_zstd)(handle.backend)
         }
@@ -225,16 +238,16 @@ unsafe fn apply_read_format(
         ReadFormatRegistration::Empty => {
             (backend_api().archive_read_support_format_empty)(handle.backend)
         }
-        ReadFormatRegistration::Raw => (backend_api().archive_read_support_format_raw)(handle.backend),
+        ReadFormatRegistration::Raw => {
+            (backend_api().archive_read_support_format_raw)(handle.backend)
+        }
         ReadFormatRegistration::Tar => {
             (backend_api().archive_read_support_format_tar)(handle.backend)
         }
     }
 }
 
-unsafe fn ensure_read_backend_open(
-    handle: &mut crate::common::state::ReadArchiveHandle,
-) -> c_int {
+unsafe fn ensure_read_backend_open(handle: &mut crate::common::state::ReadArchiveHandle) -> c_int {
     if handle.backend.is_null() {
         handle.backend = (backend_api().archive_read_new)();
         if handle.backend.is_null() {
@@ -337,22 +350,49 @@ macro_rules! read_filter_support {
 }
 
 read_filter_support!(archive_read_support_filter_all, ReadFilterRegistration::All);
-read_filter_support!(archive_read_support_filter_none, ReadFilterRegistration::None);
-read_filter_support!(archive_read_support_filter_bzip2, ReadFilterRegistration::Bzip2);
+read_filter_support!(
+    archive_read_support_filter_none,
+    ReadFilterRegistration::None
+);
+read_filter_support!(
+    archive_read_support_filter_bzip2,
+    ReadFilterRegistration::Bzip2
+);
 read_filter_support!(
     archive_read_support_filter_compress,
     ReadFilterRegistration::Compress
 );
-read_filter_support!(archive_read_support_filter_gzip, ReadFilterRegistration::Gzip);
-read_filter_support!(archive_read_support_filter_grzip, ReadFilterRegistration::Grzip);
-read_filter_support!(archive_read_support_filter_lrzip, ReadFilterRegistration::Lrzip);
+read_filter_support!(
+    archive_read_support_filter_gzip,
+    ReadFilterRegistration::Gzip
+);
+read_filter_support!(
+    archive_read_support_filter_grzip,
+    ReadFilterRegistration::Grzip
+);
+read_filter_support!(
+    archive_read_support_filter_lrzip,
+    ReadFilterRegistration::Lrzip
+);
 read_filter_support!(archive_read_support_filter_lz4, ReadFilterRegistration::Lz4);
-read_filter_support!(archive_read_support_filter_lzip, ReadFilterRegistration::Lzip);
-read_filter_support!(archive_read_support_filter_lzma, ReadFilterRegistration::Lzma);
-read_filter_support!(archive_read_support_filter_lzop, ReadFilterRegistration::Lzop);
+read_filter_support!(
+    archive_read_support_filter_lzip,
+    ReadFilterRegistration::Lzip
+);
+read_filter_support!(
+    archive_read_support_filter_lzma,
+    ReadFilterRegistration::Lzma
+);
+read_filter_support!(
+    archive_read_support_filter_lzop,
+    ReadFilterRegistration::Lzop
+);
 read_filter_support!(archive_read_support_filter_uu, ReadFilterRegistration::Uu);
 read_filter_support!(archive_read_support_filter_xz, ReadFilterRegistration::Xz);
-read_filter_support!(archive_read_support_filter_zstd, ReadFilterRegistration::Zstd);
+read_filter_support!(
+    archive_read_support_filter_zstd,
+    ReadFilterRegistration::Zstd
+);
 
 macro_rules! read_format_support {
     ($name:ident, $registration:expr) => {
@@ -373,8 +413,14 @@ macro_rules! read_format_support {
 
 read_format_support!(archive_read_support_format_all, ReadFormatRegistration::All);
 read_format_support!(archive_read_support_format_ar, ReadFormatRegistration::Ar);
-read_format_support!(archive_read_support_format_cpio, ReadFormatRegistration::Cpio);
-read_format_support!(archive_read_support_format_empty, ReadFormatRegistration::Empty);
+read_format_support!(
+    archive_read_support_format_cpio,
+    ReadFormatRegistration::Cpio
+);
+read_format_support!(
+    archive_read_support_format_empty,
+    ReadFormatRegistration::Empty
+);
 read_format_support!(archive_read_support_format_raw, ReadFormatRegistration::Raw);
 read_format_support!(archive_read_support_format_tar, ReadFormatRegistration::Tar);
 
@@ -493,27 +539,26 @@ pub extern "C" fn archive_read_next_header(
                     return status;
                 }
                 clear_error(&mut reader.core);
+                if reader.entry.is_null() {
+                    reader.entry = crate::entry::internal::new_raw_entry(ptr::null_mut());
+                }
+                if reader.entry.is_null() {
+                    return ARCHIVE_FATAL;
+                }
                 let mut backend_entry = ptr::null_mut();
                 let status =
                     (backend_api().archive_read_next_header)(reader.backend, &mut backend_entry);
                 reader.current_entry = backend_entry;
-                if status == ARCHIVE_OK {
-                    if reader.entry.is_null() {
-                        reader.entry =
-                            crate::entry::internal::new_raw_entry(ptr::null_mut());
-                    }
-                    if reader.entry.is_null() {
-                        return ARCHIVE_FATAL;
-                    }
+                if header_status_has_entry(status) && !backend_entry.is_null() {
                     let convert_status = backend_entry_to_custom(backend_entry, reader.entry);
                     if convert_status != ARCHIVE_OK {
                         return convert_status;
                     }
-                    if !entry.is_null() {
-                        *entry = reader.entry;
-                    }
-                } else if !entry.is_null() {
-                    *entry = ptr::null_mut();
+                } else if let Some(entry_data) = from_raw(reader.entry) {
+                    clear_entry(entry_data);
+                }
+                if !entry.is_null() {
+                    *entry = reader.entry;
                 }
                 sync_backend_core(a);
                 return status;
@@ -521,19 +566,19 @@ pub extern "C" fn archive_read_next_header(
             ReadLike::Disk(reader) => {
                 clear_error(&mut reader.core);
                 if reader.entry.is_null() {
-                    reader.entry =
-                        crate::entry::internal::new_raw_entry(ptr::null_mut());
+                    reader.entry = crate::entry::internal::new_raw_entry(ptr::null_mut());
                 }
                 if reader.entry.is_null() {
                     return ARCHIVE_FATAL;
                 }
                 let status = native_read_disk_next_header(reader, reader.entry);
-                if status == ARCHIVE_OK {
-                    if !entry.is_null() {
-                        *entry = reader.entry;
+                if status != ARCHIVE_OK {
+                    if let Some(entry_data) = from_raw(reader.entry) {
+                        clear_entry(entry_data);
                     }
-                } else if !entry.is_null() {
-                    *entry = ptr::null_mut();
+                }
+                if !entry.is_null() {
+                    *entry = reader.entry;
                 }
                 return status;
             }
@@ -557,11 +602,14 @@ pub extern "C" fn archive_read_next_header2(a: *mut archive, entry: *mut archive
                     return status;
                 }
                 clear_error(&mut reader.core);
+                if let Some(entry_data) = from_raw(entry) {
+                    clear_entry(entry_data);
+                }
                 let mut backend_entry = ptr::null_mut();
                 let status =
                     (backend_api().archive_read_next_header)(reader.backend, &mut backend_entry);
                 reader.current_entry = backend_entry;
-                if status == ARCHIVE_OK {
+                if header_status_has_entry(status) && !backend_entry.is_null() {
                     let convert_status = backend_entry_to_custom(backend_entry, entry);
                     if convert_status != ARCHIVE_OK {
                         return convert_status;

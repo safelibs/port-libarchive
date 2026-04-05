@@ -10,8 +10,8 @@ use crate::entry::internal::from_raw as entry_from_raw;
 use crate::ffi::{archive, archive_entry};
 use crate::r#match::internal::{
     add_pattern, add_pattern_from_file, file_times_from_path, from_archive, new_archive,
-    owner_excluded, parse_date, path_excluded, set_timefilter, time_excluded, validate_match_archive,
-    validate_time_flag, MatchArchive, PathTimeFilter, Pattern,
+    owner_excluded, parse_date, path_excluded, set_timefilter, time_excluded,
+    validate_match_archive, validate_time_flag, MatchArchive, PathTimeFilter, Pattern,
 };
 
 #[no_mangle]
@@ -60,7 +60,11 @@ fn add_pattern_checked(
             return ARCHIVE_FATAL;
         };
         let Some(value) = value.filter(|value| !value.is_empty()) else {
-            set_error_string(&mut matcher.core, libc::EINVAL, "pattern is empty".to_string());
+            set_error_string(
+                &mut matcher.core,
+                libc::EINVAL,
+                "pattern is empty".to_string(),
+            );
             return ARCHIVE_FAILED;
         };
         if inclusion {
@@ -77,7 +81,12 @@ pub unsafe extern "C" fn archive_match_exclude_pattern(
     a: *mut archive,
     pattern: *const c_char,
 ) -> c_int {
-    add_pattern_checked(a, from_optional_c_str(pattern), false, "archive_match_exclude_pattern")
+    add_pattern_checked(
+        a,
+        from_optional_c_str(pattern),
+        false,
+        "archive_match_exclude_pattern",
+    )
 }
 
 #[no_mangle]
@@ -85,7 +94,12 @@ pub unsafe extern "C" fn archive_match_exclude_pattern_w(
     a: *mut archive,
     pattern: *const wchar_t,
 ) -> c_int {
-    add_pattern_checked(a, from_optional_wide(pattern), false, "archive_match_exclude_pattern_w")
+    add_pattern_checked(
+        a,
+        from_optional_wide(pattern),
+        false,
+        "archive_match_exclude_pattern_w",
+    )
 }
 
 #[no_mangle]
@@ -93,7 +107,12 @@ pub unsafe extern "C" fn archive_match_include_pattern(
     a: *mut archive,
     pattern: *const c_char,
 ) -> c_int {
-    add_pattern_checked(a, from_optional_c_str(pattern), true, "archive_match_include_pattern")
+    add_pattern_checked(
+        a,
+        from_optional_c_str(pattern),
+        true,
+        "archive_match_include_pattern",
+    )
 }
 
 #[no_mangle]
@@ -101,7 +120,12 @@ pub unsafe extern "C" fn archive_match_include_pattern_w(
     a: *mut archive,
     pattern: *const wchar_t,
 ) -> c_int {
-    add_pattern_checked(a, from_optional_wide(pattern), true, "archive_match_include_pattern_w")
+    add_pattern_checked(
+        a,
+        from_optional_wide(pattern),
+        true,
+        "archive_match_include_pattern_w",
+    )
 }
 
 fn add_pattern_file_checked(
@@ -119,7 +143,11 @@ fn add_pattern_file_checked(
             return ARCHIVE_FATAL;
         };
         let Some(path) = path.filter(|path| !path.is_empty()) else {
-            set_error_string(&mut matcher.core, libc::EINVAL, "pathname is empty".to_string());
+            set_error_string(
+                &mut matcher.core,
+                libc::EINVAL,
+                "pathname is empty".to_string(),
+            );
             return ARCHIVE_FAILED;
         };
         let status = if inclusion {
@@ -128,7 +156,11 @@ fn add_pattern_file_checked(
             add_pattern_from_file(&mut matcher.exclusions, &path, null_separator)
         };
         if status != ARCHIVE_OK {
-            set_error_string(&mut matcher.core, libc::ENOENT, format!("Failed to read {path}"));
+            set_error_string(
+                &mut matcher.core,
+                libc::ENOENT,
+                format!("Failed to read {path}"),
+            );
         }
         status
     }
@@ -351,7 +383,12 @@ pub unsafe extern "C" fn archive_match_include_date(
     flag: c_int,
     text: *const c_char,
 ) -> c_int {
-    include_date_impl(a, flag, from_optional_c_str(text), "archive_match_include_date")
+    include_date_impl(
+        a,
+        flag,
+        from_optional_c_str(text),
+        "archive_match_include_date",
+    )
 }
 
 #[no_mangle]
@@ -360,10 +397,20 @@ pub unsafe extern "C" fn archive_match_include_date_w(
     flag: c_int,
     text: *const wchar_t,
 ) -> c_int {
-    include_date_impl(a, flag, from_optional_wide(text), "archive_match_include_date_w")
+    include_date_impl(
+        a,
+        flag,
+        from_optional_wide(text),
+        "archive_match_include_date_w",
+    )
 }
 
-fn include_file_time_impl(a: *mut archive, flag: c_int, path: Option<String>, function: &str) -> c_int {
+fn include_file_time_impl(
+    a: *mut archive,
+    flag: c_int,
+    path: Option<String>,
+    function: &str,
+) -> c_int {
     unsafe {
         if validate_match_archive(a, function) == ARCHIVE_FATAL {
             return ARCHIVE_FATAL;
@@ -376,11 +423,19 @@ fn include_file_time_impl(a: *mut archive, flag: c_int, path: Option<String>, fu
             return status;
         }
         let Some(path) = path.filter(|path| !path.is_empty()) else {
-            set_error_string(&mut matcher.core, libc::EINVAL, "pathname is empty".to_string());
+            set_error_string(
+                &mut matcher.core,
+                libc::EINVAL,
+                "pathname is empty".to_string(),
+            );
             return ARCHIVE_FAILED;
         };
         let Some(times) = file_times_from_path(&path) else {
-            set_error_string(&mut matcher.core, libc::ENOENT, "Failed to stat()".to_string());
+            set_error_string(
+                &mut matcher.core,
+                libc::ENOENT,
+                "Failed to stat()".to_string(),
+            );
             return ARCHIVE_FAILED;
         };
         let sec = if (flag & crate::ffi::archive_common::ARCHIVE_MATCH_MTIME) != 0 {
@@ -447,7 +502,11 @@ pub unsafe extern "C" fn archive_match_exclude_entry(
         return ARCHIVE_FAILED;
     };
     let Some(path) = entry.pathname.get_str() else {
-        set_error_string(&mut matcher.core, libc::EINVAL, "pathname is NULL".to_string());
+        set_error_string(
+            &mut matcher.core,
+            libc::EINVAL,
+            "pathname is NULL".to_string(),
+        );
         return ARCHIVE_FAILED;
     };
     matcher.path_time_filters.insert(
@@ -530,7 +589,12 @@ pub unsafe extern "C" fn archive_match_include_uname(
     a: *mut archive,
     name: *const c_char,
 ) -> c_int {
-    add_owner_name(a, from_optional_c_str(name), false, "archive_match_include_uname")
+    add_owner_name(
+        a,
+        from_optional_c_str(name),
+        false,
+        "archive_match_include_uname",
+    )
 }
 
 #[no_mangle]
@@ -538,7 +602,12 @@ pub unsafe extern "C" fn archive_match_include_uname_w(
     a: *mut archive,
     name: *const wchar_t,
 ) -> c_int {
-    add_owner_name(a, from_optional_wide(name), false, "archive_match_include_uname_w")
+    add_owner_name(
+        a,
+        from_optional_wide(name),
+        false,
+        "archive_match_include_uname_w",
+    )
 }
 
 #[no_mangle]
@@ -546,7 +615,12 @@ pub unsafe extern "C" fn archive_match_include_gname(
     a: *mut archive,
     name: *const c_char,
 ) -> c_int {
-    add_owner_name(a, from_optional_c_str(name), true, "archive_match_include_gname")
+    add_owner_name(
+        a,
+        from_optional_c_str(name),
+        true,
+        "archive_match_include_gname",
+    )
 }
 
 #[no_mangle]
@@ -554,7 +628,12 @@ pub unsafe extern "C" fn archive_match_include_gname_w(
     a: *mut archive,
     name: *const wchar_t,
 ) -> c_int {
-    add_owner_name(a, from_optional_wide(name), true, "archive_match_include_gname_w")
+    add_owner_name(
+        a,
+        from_optional_wide(name),
+        true,
+        "archive_match_include_gname_w",
+    )
 }
 
 #[no_mangle]

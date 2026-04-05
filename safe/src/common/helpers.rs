@@ -88,5 +88,9 @@ pub(crate) fn normalize_nanos(sec: i64, nsec: i64) -> (i64, i64) {
 }
 
 pub(crate) fn bool_to_int(value: bool) -> c_int {
-    if value { 1 } else { 0 }
+    if value {
+        1
+    } else {
+        0
+    }
 }

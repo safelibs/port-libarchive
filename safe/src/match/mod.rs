@@ -95,7 +95,8 @@ impl MatchHandle {
 
     pub fn unmatched_inclusions_next(&self) -> Option<String> {
         let mut unmatched = ptr::null();
-        let status = unsafe { ffi::archive_match_path_unmatched_inclusions_next(self.raw, &mut unmatched) };
+        let status =
+            unsafe { ffi::archive_match_path_unmatched_inclusions_next(self.raw, &mut unmatched) };
         if status == crate::common::error::ARCHIVE_OK {
             crate::entry::c_str(unmatched)
         } else {

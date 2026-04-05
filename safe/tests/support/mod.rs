@@ -98,7 +98,9 @@ impl Drop for CurrentDirGuard {
 }
 
 pub fn pushd(path: &Path) -> CurrentDirGuard {
-    let cwd_lock = CWD_LOCK.lock().expect("cwd lock");
+    let cwd_lock = CWD_LOCK
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
     let original = std::env::current_dir().expect("current dir");
     std::env::set_current_dir(path).expect("failed to change current dir");
     CurrentDirGuard {

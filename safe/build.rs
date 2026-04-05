@@ -459,7 +459,12 @@ pub const LIBARCHIVE_LIBTOOL_AGE: u32 = {libtool_age};
     cc::Build::new()
         .file(&variadic_shim)
         .compile("archive_variadic_shim");
-    build_vendored_backend(&manifest_dir, &original_dir, &generated_config_dir, &out_dir);
+    build_vendored_backend(
+        &manifest_dir,
+        &original_dir,
+        &generated_config_dir,
+        &out_dir,
+    );
 
     let target = env::var("TARGET").unwrap_or_default();
     if target.contains("linux") {

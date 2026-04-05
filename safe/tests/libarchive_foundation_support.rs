@@ -40,12 +40,8 @@ fn version_strings_and_error_lifecycle_match_expectations() {
 
 #[test]
 fn utility_string_sort_orders_null_terminated_arrays() {
-    let mut values = support::CStringArray::new(&[
-        "dir/path9",
-        "dir/path",
-        "dir/path3",
-        "dir/path2",
-    ]);
+    let mut values =
+        support::CStringArray::new(&["dir/path9", "dir/path", "dir/path3", "dir/path2"]);
     let status = unsafe { ffi::archive_utility_string_sort(values.as_mut_ptr()) };
     assert_eq!(ARCHIVE_OK, status);
     assert_eq!(
