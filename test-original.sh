@@ -606,37 +606,28 @@ except Exception as exc:
     payload["listdir_error"] = repr(exc)
     xbmc.log("AUTOEXEC LISTDIR_ERROR=" + repr(exc), xbmc.LOGERROR)
 
-candidate_urls = [
-    ("encoded_host", f"archive://{encoded_archive}/frame.txt"),
-    ("encoded_host_double_slash", f"archive://{encoded_archive}//frame.txt"),
-    ("raw_path", f"archive://{archive}/frame.txt"),
-    ("raw_path_double_slash", f"archive:////{archive.lstrip('/')}/frame.txt"),
-    ("fully_encoded", f"archive://{urllib.parse.quote(archive + '/frame.txt', safe='')}"),
-]
-
-payload["candidates"] = []
-for label, file_url in candidate_urls:
-    candidate = {"label": label, "url": file_url}
-    xbmc.log("AUTOEXEC FILE_URL[" + label + "]=" + file_url, xbmc.LOGINFO)
+entry_url = f"archive://{encoded_archive}/frame.txt"
+payload["entry_url"] = entry_url
+xbmc.log("AUTOEXEC ENTRY_URL=" + entry_url, xbmc.LOGINFO)
+try:
+    payload["entry_exists"] = xbmcvfs.exists(entry_url)
+except Exception as exc:
+    payload["entry_exists_error"] = repr(exc)
+try:
+    handle = xbmcvfs.File(entry_url)
     try:
-        candidate["exists"] = xbmcvfs.exists(file_url)
-    except Exception as exc:
-        candidate["exists_error"] = repr(exc)
-    try:
-        handle = xbmcvfs.File(file_url)
-        try:
-            candidate["content"] = handle.read()
-        finally:
-            handle.close()
-    except Exception as exc:
-        candidate["read_error"] = repr(exc)
-    payload["candidates"].append(candidate)
-    xbmc.log("AUTOEXEC CANDIDATE=" + repr(candidate), xbmc.LOGINFO)
+        payload["entry_content"] = handle.read()
+    finally:
+        handle.close()
+except Exception as exc:
+    payload["entry_read_error"] = repr(exc)
+xbmc.log("AUTOEXEC ENTRY_RESULT=" + repr({
+    "exists": payload.get("entry_exists"),
+    "content": payload.get("entry_content"),
+}), xbmc.LOGINFO)
 
 with open(result_path, "w", encoding="utf-8") as handle:
     json.dump(payload, handle, sort_keys=True)
-
-xbmc.executebuiltin("Quit")
 PY
 
   # First boot seeds Kodi's addon database and records the local service addon.
@@ -658,16 +649,17 @@ import sys
 db_path = sys.argv[1]
 conn = sqlite3.connect(db_path)
 cur = conn.cursor()
-row = cur.execute(
-    "select enabled from installed where addonID = ?",
-    ("service.libarchiveprobe",),
-).fetchone()
-if row is None:
-    raise SystemExit("Kodi did not register service.libarchiveprobe")
-cur.execute(
-    "update installed set enabled = 1, disabledReason = 0 where addonID = ?",
-    ("service.libarchiveprobe",),
-)
+for addon_id in ("service.libarchiveprobe", "vfs.libarchive"):
+    row = cur.execute(
+        "select enabled from installed where addonID = ?",
+        (addon_id,),
+    ).fetchone()
+    if row is None:
+        raise SystemExit(f"Kodi did not register {addon_id}")
+    cur.execute(
+        "update installed set enabled = 1, disabledReason = 0 where addonID = ?",
+        (addon_id,),
+    )
 conn.commit()
 PY
 
@@ -687,19 +679,13 @@ PY
   require_contains "$dir/kodi.log" "CAddonMgr::FindAddons: vfs.libarchive v20.3.0 installed"
   require_contains "$dir/kodi.log" "AUTOEXEC START"
   require_contains "$dir/kodi.log" "AUTOEXEC URL=archive://"
+  require_contains "$dir/kodi.log" "AUTOEXEC ENTRY_URL=archive://"
   [[ -f "$result_path" ]] || die "Kodi archive probe did not write $result_path"
-
-  # Headless Kodi does not expose a stable non-interactive path for archive
-  # browsing in all environments. If the in-process probe itself reports that
-  # archive:// is unsupported, record an explicit skip instead of a false
-  # positive "pass".
   if grep -F 'unsupported protocol(archive)' "$dir/kodi.log" >/dev/null 2>&1; then
-    printf 'SKIP kodi-vfs-libarchive: headless Kodi rejected archive:// URLs in this environment; addon install/linkage verified only.\n'
-    return 0
+    die "Kodi log reported unsupported archive:// protocol"
   fi
   if grep -F 'error opening [archive://' "$dir/kodi.log" >/dev/null 2>&1; then
-    printf 'SKIP kodi-vfs-libarchive: headless Kodi could not open archive:// URLs in this environment; addon install/linkage verified only.\n'
-    return 0
+    die "Kodi log reported an archive:// open failure"
   fi
 
   python3 - "$result_path" <<'PY'
@@ -709,15 +695,12 @@ import sys
 with open(sys.argv[1], "r", encoding="utf-8") as handle:
     payload = json.load(handle)
 
-matches = [
-    candidate
-    for candidate in payload.get("candidates", [])
-    if candidate.get("exists") is True and candidate.get("content") == "hello from kodi archive probe\n"
-]
+if payload.get("files") != ["frame.txt"]:
+    raise SystemExit(f"Kodi archive probe did not list frame.txt at archive root: {payload!r}")
 
-if not matches:
+if payload.get("entry_exists") is not True or payload.get("entry_content") != "hello from kodi archive probe\n":
     raise SystemExit(
-        "Kodi archive probe did not successfully read frame.txt via any candidate URL"
+        "Kodi archive probe did not successfully read frame.txt via the archive:// VFS URL"
     )
 PY
 }
