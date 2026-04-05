@@ -1,13 +1,14 @@
 {
   "library": "libarchive",
   "source_dataset": "/home/yans/code/safelibs/ported/libarchive/all_cves.json",
-  "generated_at_utc": "2026-04-05T05:39:45Z",
-  "analysis_scope": "CVEs whose underlying bug class may still affect a Rust reimplementation of libarchive, with emphasis on non-memory-corruption issues and numeric-validation bugs that remain relevant even when Rust removes the original C memory-unsafety impact",
+  "generated_at_utc": "2026-04-05T05:45:29Z",
+  "analysis_scope": "CVEs whose underlying bug class may still affect a Rust reimplementation of libarchive, with emphasis on non-memory-corruption issues plus numeric, parser-state, and bounds-validation bugs that remain relevant even when Rust removes the original C memory-unsafety impact",
   "selection_policy": {
     "included_issue_classes": [
       "parser bugs that break forward progress or permit unbounded work",
       "filesystem extraction bugs involving path resolution, link handling, permissions, or sandbox escape",
-      "numeric-validation bugs where unchecked arithmetic, signedness, or allocation math can still cause incorrect behavior, panic, denial of service, or invalid archive handling in safe Rust"
+      "numeric-validation bugs where unchecked arithmetic, signedness, or allocation math can still cause incorrect behavior, panic, denial of service, or invalid archive handling in safe Rust",
+      "parser-state and bounds-validation bugs where malformed headers, truncation, cursor movement, window sizes, or oversized metadata still need explicit rejection in a Rust parser"
     ],
     "excluded_issue_classes": [
       "heap or stack overflows, out-of-bounds reads or writes, use-after-free, double-free, and similar memory-corruption issues when the underlying bug does not also expose a Rust-relevant validation or arithmetic invariant",
@@ -16,20 +17,22 @@
     ],
     "notes": [
       "Some selected CVEs were triggered through bsdtar or bsdcpio, but were kept when the underlying issue maps to parser or extraction semantics that a Rust port would still need to preserve safely.",
-      "Numeric-validation CVEs are retained when the root cause is unchecked arithmetic, signedness, or size validation that a Rust port must still handle explicitly, even if the original C impact escalated into memory corruption."
+      "Numeric-validation CVEs are retained when the root cause is unchecked arithmetic, signedness, or size validation that a Rust port must still handle explicitly, even if the original C impact escalated into memory corruption.",
+      "Some parser-validation CVEs were originally reported as out-of-bounds reads, but were kept because the Rust-relevant carryover is malformed-header rejection, cursor or window invariant enforcement, or explicit size caps."
     ]
   },
   "summary": {
     "source_record_count": 87,
-    "selected_record_count": 24,
+    "selected_record_count": 34,
     "selected_by_confidence": {
       "high": 12,
-      "medium": 12
+      "medium": 22
     },
     "selected_by_category": {
       "parser_progress_and_bounded_work": 7,
       "filesystem_extraction_semantics": 5,
-      "numeric_validation_and_checked_arithmetic": 12
+      "numeric_validation_and_checked_arithmetic": 12,
+      "parser_state_and_bounds_validation": 10
     }
   },
   "records": [
@@ -70,6 +73,24 @@
       }
     },
     {
+      "cve_id": "CVE-2026-4424",
+      "category": "parser_state_and_bounds_validation",
+      "component_scope": "RAR LZSS window handling across compression-method transitions",
+      "relevance_confidence": "medium",
+      "rust_port_relevance": "The C manifestation was an out-of-bounds read, but the Rust-relevant issue is parser-state validation: the decoder must restore or resize the LZSS window correctly when compression methods change, or later slice access will panic or produce invalid output.",
+      "required_controls": [
+        "revalidate LZSS window size after every compression-method transition",
+        "bind filter and copy operations to the active window bounds before decoding",
+        "treat inconsistent decoder state transitions as hard parse failures"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-125"
+        ],
+        "description": "A flaw was found in libarchive. This heap out-of-bounds read vulnerability exists in the RAR archive processing logic due to improper validation of the LZSS sliding window size after transitions between compression methods. A remote attacker can exploit this by providing a specially crafted RAR archive, leading to the disclosure of sensitive heap memory information without requiring authentication or user interaction."
+      }
+    },
+    {
       "cve_id": "CVE-2026-4111",
       "category": "parser_progress_and_bounded_work",
       "component_scope": "RAR5 decompression during `archive_read_data()`",
@@ -106,6 +127,24 @@
       }
     },
     {
+      "cve_id": "CVE-2025-5915",
+      "category": "parser_state_and_bounds_validation",
+      "component_scope": "RAR filter-block versus LZSS-window validation",
+      "relevance_confidence": "medium",
+      "rust_port_relevance": "Even in Rust, a decoder must reject filter blocks that exceed the active LZSS window. Otherwise malformed archives can still drive invalid slice ranges, panics, or incorrect decompression behavior.",
+      "required_controls": [
+        "check filter-block size against the currently active LZSS window before use",
+        "reject archives that require copying or reading beyond the decoder window",
+        "keep filter execution state synchronized with window-size updates"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-122"
+        ],
+        "description": "A vulnerability has been identified in the libarchive library. This flaw can lead to a heap buffer over-read due to the size of a filter block potentially exceeding the Lempel-Ziv-Storer-Schieber (LZSS) window. This means the library may attempt to read beyond the allocated memory buffer, which can result in unpredictable program behavior, crashes (denial of service), or the disclosure of sensitive information from adjacent memory regions."
+      }
+    },
+    {
       "cve_id": "CVE-2025-5914",
       "category": "numeric_validation_and_checked_arithmetic",
       "component_scope": "RAR seek-data position tracking",
@@ -121,6 +160,78 @@
           "CWE-190"
         ],
         "description": "A vulnerability has been identified in the libarchive library, specifically within the archive_read_format_rar_seek_data() function. This flaw involves an integer overflow that can ultimately lead to a double-free condition. Exploiting a double-free vulnerability can result in memory corruption, enabling an attacker to execute arbitrary code or cause a denial-of-service condition."
+      }
+    },
+    {
+      "cve_id": "CVE-2024-57970",
+      "category": "parser_state_and_bounds_validation",
+      "component_scope": "GNU longlink truncation handling in the TAR reader",
+      "relevance_confidence": "medium",
+      "rust_port_relevance": "The key carryover is truncation-aware string parsing. A Rust implementation still needs to reject longlink metadata that ends mid-name instead of building inconsistent path state or panicking on later bounds checks.",
+      "required_controls": [
+        "treat truncated GNU longlink payloads as malformed headers",
+        "require complete name termination before longlink material is consumed",
+        "keep path-buffer length bookkeeping synchronized with truncated input"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-126"
+        ],
+        "description": "libarchive through 3.7.7 has a heap-based buffer over-read in header_gnu_longlink in archive_read_support_format_tar.c via a TAR archive because it mishandles truncation in the middle of a GNU long linkname."
+      }
+    },
+    {
+      "cve_id": "CVE-2024-48958",
+      "category": "parser_state_and_bounds_validation",
+      "component_scope": "RAR delta-filter cursor validation",
+      "relevance_confidence": "medium",
+      "rust_port_relevance": "This is fundamentally a decoder-cursor invariant problem. Rust would turn the same bug into slice-range panics or forced error paths unless the filter keeps `src` and `dst` movement within validated bounds.",
+      "required_controls": [
+        "validate every delta-filter cursor move against the destination window",
+        "reject filters whose computed `src` position runs past `dst`",
+        "keep filter-state transitions explicit and bounds-checked"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-125"
+        ],
+        "description": "execute_filter_delta in archive_read_support_format_rar.c in libarchive before 3.7.5 allows out-of-bounds access via a crafted archive file because src can move beyond dst."
+      }
+    },
+    {
+      "cve_id": "CVE-2024-48957",
+      "category": "parser_state_and_bounds_validation",
+      "component_scope": "RAR audio-filter cursor validation",
+      "relevance_confidence": "medium",
+      "rust_port_relevance": "Like the delta-filter case, the issue is decoder-state validation rather than raw pointer management. The Rust port still needs strict cursor bounds for audio-filter execution.",
+      "required_controls": [
+        "validate audio-filter cursor updates before each read or write",
+        "forbid filter state that allows `src` to advance beyond `dst`",
+        "convert inconsistent filter metadata into a hard decode error"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-125"
+        ],
+        "description": "execute_filter_audio in archive_read_support_format_rar.c in libarchive before 3.7.5 allows out-of-bounds access via a crafted archive file because src can move beyond dst."
+      }
+    },
+    {
+      "cve_id": "CVE-2024-37407",
+      "category": "parser_state_and_bounds_validation",
+      "component_scope": "ZIP empty-name handling with mac-ext enabled",
+      "relevance_confidence": "medium",
+      "rust_port_relevance": "Empty entry names are a parser validation edge case, not a C-only artifact. The Rust port still needs to define and enforce how empty names interact with mac-ext handling and central-directory parsing.",
+      "required_controls": [
+        "reject or explicitly special-case empty ZIP entry names before mac-ext processing",
+        "keep name-length checks consistent between local and central directory parsing",
+        "avoid deriving path or metadata state from zero-length names without an explicit rule"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-125"
+        ],
+        "description": "Libarchive before 3.7.4 allows name out-of-bounds access when a ZIP archive has an empty-name file and mac-ext is enabled. This occurs in slurp_central_directory in archive_read_support_format_zip.c."
       }
     },
     {
@@ -178,6 +289,24 @@
       }
     },
     {
+      "cve_id": "CVE-2020-9308",
+      "category": "parser_state_and_bounds_validation",
+      "component_scope": "RAR5 header-size validation",
+      "relevance_confidence": "medium",
+      "rust_port_relevance": "The decoder still needs to reject structurally impossible headers, such as zero-length RAR5 headers, before state is advanced. In Rust this would otherwise become a panic or malformed-state decode failure rather than a SIGSEGV.",
+      "required_controls": [
+        "enforce minimum nonzero header-size constraints before header dispatch",
+        "reject corrupted headers before any derived cursor movement or allocation",
+        "require header length fields to fit the remaining input window"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-787"
+        ],
+        "description": "archive_read_support_format_rar5.c in libarchive before 3.4.2 attempts to unpack a RAR5 file with an invalid or corrupted header (such as a header size of zero), leading to a SIGSEGV or possibly unspecified other impact."
+      }
+    },
+    {
       "cve_id": "CVE-2019-1000020",
       "category": "parser_progress_and_bounded_work",
       "component_scope": "ISO9660 Rock Ridge continuation parsing",
@@ -211,6 +340,42 @@
           "CWE-119"
         ],
         "description": "libarchive version commit 9693801580c0cf7c70e862d305270a16b52826a7 onwards (release v3.2.0 onwards) contains a CWE-20: Improper Input Validation vulnerability in WARC parser - libarchive/archive_read_support_format_warc.c, _warc_read() that can result in DoS - quasi-infinite run time and disk usage from tiny file. This attack appear to be exploitable via the victim must open a specially crafted WARC file."
+      }
+    },
+    {
+      "cve_id": "CVE-2016-8689",
+      "category": "parser_state_and_bounds_validation",
+      "component_scope": "7zip EmptyStream attribute parsing",
+      "relevance_confidence": "medium",
+      "rust_port_relevance": "The relevant invariant is header-consistency checking. A Rust port still needs to reject 7zip headers that repeat EmptyStream attributes in structurally invalid ways before any indexing or table expansion occurs.",
+      "required_controls": [
+        "validate that each 7zip stream attribute appears only in legal combinations",
+        "bound EmptyStream-derived indexing against the file count",
+        "treat repeated or contradictory header attributes as malformed input"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-125"
+        ],
+        "description": "The read_Header function in archive_read_support_format_7zip.c in libarchive 3.2.1 allows remote attackers to cause a denial of service (out-of-bounds read) via multiple EmptyStream attributes in a header in a 7zip archive."
+      }
+    },
+    {
+      "cve_id": "CVE-2016-8688",
+      "category": "parser_state_and_bounds_validation",
+      "component_scope": "mtree line-length tracking during read-ahead",
+      "relevance_confidence": "medium",
+      "rust_port_relevance": "This is a line-size bookkeeping bug. A Rust port still needs explicit limits and cursor accounting when extending read-ahead buffers for mtree input, or malformed long lines can still trigger panics or excessive work.",
+      "required_controls": [
+        "track current line length separately from total read-ahead size",
+        "enforce maximum line sizes before extending the lookahead buffer",
+        "recompute parser cursors after read-ahead growth instead of assuming prior offsets stay valid"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-125"
+        ],
+        "description": "The mtree bidder in libarchive 3.2.1 does not keep track of line sizes when extending the read-ahead, which allows remote attackers to cause a denial of service (crash) via a crafted file, which triggers an invalid read in the (1) detect_form or (2) bid_entry function in libarchive/archive_read_support_format_mtree.c."
       }
     },
     {
@@ -266,6 +431,24 @@
           "CWE-20"
         ],
         "description": "The sandboxing code in libarchive 3.2.0 and earlier mishandles hardlink archive entries of non-zero data size, which might allow remote attackers to write to arbitrary files via a crafted archive file."
+      }
+    },
+    {
+      "cve_id": "CVE-2016-4809",
+      "category": "parser_state_and_bounds_validation",
+      "component_scope": "CPIO symlink-size validation in header parsing",
+      "relevance_confidence": "medium",
+      "rust_port_relevance": "Oversized symlink targets are still a parser and resource-validation problem in Rust. The port needs explicit bounds on link-target length and must reject impossible CPIO metadata before attempting to materialize or normalize the link name.",
+      "required_controls": [
+        "cap CPIO symlink target sizes before allocating or decoding the link body",
+        "reject entries whose declared symlink length exceeds the remaining archive data",
+        "treat oversized or truncated symlink metadata as a hard parse error"
+      ],
+      "source_evidence": {
+        "weaknesses": [
+          "CWE-20"
+        ],
+        "description": "The archive_read_format_cpio_read_header function in archive_read_support_format_cpio.c in libarchive before 3.2.1 allows remote attackers to cause a denial of service (application crash) via a CPIO archive with a large symlink."
       }
     },
     {
