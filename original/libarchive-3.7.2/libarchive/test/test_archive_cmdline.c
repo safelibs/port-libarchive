@@ -26,6 +26,9 @@
 #include "test.h"
 __FBSDID("$FreeBSD$");
 
+#include <limits.h>
+#include <unistd.h>
+
 static void
 write_single_file_archive(struct archive *a)
 {
@@ -83,8 +86,8 @@ write_archive_through_program(const char *cmd, char *buff, size_t buffsize,
 }
 
 static void
-assert_program_invocation(const char *directory, const char *command,
-    const char *expected_invocation)
+assert_program_invocation(const char *directory, const char *script_name,
+    const char *command, const char *expected_invocation)
 {
 	char archive_buffer[65536];
 	char command_buffer[1024];
@@ -97,8 +100,8 @@ assert_program_invocation(const char *directory, const char *command,
 	assertMakeDir(directory, 0755);
 	assert(0 < snprintf(log_path, sizeof(log_path), "%s/invocation.txt",
 	    directory));
-	assert(0 < snprintf(script_path, sizeof(script_path),
-	    "%s/filter script", directory));
+	assert(0 < snprintf(script_path, sizeof(script_path), "%s/%s",
+	    directory, script_name));
 	assert(0 < snprintf(script_contents, sizeof(script_contents),
 	    "#!/bin/sh\n"
 	    "{\n"
@@ -123,17 +126,58 @@ assert_program_invocation(const char *directory, const char *command,
 	assertTextFileContents(expected_invocation, log_path);
 }
 
+static void
+assert_absolute_program_invocation(const char *directory)
+{
+	char absolute_script_path[PATH_MAX];
+	char command[PATH_MAX + 8];
+	char cwd[PATH_MAX];
+	char expected_invocation[PATH_MAX + 2];
+
+	assert(getcwd(cwd, sizeof(cwd)) != NULL);
+	assert(0 < snprintf(absolute_script_path, sizeof(absolute_script_path),
+	    "%s/%s/filter script", cwd, directory));
+	assert(0 < snprintf(command, sizeof(command), "\"%s\"",
+	    absolute_script_path));
+	assert(0 < snprintf(expected_invocation, sizeof(expected_invocation),
+	    "%s\n", absolute_script_path));
+	assert_program_invocation(directory, "filter script", command,
+	    expected_invocation);
+}
+
 DEFINE_TEST(test_archive_cmdline)
 {
-	assert_program_invocation("cmdline-case-1",
+	assert_program_invocation("cmdline-case-1", "filter script",
 	    "\"cmdline-case-1/filter script\"",
 	    "cmdline-case-1/filter script\n");
 
-	assert_program_invocation("cmdline case 2",
-	    "\"cmdline case 2/filter script\" -d",
-	    "cmdline case 2/filter script\n-d\n");
+	assert_program_invocation("cmdline-case-2", "filter script",
+	    "\"cmdline-case-2/filter script\" ",
+	    "cmdline-case-2/filter script\n");
 
-	assert_program_invocation("cmdline case 3",
-	    "\"cmdline case 3/filter script\" \"arg with space\" plain",
-	    "cmdline case 3/filter script\narg with space\nplain\n");
+	assert_absolute_program_invocation("cmdline-case-3");
+
+	assert_program_invocation("cmdline case 4", "filter x",
+	    "\"cmdline case 4/filter \"x",
+	    "cmdline case 4/filter x\n");
+
+	assert_program_invocation("cmdline case 5", "filter x s ",
+	    "\"cmdline case 5/filter \"x\" s \"",
+	    "cmdline case 5/filter x s \n");
+
+	assert_program_invocation("cmdline case 6", "filter\" script",
+	    "\"cmdline case 6/filter\\\" script\"",
+	    "cmdline case 6/filter\" script\n");
+
+	assert_program_invocation("cmdline case 7", "filter script",
+	    "\"cmdline case 7/filter script\" -d",
+	    "cmdline case 7/filter script\n-d\n");
+
+	assert_program_invocation("cmdline case 8", "filter script",
+	    "\"cmdline case 8/filter script\" -d -q",
+	    "cmdline case 8/filter script\n-d\n-q\n");
+
+	assert_program_invocation("cmdline case 9", "filter script",
+	    "\"cmdline case 9/filter script\" \"arg with space\" plain",
+	    "cmdline case 9/filter script\narg with space\nplain\n");
 }
