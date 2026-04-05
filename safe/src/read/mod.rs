@@ -226,7 +226,6 @@ unsafe fn apply_read_format(
                 ReadFormatRegistration::Cpio,
                 ReadFormatRegistration::Empty,
                 ReadFormatRegistration::Tar,
-                ReadFormatRegistration::Raw,
             ],
         ),
         ReadFormatRegistration::Ar => {
