@@ -4,11 +4,21 @@
 
 struct archive;
 
-extern void archive_set_error_message(struct archive *a, int error_number, const char *message);
+typedef void (*archive_set_error_callback)(struct archive *a, int error_number, const char *message);
+
+static archive_set_error_callback archive_set_error_callback_fn = NULL;
 
 void archive_variadic_shim_link_anchor(void) {}
 
+void archive_variadic_shim_set_callback(archive_set_error_callback callback) {
+    archive_set_error_callback_fn = callback;
+}
+
 void archive_set_error(struct archive *a, int error_number, const char *fmt, ...) {
+    if (archive_set_error_callback_fn == NULL) {
+        return;
+    }
+
     va_list ap;
     va_start(ap, fmt);
 
@@ -19,26 +29,26 @@ void archive_set_error(struct archive *a, int error_number, const char *fmt, ...
     va_end(ap_copy);
 
     if (needed < 0) {
-        archive_set_error_message(a, error_number, "");
+        archive_set_error_callback_fn(a, error_number, "");
         va_end(ap);
         return;
     }
 
     if ((size_t)needed < sizeof(stack_buffer)) {
-        archive_set_error_message(a, error_number, stack_buffer);
+        archive_set_error_callback_fn(a, error_number, stack_buffer);
         va_end(ap);
         return;
     }
 
     char *heap_buffer = (char *)malloc((size_t)needed + 1);
     if (heap_buffer == NULL) {
-        archive_set_error_message(a, error_number, "");
+        archive_set_error_callback_fn(a, error_number, "");
         va_end(ap);
         return;
     }
 
     vsnprintf(heap_buffer, (size_t)needed + 1, fmt, ap);
-    archive_set_error_message(a, error_number, heap_buffer);
+    archive_set_error_callback_fn(a, error_number, heap_buffer);
     free(heap_buffer);
     va_end(ap);
 }

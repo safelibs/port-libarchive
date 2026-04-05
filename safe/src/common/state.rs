@@ -10,6 +10,7 @@ use crate::common::error::{
     ARCHIVE_READ_DISK_MAGIC, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_ANY, ARCHIVE_STATE_CLOSED,
     ARCHIVE_STATE_FATAL, ARCHIVE_STATE_NEW, ARCHIVE_WRITE_DISK_MAGIC, ARCHIVE_WRITE_MAGIC,
 };
+use crate::common::api::ensure_variadic_shim_initialized;
 use crate::common::helpers::{from_optional_c_str, from_optional_wide};
 use crate::ffi::{archive, archive_entry};
 
@@ -75,6 +76,7 @@ pub(crate) unsafe fn read_from_archive<'a>(a: *mut archive) -> Option<&'a mut Re
 }
 
 pub(crate) fn alloc_archive(kind: ArchiveKind) -> *mut archive {
+    ensure_variadic_shim_initialized();
     match kind {
         ArchiveKind::Read => Box::into_raw(Box::new(ReadArchiveHandle {
             core: ArchiveCore::new(kind),
@@ -220,6 +222,16 @@ pub(crate) unsafe fn read_archive_open_filename(
         return ARCHIVE_FAILED;
     };
     read_archive_load_path(a, &PathBuf::from(path))
+}
+
+pub(crate) unsafe fn read_archive_open_filenames(
+    a: *mut archive,
+    paths: *const *const c_char,
+) -> c_int {
+    if paths.is_null() {
+        return ARCHIVE_FAILED;
+    }
+    read_archive_open_filename(a, *paths)
 }
 
 pub(crate) unsafe fn read_archive_open_filename_w(

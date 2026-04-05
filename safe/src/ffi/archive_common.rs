@@ -43,6 +43,16 @@ unsafe extern "C" {
     pub fn archive_read_finish(a: *mut archive) -> c_int;
     pub fn archive_read_free(a: *mut archive) -> c_int;
     pub fn archive_read_new() -> *mut archive;
+    pub fn archive_read_open_filename(
+        a: *mut archive,
+        path: *const c_char,
+        block_size: usize,
+    ) -> c_int;
+    pub fn archive_read_open_filenames(
+        a: *mut archive,
+        paths: *const *const c_char,
+        block_size: usize,
+    ) -> c_int;
     pub fn archive_set_error(a: *mut archive, error_number: c_int, fmt: *const c_char, ...);
     pub fn archive_utility_string_sort(strings: *mut *mut c_char) -> c_int;
     pub fn archive_version_details() -> *const c_char;
@@ -55,4 +65,9 @@ unsafe extern "C" {
     pub fn archive_zlib_version() -> *const c_char;
     pub fn archive_write_close(a: *mut archive) -> c_int;
     pub fn archive_read_close(a: *mut archive) -> c_int;
+    pub fn archive_read_open_filename_w(
+        a: *mut archive,
+        path: *const libc::wchar_t,
+        block_size: usize,
+    ) -> c_int;
 }

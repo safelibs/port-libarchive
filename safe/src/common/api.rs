@@ -1,5 +1,6 @@
 use std::ffi::{c_char, c_int, CStr};
 use std::ptr;
+use std::sync::Once;
 
 use crate::common::error::{ARCHIVE_FATAL, ARCHIVE_OK};
 use crate::common::helpers::from_optional_c_str;
@@ -21,6 +22,28 @@ static ZLIB_VERSION: &[u8] = b"rust-builtin\0";
 #[link(name = "archive_variadic_shim", kind = "static")]
 unsafe extern "C" {
     fn archive_variadic_shim_link_anchor();
+    fn archive_variadic_shim_set_callback(
+        callback: unsafe extern "C" fn(*mut archive, c_int, *const c_char),
+    );
+}
+
+static VARIADIC_SHIM_INIT: Once = Once::new();
+
+unsafe extern "C" fn archive_set_error_bridge(
+    a: *mut archive,
+    error_number: c_int,
+    message: *const c_char,
+) {
+    if let Some(core) = core_from_archive(a) {
+        set_error_option(core, error_number, from_optional_c_str(message));
+    }
+}
+
+pub(crate) fn ensure_variadic_shim_initialized() {
+    VARIADIC_SHIM_INIT.call_once(|| unsafe {
+        archive_variadic_shim_link_anchor();
+        archive_variadic_shim_set_callback(archive_set_error_bridge);
+    });
 }
 
 #[no_mangle]
@@ -56,18 +79,6 @@ pub unsafe extern "C" fn archive_errno(a: *mut archive) -> c_int {
 #[no_mangle]
 pub unsafe extern "C" fn archive_error_string(a: *mut archive) -> *const c_char {
     core_from_archive(a).map_or(ptr::null(), |core| error_string_ptr(core))
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn archive_set_error_message(
-    a: *mut archive,
-    error_number: c_int,
-    message: *const c_char,
-) {
-    archive_variadic_shim_link_anchor();
-    if let Some(core) = core_from_archive(a) {
-        set_error_option(core, error_number, from_optional_c_str(message));
-    }
 }
 
 #[no_mangle]

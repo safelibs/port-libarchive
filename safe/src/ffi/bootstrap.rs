@@ -6,7 +6,7 @@ use libc::{size_t, wchar_t};
 use crate::common::panic_boundary::{ffi_int, ffi_ptr};
 use crate::common::state::{
     alloc_archive, read_archive_open_filename, read_archive_open_filename_w,
-    read_archive_support_format, ArchiveKind,
+    read_archive_open_filenames, read_archive_support_format, ArchiveKind,
 };
 use crate::ffi::archive;
 
@@ -52,6 +52,17 @@ pub extern "C" fn archive_read_open_filename(
 ) -> c_int {
     ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
         read_archive_open_filename(a, path)
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_open_filenames(
+    a: *mut archive,
+    paths: *const *const c_char,
+    _block_size: size_t,
+) -> c_int {
+    ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        read_archive_open_filenames(a, paths)
     })
 }
 
