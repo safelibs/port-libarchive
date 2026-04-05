@@ -6,7 +6,7 @@ use crate::common::backend::{BackendReadDiskCleanupCallback, BackendReadDiskLook
 use crate::common::state::{ReadDiskExcludedCallback, ReadDiskMetadataFilterCallback};
 use crate::ffi::{archive, archive_entry};
 
-unsafe extern "C" {
+extern "C" {
     pub fn archive_read_disk_new() -> *mut archive;
     pub fn archive_read_disk_set_symlink_logical(a: *mut archive) -> c_int;
     pub fn archive_read_disk_set_symlink_physical(a: *mut archive) -> c_int;

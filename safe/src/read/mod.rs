@@ -17,7 +17,7 @@ use crate::common::error::{
 use crate::common::helpers::from_optional_c_str;
 use crate::common::panic_boundary::ffi_int;
 use crate::common::state::{
-    alloc_archive, archive_check_magic, archive_magic, clear_error, free_archive,
+    alloc_archive, archive_check_magic, archive_magic, clear_error, core_from_archive, free_archive,
     read_disk_from_archive, read_from_archive, set_error_string, sync_backend_core,
     ArchiveCloseCallback, ArchiveKind, ArchiveOpenCallback, ArchivePassphraseCallback,
     ArchiveReadCallback, ArchiveSeekCallback, ArchiveSkipCallback, ArchiveSwitchCallback,
@@ -69,6 +69,22 @@ impl<'a> ReadLike<'a> {
 
 fn header_status_has_entry(status: c_int) -> bool {
     matches!(status, ARCHIVE_OK | ARCHIVE_WARN)
+}
+
+unsafe fn mirror_archive_error(dst: *mut archive, src: *mut archive) {
+    let Some(dst_core) = core_from_archive(dst) else {
+        return;
+    };
+    let Some(src_core) = core_from_archive(src) else {
+        return;
+    };
+    if let Some(error) = src_core.error_string.as_ref() {
+        set_error_string(
+            dst_core,
+            src_core.archive_error_number,
+            error.to_string_lossy().into_owned(),
+        );
+    }
 }
 
 const ARCHIVE_FILTER_NONE: c_int = 0;
@@ -549,8 +565,7 @@ fn emulate_security_format_option(
     }
 }
 
-#[no_mangle]
-pub extern "C" fn backend_archive_read_support_format_by_code(
+fn backend_archive_read_support_format_by_code(
     a: *mut BackendArchive,
     format_code: c_int,
 ) -> c_int {
@@ -2056,6 +2071,43 @@ pub extern "C" fn archive_read_set_passphrase_callback(
 }
 
 #[no_mangle]
+pub extern "C" fn archive_read_extract_set_progress_callback(
+    a: *mut archive,
+    progress_func: Option<unsafe extern "C" fn(*mut c_void)>,
+    user_data: *mut c_void,
+) {
+    unsafe {
+        let Some(handle) = validate_read_with_state(
+            a,
+            "archive_read_extract_set_progress_callback",
+            crate::common::error::ARCHIVE_STATE_ANY,
+        ) else {
+            return;
+        };
+        handle.extract_progress = progress_func;
+        handle.extract_progress_user_data = user_data;
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_extract_set_skip_file(
+    a: *mut archive,
+    dev: i64,
+    ino: i64,
+) {
+    unsafe {
+        let Some(handle) = validate_read_with_state(
+            a,
+            "archive_read_extract_set_skip_file",
+            crate::common::error::ARCHIVE_STATE_ANY,
+        ) else {
+            return;
+        };
+        handle.extract_skip_file = Some((dev, ino));
+    }
+}
+
+#[no_mangle]
 pub extern "C" fn archive_read_extract(
     a: *mut archive,
     entry: *mut archive_entry,
@@ -2092,6 +2144,12 @@ pub extern "C" fn archive_read_extract2(
         if crate::common::state::write_disk_from_archive(disk).is_none() {
             return ARCHIVE_FATAL;
         }
+        if let Some((dev, ino)) = handle.extract_skip_file {
+            let status = crate::disk::archive_write_disk_set_skip_file(disk, dev, ino);
+            if status != ARCHIVE_OK {
+                return status;
+            }
+        }
         let entry_ptr = if !entry.is_null() {
             entry
         } else if !handle.entry.is_null() {
@@ -2102,6 +2160,7 @@ pub extern "C" fn archive_read_extract2(
 
         let status = crate::write::archive_write_header(disk, entry_ptr);
         if status != ARCHIVE_OK {
+            mirror_archive_error(a, disk);
             return status;
         }
 
@@ -2114,10 +2173,17 @@ pub extern "C" fn archive_read_extract2(
             let mut block_offset = 0i64;
             let status = archive_read_data_block(a, &mut block, &mut block_size, &mut block_offset);
             if status == ARCHIVE_EOF {
-                return crate::write::archive_write_finish_entry(disk);
+                let finish_status = crate::write::archive_write_finish_entry(disk);
+                if finish_status != ARCHIVE_OK {
+                    mirror_archive_error(a, disk);
+                }
+                return finish_status;
             }
             if status != ARCHIVE_OK {
                 return status;
+            }
+            if let Some(progress) = handle.extract_progress {
+                progress(handle.extract_progress_user_data);
             }
             let Some(current_offset) = u64::try_from(block_offset).ok() else {
                 set_error_string(
@@ -2160,6 +2226,7 @@ pub extern "C" fn archive_read_extract2(
             let write_status =
                 crate::write::archive_write_data_block(disk, block, block_size, block_offset);
             if write_status < 0 {
+                mirror_archive_error(a, disk);
                 return write_status as c_int;
             }
         }

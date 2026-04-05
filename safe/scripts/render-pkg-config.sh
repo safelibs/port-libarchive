@@ -9,10 +9,11 @@ OUTPUT="$ROOT/generated/pkgconfig/libarchive.pc"
 MODE="build-tree"
 CHECK=0
 PREFIX=""
+RENDERED_OUTPUT="$OUTPUT"
 
 usage() {
   cat <<'EOF'
-usage: render-pkg-config.sh [--mode build-tree|staged-sysroot] [--prefix <path>] [--check]
+usage: render-pkg-config.sh [--mode build-tree|staged-sysroot] [--prefix <path>] [--output <path>] [--check]
 
 Render safe/generated/pkgconfig/libarchive.pc from the checked-in template and
 the captured original pkg-config oracle.
@@ -27,6 +28,10 @@ while (($#)); do
       ;;
     --prefix)
       PREFIX="${2:?missing value for --prefix}"
+      shift 2
+      ;;
+    --output)
+      RENDERED_OUTPUT="${2:?missing value for --output}"
       shift 2
       ;;
     --check)
@@ -107,9 +112,9 @@ if mode == "build-tree":
 else:
     replacements = {
         "@prefix@": str(prefix),
-        "@exec_prefix@": "${prefix}",
-        "@libdir@": "${exec_prefix}/lib",
-        "@includedir@": "${prefix}/include",
+        "@exec_prefix@": fields.get("exec_prefix", "${prefix}"),
+        "@libdir@": fields.get("libdir", "${exec_prefix}/lib"),
+        "@includedir@": fields.get("includedir", "${prefix}/include"),
     }
 
 rendered = template
@@ -157,13 +162,13 @@ PY
 }
 
 if ((CHECK)); then
-  [[ -f "$OUTPUT" ]] || {
-    printf 'rendered pkg-config file is missing: %s\n' "$OUTPUT" >&2
+  [[ -f "$RENDERED_OUTPUT" ]] || {
+    printf 'rendered pkg-config file is missing: %s\n' "$RENDERED_OUTPUT" >&2
     exit 1
   }
-  cmp -s "$TMP_RENDER" "$OUTPUT" || {
+  cmp -s "$TMP_RENDER" "$RENDERED_OUTPUT" || {
     echo "rendered pkg-config file is out of date" >&2
-    diff -u "$OUTPUT" "$TMP_RENDER" || true
+    diff -u "$RENDERED_OUTPUT" "$TMP_RENDER" || true
     exit 1
   }
   diff -u <(normalize_contract "$TMP_RENDER") <(normalize_contract "$ORIGINAL_PC") >/dev/null || {
@@ -171,7 +176,7 @@ if ((CHECK)); then
     exit 1
   }
 else
-  mkdir -p "$(dirname -- "$OUTPUT")"
-  mv "$TMP_RENDER" "$OUTPUT"
+  mkdir -p "$(dirname -- "$RENDERED_OUTPUT")"
+  mv "$TMP_RENDER" "$RENDERED_OUTPUT"
   trap - EXIT
 fi

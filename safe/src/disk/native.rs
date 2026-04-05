@@ -29,6 +29,7 @@ const ARCHIVE_EXTRACT_TIME: c_int = 0x0004;
 const ARCHIVE_EXTRACT_NO_OVERWRITE: c_int = 0x0008;
 const ARCHIVE_EXTRACT_UNLINK: c_int = 0x0010;
 const ARCHIVE_EXTRACT_ACL: c_int = 0x0020;
+const ARCHIVE_EXTRACT_FFLAGS: c_int = 0x0040;
 const ARCHIVE_EXTRACT_XATTR: c_int = 0x0080;
 const ARCHIVE_EXTRACT_SECURE_SYMLINKS: c_int = 0x0100;
 const ARCHIVE_EXTRACT_SECURE_NODOTDOT: c_int = 0x0200;
@@ -40,6 +41,7 @@ const ARCHIVE_EXTRACT_SAFE_WRITES: c_int = 0x40000;
 
 const ARCHIVE_READDISK_RESTORE_ATIME: c_int = 0x0001;
 const ARCHIVE_READDISK_HONOR_NODUMP: c_int = 0x0002;
+const ARCHIVE_READDISK_NO_FFLAGS: c_int = 0x0040;
 const ARCHIVE_READDISK_NO_XATTR: c_int = 0x0010;
 const ARCHIVE_READDISK_NO_ACL: c_int = 0x0020;
 const ARCHIVE_READDISK_NO_SPARSE: c_int = 0x0080;
@@ -57,10 +59,43 @@ const ACL_MASK: c_int = 0x10;
 const ACL_OTHER: c_int = 0x20;
 const ACL_TYPE_ACCESS: c_int = 0x8000;
 const ACL_TYPE_DEFAULT: c_int = 0x4000;
-const FS_IOC_GETFLAGS: libc::c_ulong = 0x8008_6601;
 const FS_NODUMP_FL: libc::c_long = 0x0000_0040;
+const LINUX_IOC_NRBITS: u32 = 8;
+const LINUX_IOC_TYPEBITS: u32 = 8;
+const LINUX_IOC_SIZEBITS: u32 = 14;
+const LINUX_IOC_NRSHIFT: u32 = 0;
+const LINUX_IOC_TYPESHIFT: u32 = LINUX_IOC_NRSHIFT + LINUX_IOC_NRBITS;
+const LINUX_IOC_SIZESHIFT: u32 = LINUX_IOC_TYPESHIFT + LINUX_IOC_TYPEBITS;
+const LINUX_IOC_DIRSHIFT: u32 = LINUX_IOC_SIZESHIFT + LINUX_IOC_SIZEBITS;
+const LINUX_IOC_WRITE: u32 = 1;
+const LINUX_IOC_READ: u32 = 2;
 
-unsafe extern "C" {
+const fn linux_ioc(dir: u32, ty: u8, nr: u8, size: usize) -> libc::c_ulong {
+    ((dir << LINUX_IOC_DIRSHIFT)
+        | ((ty as u32) << LINUX_IOC_TYPESHIFT)
+        | ((nr as u32) << LINUX_IOC_NRSHIFT)
+        | ((size as u32) << LINUX_IOC_SIZESHIFT)) as libc::c_ulong
+}
+
+const fn fs_ioc_getflags() -> libc::c_ulong {
+    linux_ioc(
+        LINUX_IOC_READ,
+        b'f',
+        1,
+        std::mem::size_of::<libc::c_long>(),
+    )
+}
+
+const fn fs_ioc_setflags() -> libc::c_ulong {
+    linux_ioc(
+        LINUX_IOC_WRITE,
+        b'f',
+        2,
+        std::mem::size_of::<libc::c_long>(),
+    )
+}
+
+extern "C" {
     fn acl_get_fd(fd: c_int) -> *mut c_void;
     fn acl_get_file(path_p: *const c_char, type_: c_int) -> *mut c_void;
     fn acl_get_entry(acl: *mut c_void, entry_id: c_int, entry_p: *mut *mut c_void) -> c_int;
@@ -299,11 +334,20 @@ fn is_nodump(path: &Path) -> bool {
         return false;
     }
     let mut flags: libc::c_long = 0;
-    let rc = unsafe { libc::ioctl(fd, FS_IOC_GETFLAGS, &mut flags) };
+    let rc = unsafe { libc::ioctl(fd, fs_ioc_getflags(), &mut flags) };
     unsafe {
         libc::close(fd);
     }
     rc == 0 && (flags & FS_NODUMP_FL) != 0
+}
+
+fn should_skip_xattr(name: &CStr) -> bool {
+    let name = name.to_bytes();
+    name == b"system.posix_acl_access"
+        || name == b"system.posix_acl_default"
+        || name == b"trusted.SGI_ACL_DEFAULT"
+        || name == b"trusted.SGI_ACL_FILE"
+        || name.starts_with(b"xfsroot.")
 }
 
 fn load_xattrs(path: &Path, follow: bool) -> Vec<(CString, Vec<u8>)> {
@@ -347,6 +391,10 @@ fn load_xattrs(path: &Path, follow: bool) -> Vec<(CString, Vec<u8>)> {
             start = index + 1;
             continue;
         };
+        if should_skip_xattr(name.as_c_str()) {
+            start = index + 1;
+            continue;
+        }
         let size = unsafe {
             if follow {
                 libc::getxattr(c_path.as_ptr(), name.as_ptr(), ptr::null_mut(), 0)
@@ -381,6 +429,27 @@ fn load_xattrs(path: &Path, follow: bool) -> Vec<(CString, Vec<u8>)> {
         start = index + 1;
     }
     result
+}
+
+fn load_fflags(path: &Path) -> Option<libc::c_ulong> {
+    let Ok(c_path) = c_path(path) else {
+        return None;
+    };
+    let fd = unsafe {
+        libc::open(
+            c_path.as_ptr(),
+            libc::O_RDONLY | libc::O_NONBLOCK | libc::O_CLOEXEC,
+        )
+    };
+    if fd < 0 {
+        return None;
+    }
+    let mut flags: libc::c_long = 0;
+    let rc = unsafe { libc::ioctl(fd, fs_ioc_getflags(), &mut flags) };
+    unsafe {
+        libc::close(fd);
+    }
+    (rc == 0 && flags != 0).then_some(flags as libc::c_ulong)
 }
 
 fn acl_tag_to_entry(tag: c_int) -> Option<c_int> {
@@ -636,6 +705,13 @@ fn populate_entry_from_path(
             &mut entry_data.acl,
             &mut entry_data.mode,
         );
+    }
+    if (handle.behavior_flags & ARCHIVE_READDISK_NO_FFLAGS) == 0 {
+        if let Some(flags) = load_fflags(&effective_path) {
+            entry_data.fflags_set = flags;
+            entry_data.fflags_clear = 0;
+            entry_data.fflags_text_cache = None;
+        }
     }
     if let Some(uname) = resolve_uname(handle, entry_data.uid) {
         entry_data.uname.set(Some(uname));
@@ -1123,6 +1199,50 @@ fn has_dotdot(path: &Path) -> bool {
         .any(|component| matches!(component, Component::ParentDir))
 }
 
+fn is_current_directory_path(path: &Path) -> bool {
+    let mut saw_component = false;
+    for component in path.components() {
+        saw_component = true;
+        if !matches!(component, Component::CurDir) {
+            return false;
+        }
+    }
+    saw_component
+}
+
+fn normalize_write_path(raw_path: &Path) -> PathBuf {
+    let mut normalized = if raw_path.is_absolute() {
+        PathBuf::from("/")
+    } else {
+        PathBuf::new()
+    };
+    let mut copied_component = false;
+    for component in raw_path.components() {
+        match component {
+            Component::Prefix(_) | Component::RootDir | Component::CurDir => {}
+            Component::ParentDir => {
+                normalized.push("..");
+                copied_component = true;
+            }
+            Component::Normal(name) => {
+                normalized.push(name);
+                copied_component = true;
+            }
+        }
+    }
+    if copied_component {
+        normalized
+    } else if raw_path.is_absolute() {
+        PathBuf::from("/")
+    } else {
+        PathBuf::from(".")
+    }
+}
+
+fn is_noop_directory_path(path: &Path) -> bool {
+    path == Path::new(".") || path == Path::new("..") || path == Path::new("/")
+}
+
 struct WriteDiskResolvedTarget {
     parent_fd: c_int,
     name: CString,
@@ -1356,14 +1476,16 @@ fn resolve_write_target(
     raw_path: &Path,
     create_intermediate: bool,
 ) -> Result<WriteDiskResolvedTarget, c_int> {
-    if (handle.options & ARCHIVE_EXTRACT_SECURE_NOABSOLUTEPATHS) != 0 && raw_path.is_absolute() {
+    let normalized_path = normalize_write_path(raw_path);
+    if (handle.options & ARCHIVE_EXTRACT_SECURE_NOABSOLUTEPATHS) != 0 && normalized_path.is_absolute()
+    {
         return Err(record_error(
             &mut handle.core,
             libc::EINVAL,
             "absolute paths are not permitted",
         ));
     }
-    if (handle.options & ARCHIVE_EXTRACT_SECURE_NODOTDOT) != 0 && has_dotdot(raw_path) {
+    if (handle.options & ARCHIVE_EXTRACT_SECURE_NODOTDOT) != 0 && has_dotdot(&normalized_path) {
         return Err(record_error(
             &mut handle.core,
             libc::EINVAL,
@@ -1371,26 +1493,51 @@ fn resolve_write_target(
         ));
     }
 
-    let Some(file_name) = raw_path.file_name() else {
+    let components: Vec<_> = normalized_path.components().collect();
+    let Some(final_component) = components.last() else {
         return Err(record_error(
             &mut handle.core,
             libc::EINVAL,
-            format!("entry path has no final component: {}", raw_path.display()),
+            format!(
+                "entry path has no final component: {}",
+                normalized_path.display()
+            ),
         ));
     };
-    let name = CString::new(file_name.as_bytes()).map_err(|_| {
+    let name_bytes: &[u8] = match final_component {
+        Component::CurDir => b".",
+        Component::ParentDir => b"..",
+        Component::Normal(file_name) => file_name.as_bytes(),
+        Component::RootDir | Component::Prefix(_) => {
+            return Err(record_error(
+                &mut handle.core,
+                libc::EINVAL,
+                format!(
+                    "entry path has no final component: {}",
+                    normalized_path.display()
+                ),
+            ));
+        }
+    };
+    let name = CString::new(name_bytes).map_err(|_| {
         record_error(
             &mut handle.core,
             libc::EINVAL,
-            format!("entry path contains NUL bytes: {}", raw_path.display()),
+            format!(
+                "entry path contains NUL bytes: {}",
+                normalized_path.display()
+            ),
         )
     })?;
 
-    let base_fd = open_root_fd(handle, raw_path.is_absolute()).map_err(|errno| {
+    let base_fd = open_root_fd(handle, normalized_path.is_absolute()).map_err(|errno| {
         record_error(
             &mut handle.core,
             errno,
-            format!("failed to open extraction root for {}", raw_path.display()),
+            format!(
+                "failed to open extraction root for {}",
+                normalized_path.display()
+            ),
         )
     })?;
     let mut current_fd = dup_fd(base_fd).map_err(|errno| {
@@ -1399,13 +1546,16 @@ fn resolve_write_target(
             errno,
             format!(
                 "failed to duplicate extraction root for {}",
-                raw_path.display()
+                normalized_path.display()
             ),
         )
     })?;
 
-    let mut components = raw_path.components().peekable();
-    while let Some(component) = components.next() {
+    for component in components
+        .iter()
+        .take(components.len().saturating_sub(1))
+        .copied()
+    {
         match component {
             Component::RootDir => {
                 close_fd_if_valid(current_fd);
@@ -1415,7 +1565,7 @@ fn resolve_write_target(
                         errno,
                         format!(
                             "failed to duplicate extraction root for {}",
-                            raw_path.display()
+                            normalized_path.display()
                         ),
                     )
                 })?;
@@ -1437,7 +1587,7 @@ fn resolve_write_target(
                         last_errno(),
                         format!(
                             "failed to traverse parent directory for {}",
-                            raw_path.display()
+                            normalized_path.display()
                         ),
                     ));
                 }
@@ -1445,15 +1595,15 @@ fn resolve_write_target(
                 current_fd = parent;
             }
             Component::Normal(component_name) => {
-                if components.peek().is_none() {
-                    break;
-                }
                 let component = CString::new(component_name.as_bytes()).map_err(|_| {
                     close_fd_if_valid(current_fd);
                     record_error(
                         &mut handle.core,
                         libc::EINVAL,
-                        format!("entry path contains NUL bytes: {}", raw_path.display()),
+                        format!(
+                            "entry path contains NUL bytes: {}",
+                            normalized_path.display()
+                        ),
                     )
                 })?;
                 let next_fd = advance_parent_fd(
@@ -1461,7 +1611,7 @@ fn resolve_write_target(
                     current_fd,
                     component.as_c_str(),
                     create_intermediate,
-                    raw_path,
+                    &normalized_path,
                 )?;
                 close_fd_if_valid(current_fd);
                 current_fd = next_fd;
@@ -1473,7 +1623,7 @@ fn resolve_write_target(
     Ok(WriteDiskResolvedTarget {
         parent_fd: current_fd,
         name,
-        display_path: raw_path.to_path_buf(),
+        display_path: normalized_path,
     })
 }
 
@@ -1827,6 +1977,8 @@ fn make_fixup(
         mode: desired_file_mode(handle, entry.mode, uid, gid),
         uid,
         gid,
+        fflags_set: entry.fflags_set,
+        fflags_clear: entry.fflags_clear,
         atime: if entry.atime.set {
             Some((entry.atime.sec, i64::from(entry.atime.nsec)))
         } else {
@@ -1890,11 +2042,15 @@ fn apply_fixup(handle: &mut WriteDiskArchiveHandle, mut fixup: WriteDiskPendingF
         }
     }
     if fixup.apply_perm {
-        let rc = unsafe {
-            if fixup.target_fd >= 0 && fixup.follow {
-                libc::fchmod(fixup.target_fd, mode & 0o7777)
-            } else {
-                -1
+        let rc = if filetype_from_mode(fixup.mode) == AE_IFLNK {
+            0
+        } else {
+            unsafe {
+                if fixup.target_fd >= 0 && fixup.follow {
+                    libc::fchmod(fixup.target_fd, mode & 0o7777)
+                } else {
+                    -1
+                }
             }
         };
         if rc != 0 {
@@ -1949,6 +2105,29 @@ fn apply_fixup(handle: &mut WriteDiskArchiveHandle, mut fixup: WriteDiskPendingF
     if apply_acl_fixup(handle, &fixup) != ARCHIVE_OK {
         status = ARCHIVE_WARN;
     }
+    if (handle.options & ARCHIVE_EXTRACT_FFLAGS) != 0
+        && matches!(filetype_from_mode(fixup.mode), AE_IFREG | AE_IFDIR)
+        && (fixup.fflags_set != 0 || fixup.fflags_clear != 0)
+    {
+        let mut flags = fixup.fflags_set as libc::c_long;
+        let rc = unsafe {
+            if fixup.target_fd >= 0 {
+                let mut current: libc::c_long = 0;
+                if libc::ioctl(fixup.target_fd, fs_ioc_getflags(), &mut current) != 0 {
+                    -1
+                } else {
+                    flags = (current & !(fixup.fflags_clear as libc::c_long))
+                        | fixup.fflags_set as libc::c_long;
+                    libc::ioctl(fixup.target_fd, fs_ioc_setflags(), &mut flags)
+                }
+            } else {
+                -1
+            }
+        };
+        if rc != 0 {
+            status = ARCHIVE_WARN;
+        }
+    }
     close_fixup(&mut fixup);
     status
 }
@@ -1978,6 +2157,7 @@ fn skip_current_state(display_path: PathBuf) -> WriteDiskCurrentState {
         size_limit: Some(0),
         written: 0,
         accept_data: false,
+        suppress_data_warnings: true,
         close_fd_on_finish: false,
         fixup: None,
     }
@@ -2185,8 +2365,14 @@ pub(crate) unsafe fn write_disk_header(
     let Some(pathname) = entry_data.pathname.get_str() else {
         return record_error(&mut handle.core, libc::EINVAL, "entry pathname is missing");
     };
-    let raw_path = Path::new(pathname);
-    let target = match resolve_write_target(handle, raw_path, true) {
+    let normalized_path = normalize_write_path(Path::new(pathname));
+    if filetype_from_mode(entry_data.mode) == AE_IFDIR
+        && (is_current_directory_path(&normalized_path) || is_noop_directory_path(&normalized_path))
+    {
+        handle.extraction.current = Some(skip_current_state(normalized_path));
+        return ARCHIVE_OK;
+    }
+    let target = match resolve_write_target(handle, &normalized_path, true) {
         Ok(target) => target,
         Err(status) => {
             handle.extraction.last_header_failed = true;
@@ -2253,6 +2439,7 @@ pub(crate) unsafe fn write_disk_header(
             size_limit: None,
             written: 0,
             accept_data: false,
+            suppress_data_warnings: false,
             close_fd_on_finish: false,
             fixup: Some(fixup),
         });
@@ -2304,6 +2491,7 @@ pub(crate) unsafe fn write_disk_header(
             size_limit: None,
             written: 0,
             accept_data: false,
+            suppress_data_warnings: false,
             close_fd_on_finish: false,
             fixup: Some(make_fixup(
                 handle,
@@ -2394,6 +2582,7 @@ pub(crate) unsafe fn write_disk_header(
             size_limit: entry_data.size_set.then_some(entry_data.size),
             written: 0,
             accept_data: authoritative,
+            suppress_data_warnings: false,
             close_fd_on_finish: fd >= 0,
             fixup: authoritative.then(|| {
                 let mut fixup = make_fixup(
@@ -2503,6 +2692,7 @@ pub(crate) unsafe fn write_disk_header(
         size_limit: entry_data.size_set.then_some(entry_data.size),
         written: 0,
         accept_data: true,
+        suppress_data_warnings: false,
         close_fd_on_finish: true,
         fixup: Some(make_fixup(
             handle,
@@ -2527,7 +2717,11 @@ pub(crate) unsafe fn write_disk_data(
         return ARCHIVE_FATAL as isize;
     };
     if !current.accept_data || current.fd < 0 {
-        return ARCHIVE_WARN as isize;
+        if !current.suppress_data_warnings {
+            return ARCHIVE_WARN as isize;
+        }
+        current.written = current.written.saturating_add(size as i64);
+        return size as isize;
     }
     let mut to_write = size as usize;
     if let Some(limit) = current.size_limit {
@@ -2544,6 +2738,7 @@ pub(crate) unsafe fn write_disk_data(
         return ARCHIVE_FATAL as isize;
     }
     current.written += rc as i64;
+    handle.extraction.total_bytes_written += rc as i64;
     rc as isize
 }
 
@@ -2558,7 +2753,19 @@ pub(crate) unsafe fn write_disk_data_block(
         return ARCHIVE_FATAL as isize;
     };
     if !current.accept_data || current.fd < 0 {
-        return ARCHIVE_WARN as isize;
+        if !current.suppress_data_warnings {
+            return if size == 0 {
+                ARCHIVE_OK as isize
+            } else {
+                ARCHIVE_WARN as isize
+            };
+        }
+        if let Some(limit) = current.size_limit {
+            current.written = current.written.max(offset.saturating_add(size as i64).min(limit));
+        } else {
+            current.written = current.written.max(offset.saturating_add(size as i64));
+        }
+        return ARCHIVE_OK as isize;
     }
     let mut to_write = size as usize;
     if let Some(limit) = current.size_limit {
@@ -2586,6 +2793,7 @@ pub(crate) unsafe fn write_disk_data_block(
     current.written = current
         .written
         .max(end_offset.min(current.written.saturating_add(rc as i64)));
+    handle.extraction.total_bytes_written += rc as i64;
     ARCHIVE_OK as isize
 }
 
@@ -2685,7 +2893,7 @@ pub(crate) fn write_disk_close(handle: &mut WriteDiskArchiveHandle) -> c_int {
     if handle.extraction.current.is_some() {
         status = write_disk_finish_entry(handle);
     } else if handle.extraction.last_header_failed {
-        status = ARCHIVE_FATAL;
+        handle.extraction.last_header_failed = false;
     }
     while let Some(fixup) = handle.extraction.deferred_dirs.pop() {
         if apply_fixup(handle, fixup) != ARCHIVE_OK {

@@ -72,7 +72,7 @@ pub const ARCHIVE_ENTRY_ACL_STYLE_SOLARIS: c_int = 0x0000_0004;
 pub const ARCHIVE_ENTRY_ACL_STYLE_SEPARATOR_COMMA: c_int = 0x0000_0008;
 pub const ARCHIVE_ENTRY_ACL_STYLE_COMPACT: c_int = 0x0000_0010;
 
-unsafe extern "C" {
+extern "C" {
     pub fn archive_entry_new() -> *mut archive_entry;
     pub fn archive_entry_new2(a: *mut archive) -> *mut archive_entry;
     pub fn archive_entry_free(entry: *mut archive_entry);

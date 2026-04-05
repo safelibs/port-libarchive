@@ -1,5 +1,5 @@
 use std::collections::{BTreeSet, HashMap};
-use std::ffi::{c_int, CString};
+use std::ffi::{c_char, c_int, CString};
 use std::ptr;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -15,6 +15,10 @@ use crate::common::state::{
 };
 use crate::entry::internal::from_raw as entry_from_raw;
 use crate::ffi::{archive, archive_entry};
+
+extern "C" {
+    fn __archive_get_date(now: libc::time_t, p: *const c_char) -> libc::time_t;
+}
 
 const PATHMATCH_NO_ANCHOR_START: c_int = 1;
 const PATHMATCH_NO_ANCHOR_END: c_int = 2;
@@ -58,6 +62,7 @@ impl MatchList {
     pub(crate) fn unmatched_next(&mut self, wide: bool) -> Option<(*const i8, *const wchar_t)> {
         if self.unmatched_eof {
             self.unmatched_eof = false;
+            self.unmatched_next = 0;
             return None;
         }
 
@@ -424,14 +429,13 @@ fn match_path_inclusion(pattern: &str, path: &str, recursive: bool) -> bool {
 }
 
 pub(crate) fn path_excluded(matcher: &mut MatchArchive, path: &str) -> c_int {
-    let mut matched_index = None;
-    for (index, inclusion) in matcher.inclusions.patterns.iter_mut().enumerate() {
+    let mut matched = false;
+    for inclusion in &mut matcher.inclusions.patterns {
         if inclusion.matches == 0
             && match_path_inclusion(&inclusion.text, path, matcher.recursive_include)
         {
             inclusion.matches += 1;
-            matched_index = Some(index);
-            break;
+            matched = true;
         }
     }
 
@@ -441,7 +445,7 @@ pub(crate) fn path_excluded(matcher: &mut MatchArchive, path: &str) -> c_int {
         }
     }
 
-    if matched_index.is_some() {
+    if matched {
         return 0;
     }
 
@@ -868,6 +872,12 @@ fn parse_time_token(token: &str) -> Option<(u32, u32, u32, Option<i64>)> {
 }
 
 pub(crate) fn parse_date(now: i64, text: &str) -> Option<i64> {
+    let c_text = CString::new(text).ok()?;
+    let parsed = unsafe { __archive_get_date(now as libc::time_t, c_text.as_ptr()) };
+    if parsed != -1 {
+        return Some(parsed as i64);
+    }
+
     if let Some(relative) = parse_relative_date(now, text) {
         return Some(relative);
     }

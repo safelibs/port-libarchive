@@ -67,7 +67,7 @@ fn parse_fflags_text(text: &str) -> (c_ulong, c_ulong) {
         let (set_name, bit) = match token {
             "sappnd" | "uappnd" => (true, FS_APPEND_FL),
             "schg" | "uchg" => (true, FS_IMMUTABLE_FL),
-            "dump" => (true, FS_NODUMP_FL),
+            "dump" => (false, FS_NODUMP_FL),
             "undel" | "uunlink" => (true, FS_UNRM_FL),
             "hidden" | "uhidden" => (true, FILE_ATTRIBUTE_HIDDEN),
             "rdonly" | "urdonly" | "readonly" => (true, FILE_ATTRIBUTE_READONLY),
@@ -878,7 +878,7 @@ pub unsafe extern "C" fn archive_entry_acl_reset(
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_acl_next(
     entry: *mut archive_entry,
-    _want_type: c_int,
+    want_type: c_int,
     entry_type: *mut c_int,
     permset: *mut c_int,
     tag: *mut c_int,
@@ -886,6 +886,9 @@ pub unsafe extern "C" fn archive_entry_acl_next(
     name: *mut *const c_char,
 ) -> c_int {
     from_raw(entry).map_or(ARCHIVE_EOF, |entry_data| {
+        if entry_data.acl.iter_want_type != Some(want_type) {
+            entry_data.acl.reset(entry_data.mode, want_type);
+        }
         entry_data.acl.next(entry_type, permset, tag, qual, name)
     })
 }
@@ -1064,7 +1067,7 @@ pub unsafe extern "C" fn archive_entry_sparse_next(
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_linkresolver_new() -> *mut archive_entry_linkresolver {
     Box::into_raw(Box::new(LinkResolverData {
-        strategy: crate::ffi::archive_common::ARCHIVE_FORMAT_CPIO_POSIX,
+        strategy: crate::ffi::archive_common::ARCHIVE_FORMAT_TAR,
         entries: std::collections::HashMap::new(),
     })) as *mut archive_entry_linkresolver
 }

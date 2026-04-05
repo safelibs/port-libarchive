@@ -8,7 +8,7 @@ use crate::common::state::{
 };
 use crate::ffi::{archive, archive_entry};
 
-unsafe extern "C" {
+extern "C" {
     pub fn archive_read_new() -> *mut archive;
     pub fn archive_read_free(a: *mut archive) -> c_int;
     pub fn archive_read_close(a: *mut archive) -> c_int;

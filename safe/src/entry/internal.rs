@@ -71,6 +71,30 @@ pub(crate) const ARCHIVE_ENTRY_ACL_STYLE_MARK_DEFAULT: c_int = 0x0000_0002;
 pub(crate) const ARCHIVE_ENTRY_ACL_STYLE_SEPARATOR_COMMA: c_int = 0x0000_0008;
 pub(crate) const ARCHIVE_ENTRY_ACL_STYLE_COMPACT: c_int = 0x0000_0010;
 
+const ARCHIVE_ENTRY_ACL_PERMS_POSIX1E: c_int =
+    ARCHIVE_ENTRY_ACL_EXECUTE | ARCHIVE_ENTRY_ACL_WRITE | ARCHIVE_ENTRY_ACL_READ;
+const ARCHIVE_ENTRY_ACL_PERMS_NFS4: c_int = ARCHIVE_ENTRY_ACL_EXECUTE
+    | ARCHIVE_ENTRY_ACL_READ_DATA
+    | ARCHIVE_ENTRY_ACL_WRITE_DATA
+    | ARCHIVE_ENTRY_ACL_APPEND_DATA
+    | ARCHIVE_ENTRY_ACL_READ_NAMED_ATTRS
+    | ARCHIVE_ENTRY_ACL_WRITE_NAMED_ATTRS
+    | ARCHIVE_ENTRY_ACL_DELETE_CHILD
+    | ARCHIVE_ENTRY_ACL_READ_ATTRIBUTES
+    | ARCHIVE_ENTRY_ACL_WRITE_ATTRIBUTES
+    | ARCHIVE_ENTRY_ACL_DELETE
+    | ARCHIVE_ENTRY_ACL_READ_ACL
+    | ARCHIVE_ENTRY_ACL_WRITE_ACL
+    | ARCHIVE_ENTRY_ACL_WRITE_OWNER
+    | ARCHIVE_ENTRY_ACL_SYNCHRONIZE;
+const ARCHIVE_ENTRY_ACL_INHERITANCE_NFS4: c_int = ARCHIVE_ENTRY_ACL_ENTRY_INHERITED
+    | ARCHIVE_ENTRY_ACL_ENTRY_FILE_INHERIT
+    | ARCHIVE_ENTRY_ACL_ENTRY_DIRECTORY_INHERIT
+    | ARCHIVE_ENTRY_ACL_ENTRY_NO_PROPAGATE_INHERIT
+    | ARCHIVE_ENTRY_ACL_ENTRY_INHERIT_ONLY
+    | ARCHIVE_ENTRY_ACL_ENTRY_SUCCESSFUL_ACCESS
+    | ARCHIVE_ENTRY_ACL_ENTRY_FAILED_ACCESS;
+
 pub(crate) const ARCHIVE_ENTRY_DIGEST_MD5: c_int = 0x0000_0001;
 pub(crate) const ARCHIVE_ENTRY_DIGEST_RMD160: c_int = 0x0000_0002;
 pub(crate) const ARCHIVE_ENTRY_DIGEST_SHA1: c_int = 0x0000_0003;
@@ -179,7 +203,7 @@ impl CachedText {
     pub(crate) fn set_bytes(&mut self, value: Option<Vec<u8>>) {
         self.value = value
             .as_ref()
-            .map(|value| String::from_utf8_lossy(value).into_owned());
+            .and_then(|value| String::from_utf8(value.clone()).ok());
         self.bytes = value;
         self.clear_cache();
     }
@@ -263,6 +287,7 @@ pub(crate) struct AclState {
     pub(crate) entries: Vec<AclEntry>,
     pub(crate) acl_types: c_int,
     iter_entries: Vec<AclEntry>,
+    pub(crate) iter_want_type: Option<c_int>,
     iter_index: usize,
     iter_name_cache: Option<CString>,
     last_text_flags: Option<c_int>,
@@ -661,6 +686,19 @@ fn is_nfs4_type(entry_type: c_int) -> bool {
     (entry_type & ARCHIVE_ENTRY_ACL_TYPE_NFS4) != 0
 }
 
+fn parse_acl_qualifier(name: Option<&str>) -> Option<c_int> {
+    let name = name?;
+    let digits_start = name
+        .rfind(|ch: char| !ch.is_ascii_digit())
+        .map_or(0, |index| index + 1);
+    let digits = &name[digits_start..];
+    if digits.is_empty() {
+        None
+    } else {
+        digits.parse::<c_int>().ok()
+    }
+}
+
 impl AclState {
     fn invalidate_cache(&mut self) {
         self.last_text_flags = None;
@@ -672,6 +710,7 @@ impl AclState {
         self.entries.clear();
         self.acl_types = 0;
         self.iter_entries.clear();
+        self.iter_want_type = None;
         self.iter_index = 0;
         self.iter_name_cache = None;
         self.invalidate_cache();
@@ -690,6 +729,11 @@ impl AclState {
             if (self.acl_types & !ARCHIVE_ENTRY_ACL_TYPE_NFS4) != 0 {
                 return ARCHIVE_FAILED;
             }
+            if (permset & !(ARCHIVE_ENTRY_ACL_PERMS_NFS4 | ARCHIVE_ENTRY_ACL_INHERITANCE_NFS4))
+                != 0
+            {
+                return ARCHIVE_FAILED;
+            }
             match tag {
                 ARCHIVE_ENTRY_ACL_USER
                 | ARCHIVE_ENTRY_ACL_USER_OBJ
@@ -700,6 +744,9 @@ impl AclState {
             }
         } else if is_posix_type(entry_type) {
             if (self.acl_types & !ARCHIVE_ENTRY_ACL_TYPE_POSIX1E) != 0 {
+                return ARCHIVE_FAILED;
+            }
+            if (permset & !ARCHIVE_ENTRY_ACL_PERMS_POSIX1E) != 0 {
                 return ARCHIVE_FAILED;
             }
             match tag {
@@ -791,6 +838,7 @@ impl AclState {
             0
         };
         self.iter_entries.clear();
+        self.iter_want_type = Some(want_type);
         self.iter_index = 0;
         self.iter_name_cache = None;
 
@@ -1173,6 +1221,7 @@ impl AclState {
 
     pub(crate) fn from_text(&mut self, mode: &mut mode_t, text: &str, want_type: c_int) -> c_int {
         let mut status = ARCHIVE_OK;
+        let mut types = 0;
         let separator = if text.contains('\n') { '\n' } else { ',' };
         for raw_line in text.split(separator) {
             let line = raw_line.trim();
@@ -1258,10 +1307,13 @@ impl AclState {
                 let qual = parts
                     .get(id_index)
                     .and_then(|part| part.parse::<c_int>().ok())
+                    .or_else(|| parse_acl_qualifier(name.as_deref()))
                     .unwrap_or(-1);
                 let result = self.add_entry(mode, entry_type, permset, tag, qual, name);
                 if result != ARCHIVE_OK {
                     status = result;
+                } else {
+                    types |= entry_type;
                 }
                 continue;
             }
@@ -1329,18 +1381,16 @@ impl AclState {
             let qual = parts
                 .get(3)
                 .and_then(|part| part.parse::<c_int>().ok())
-                .unwrap_or(
-                    if matches!(tag, ARCHIVE_ENTRY_ACL_USER | ARCHIVE_ENTRY_ACL_GROUP) {
-                        0
-                    } else {
-                        -1
-                    },
-                );
+                .or_else(|| parse_acl_qualifier(name.as_deref()))
+                .unwrap_or(-1);
             let result = self.add_entry(mode, entry_type, permset, tag, qual, name);
             if result != ARCHIVE_OK {
                 status = result;
+            } else {
+                types |= entry_type;
             }
         }
+        self.reset(*mode, types);
         status
     }
 }
@@ -1476,17 +1526,60 @@ pub(crate) fn strmode(entry: &mut ArchiveEntryData) -> *const c_char {
     entry.strmode_cache.as_ref().unwrap().as_ptr()
 }
 
-#[derive(Default)]
 pub(crate) struct LinkEntry {
     pub(crate) canonical: *mut archive_entry,
     pub(crate) entry: *mut archive_entry,
     pub(crate) links: u32,
 }
 
+impl Default for LinkEntry {
+    fn default() -> Self {
+        Self {
+            canonical: ptr::null_mut(),
+            entry: ptr::null_mut(),
+            links: 0,
+        }
+    }
+}
+
 #[repr(C)]
 pub(crate) struct LinkResolverData {
     pub(crate) strategy: c_int,
     pub(crate) entries: std::collections::HashMap<(dev_t, i64), LinkEntry>,
+}
+
+const ARCHIVE_FORMAT_BASE_MASK: c_int = 0xff0000;
+const ARCHIVE_FORMAT_7ZIP: c_int = 0xE0000;
+const ARCHIVE_FORMAT_AR: c_int = 0x70000;
+const ARCHIVE_FORMAT_CPIO: c_int = 0x10000;
+const ARCHIVE_FORMAT_CPIO_SVR4_CRC: c_int = ARCHIVE_FORMAT_CPIO | 5;
+const ARCHIVE_FORMAT_ISO9660: c_int = 0x40000;
+const ARCHIVE_FORMAT_MTREE: c_int = 0x80000;
+const ARCHIVE_FORMAT_SHAR: c_int = 0x20000;
+const ARCHIVE_FORMAT_TAR: c_int = 0x30000;
+const ARCHIVE_FORMAT_XAR: c_int = 0xA0000;
+const ARCHIVE_FORMAT_ZIP: c_int = 0x50000;
+
+const LINKIFY_LIKE_TAR: c_int = 0;
+const LINKIFY_LIKE_MTREE: c_int = 1;
+const LINKIFY_LIKE_OLD_CPIO: c_int = 2;
+const LINKIFY_LIKE_NEW_CPIO: c_int = 3;
+
+fn linkify_strategy(format_code: c_int) -> c_int {
+    match format_code & ARCHIVE_FORMAT_BASE_MASK {
+        ARCHIVE_FORMAT_7ZIP | ARCHIVE_FORMAT_AR | ARCHIVE_FORMAT_ZIP => LINKIFY_LIKE_OLD_CPIO,
+        ARCHIVE_FORMAT_CPIO => match format_code {
+            crate::ffi::archive_common::ARCHIVE_FORMAT_CPIO_SVR4_NOCRC | ARCHIVE_FORMAT_CPIO_SVR4_CRC => {
+                LINKIFY_LIKE_NEW_CPIO
+            }
+            _ => LINKIFY_LIKE_OLD_CPIO,
+        },
+        ARCHIVE_FORMAT_MTREE => LINKIFY_LIKE_MTREE,
+        ARCHIVE_FORMAT_ISO9660 | ARCHIVE_FORMAT_SHAR | ARCHIVE_FORMAT_TAR | ARCHIVE_FORMAT_XAR => {
+            LINKIFY_LIKE_TAR
+        }
+        _ => LINKIFY_LIKE_OLD_CPIO,
+    }
 }
 
 pub(crate) unsafe fn free_linkresolver(resolver: *mut archive_entry_linkresolver) {
@@ -1534,7 +1627,21 @@ pub(crate) unsafe fn linkify(
     if !spare.is_null() {
         *spare = ptr::null_mut();
     }
-    if entry.is_null() || (*entry).is_null() {
+    if entry.is_null() {
+        return;
+    }
+    if (*entry).is_null() {
+        let key = resolver
+            .entries
+            .iter()
+            .find(|(_, value)| !value.entry.is_null())
+            .map(|(key, _)| *key);
+        let Some(key) = key else {
+            return;
+        };
+        let entry_state = resolver.entries.remove(&key).unwrap();
+        *entry = entry_state.entry;
+        free_raw_entry(entry_state.canonical);
         return;
     }
 
@@ -1547,17 +1654,9 @@ pub(crate) unsafe fn linkify(
     }
 
     let key = (current.dev, current.ino);
-    match resolver.strategy {
-        crate::ffi::archive_common::ARCHIVE_FORMAT_TAR_USTAR
-        | crate::ffi::archive_common::ARCHIVE_FORMAT_TAR => {
-            if let Some(link) = resolver.entries.get_mut(&key) {
-                let canonical = from_raw(link.canonical).unwrap();
-                current.size = 0;
-                current.size_set = false;
-                current
-                    .hardlink
-                    .set_bytes(canonical.pathname.get_bytes().map(|value| value.to_vec()));
-            } else {
+    match linkify_strategy(resolver.strategy) {
+        LINKIFY_LIKE_TAR | LINKIFY_LIKE_MTREE => {
+            let Some(link) = resolver.entries.get_mut(&key) else {
                 resolver.entries.insert(
                     key,
                     LinkEntry {
@@ -1566,9 +1665,25 @@ pub(crate) unsafe fn linkify(
                         links: current.nlink.saturating_sub(1),
                     },
                 );
+                return;
+            };
+
+            let canonical = from_raw(link.canonical).unwrap();
+            if linkify_strategy(resolver.strategy) == LINKIFY_LIKE_TAR {
+                current.size = 0;
+                current.size_set = false;
+            }
+            current
+                .hardlink
+                .set_bytes(canonical.pathname.get_bytes().map(|value| value.to_vec()));
+            if link.links > 0 {
+                link.links -= 1;
+            }
+            if link.links == 0 {
+                resolver.entries.remove(&key);
             }
         }
-        crate::ffi::archive_common::ARCHIVE_FORMAT_CPIO_SVR4_NOCRC => {
+        LINKIFY_LIKE_NEW_CPIO => {
             if let Some(link) = resolver.entries.get_mut(&key) {
                 let previous = link.entry;
                 link.entry = *entry;
@@ -1600,6 +1715,7 @@ pub(crate) unsafe fn linkify(
                 *entry = ptr::null_mut();
             }
         }
+        LINKIFY_LIKE_OLD_CPIO => {}
         _ => {}
     }
 }

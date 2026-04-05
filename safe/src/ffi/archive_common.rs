@@ -18,7 +18,7 @@ pub const ARCHIVE_MATCH_EQUAL: c_int = 0x0010;
 pub const ARCHIVE_MATCH_MTIME: c_int = 0x0100;
 pub const ARCHIVE_MATCH_CTIME: c_int = 0x0200;
 
-unsafe extern "C" {
+extern "C" {
     pub fn archive_bzlib_version() -> *const c_char;
     pub fn archive_clear_error(a: *mut archive);
     pub fn archive_compression(a: *mut archive) -> c_int;

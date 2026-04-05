@@ -5,7 +5,7 @@ use libc::wchar_t;
 
 use crate::ffi::{archive, archive_entry};
 
-unsafe extern "C" {
+extern "C" {
     pub fn archive_match_new() -> *mut archive;
     pub fn archive_match_free(a: *mut archive) -> c_int;
 

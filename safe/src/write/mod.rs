@@ -1157,11 +1157,11 @@ pub extern "C" fn archive_write_open_filename(a: *mut archive, file: *const c_ch
         let Some(handle) = validate_writer(a, "archive_write_open_filename") else {
             return ARCHIVE_FATAL;
         };
-        let Some(file) = from_optional_c_str(file) else {
-            return ARCHIVE_FATAL;
-        };
         clear_error(&mut handle.core);
-        handle.open_target = WriteOpenConfig::Filename(file);
+        handle.open_target = match from_optional_c_str(file) {
+            Some(file) => WriteOpenConfig::Filename(file),
+            None => WriteOpenConfig::Fd(libc::STDOUT_FILENO),
+        };
         ensure_write_backend_open(handle)
     })
 }
@@ -1184,11 +1184,11 @@ pub extern "C" fn archive_write_open_filename_w(a: *mut archive, file: *const wc
         let Some(handle) = validate_writer(a, "archive_write_open_filename_w") else {
             return ARCHIVE_FATAL;
         };
-        let Some(file) = from_optional_wide(file) else {
-            return ARCHIVE_FATAL;
-        };
         clear_error(&mut handle.core);
-        handle.open_target = WriteOpenConfig::FilenameW(file);
+        handle.open_target = match from_optional_wide(file) {
+            Some(file) => WriteOpenConfig::FilenameW(file),
+            None => WriteOpenConfig::Fd(libc::STDOUT_FILENO),
+        };
         ensure_write_backend_open(handle)
     })
 }
@@ -1242,7 +1242,7 @@ pub extern "C" fn archive_write_header(a: *mut archive, entry: *mut archive_entr
             WriteLike::Disk(handle) => {
                 if handle.extraction.current.is_some() {
                     let finish_status = native_write_disk_finish_entry(handle);
-                    if finish_status < ARCHIVE_OK {
+                    if finish_status == ARCHIVE_FATAL {
                         finish_status
                     } else {
                         native_write_disk_header(handle, entry)

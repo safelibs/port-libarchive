@@ -1,0 +1,11 @@
+/target
+/debian/.debhelper/
+/debian/debhelper-build-stamp
+/debian/files
+/debian/libarchive-dev/
+/debian/libarchive-tools/
+/debian/libarchive13t64/
+/debian/tmp/
+/debian/*.debhelper.log
+/debian/*.substvars
+/debian/pkgconfig/

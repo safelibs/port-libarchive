@@ -1,0 +1,73 @@
+#!/usr/bin/make -f
+
+# Aim for the top, adapt if anything should break on the buildds.
+DEB_BUILD_MAINT_OPTIONS=	hardening=+all
+export DEB_BUILD_MAINT_OPTIONS
+
+include /usr/share/dpkg/default.mk
+
+include /usr/share/debhelper/dh_package_notes/package-notes.mk
+
+CONFIGURE_CHOICES = --without-openssl --with-nettle \
+	--enable-bsdtar=shared --enable-bsdcpio=shared \
+	--enable-bsdcat=shared --enable-bsdunzip=shared
+FRONTEND_BUILD_DIR = $(CURDIR)/target/debian-frontends
+RENDERED_PKGCONFIG = $(CURDIR)/debian/pkgconfig/libarchive.pc
+LIB_DIR = $(CURDIR)/target/release
+MULTIARCH_LIBDIR = debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	# The safe build consumes the preserved phase-1 config.h snapshot that was
+	# generated with these upstream Debian configure choices:
+	# $(CONFIGURE_CHOICES)
+	:
+
+override_dh_auto_build:
+	cargo build --release
+	./scripts/build-c-frontends.sh --build-dir "$(FRONTEND_BUILD_DIR)" --suite all --lib-dir "$(LIB_DIR)"
+	./scripts/render-pkg-config.sh --mode staged-sysroot --prefix /usr --output "$(RENDERED_PKGCONFIG)"
+
+override_dh_auto_clean:
+	cargo clean || true
+	rm -rf debian/pkgconfig debian/tmp target/debian-frontends tmp-locales
+
+override_dh_makeshlibs:
+	dh_makeshlibs -- -c4
+
+override_dh_auto_install:
+	install -d "$(MULTIARCH_LIBDIR)" \
+		debian/tmp/usr/include \
+		debian/tmp/usr/bin \
+		debian/tmp/usr/share/man/man1 \
+		debian/tmp/usr/share/man/man3 \
+		debian/tmp/usr/share/man/man5 \
+		"$(MULTIARCH_LIBDIR)/pkgconfig"
+	install -m 755 "$(LIB_DIR)/libarchive.so" "$(MULTIARCH_LIBDIR)/libarchive.so.13.7.2"
+	ln -sf libarchive.so.13.7.2 "$(MULTIARCH_LIBDIR)/libarchive.so.13"
+	ln -sf libarchive.so.13 "$(MULTIARCH_LIBDIR)/libarchive.so"
+	install -m 644 "$(LIB_DIR)/libarchive.a" "$(MULTIARCH_LIBDIR)/libarchive.a"
+	install -m 644 include/archive.h include/archive_entry.h debian/tmp/usr/include/
+	install -m 644 "$(RENDERED_PKGCONFIG)" "$(MULTIARCH_LIBDIR)/pkgconfig/libarchive.pc"
+	install -m 755 "$(FRONTEND_BUILD_DIR)/bsdcat" debian/tmp/usr/bin/bsdcat
+	install -m 755 "$(FRONTEND_BUILD_DIR)/bsdcpio" debian/tmp/usr/bin/bsdcpio
+	install -m 755 "$(FRONTEND_BUILD_DIR)/bsdtar" debian/tmp/usr/bin/bsdtar
+	install -m 755 "$(FRONTEND_BUILD_DIR)/bsdunzip" debian/tmp/usr/bin/bsdunzip
+	install -m 644 doc/man/*.1 debian/tmp/usr/share/man/man1/
+	install -m 644 doc/man/*.3 debian/tmp/usr/share/man/man3/
+	install -m 644 doc/man/*.5 debian/tmp/usr/share/man/man5/
+
+execute_before_dh_install:
+	find debian -name '*.la' -delete
+
+override_dh_auto_test:
+ifneq (,$(filter check,$(DEB_BUILD_OPTIONS)))
+	./scripts/check-source-compat.sh
+endif
+
+execute_after_dh_installchangelogs:
+	set -e; for p in $$(dh_listpackages); do \
+		install -m 644 NEWS debian/$$p/usr/share/doc/$$p/; \
+	done

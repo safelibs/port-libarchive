@@ -90,8 +90,21 @@ print(contract["link_targets"]["untar"]["source"])
 PY
 )
 
-MINITAR_SRC="$ROOT/../${EXAMPLE_PATHS[0]}"
-UNTAR_SRC="$ROOT/../${EXAMPLE_PATHS[1]}"
+resolve_vendored_source() {
+  local recorded_path="$1"
+  local safe_relative="${recorded_path#original/libarchive-3.7.2/}"
+  local vendored_path="$ROOT/$safe_relative"
+
+  if [[ -f "$vendored_path" ]]; then
+    printf '%s\n' "$vendored_path"
+    return 0
+  fi
+
+  printf '%s\n' "$ROOT/../$recorded_path"
+}
+
+MINITAR_SRC="$(resolve_vendored_source "${EXAMPLE_PATHS[0]}")"
+UNTAR_SRC="$(resolve_vendored_source "${EXAMPLE_PATHS[1]}")"
 [[ -f "$MINITAR_SRC" ]] || {
   printf 'missing example source: %s\n' "$MINITAR_SRC" >&2
   exit 1

@@ -29,12 +29,11 @@ pub(crate) fn from_optional_wide(ptr: *const wchar_t) -> Option<String> {
         }
     }
 
-    Some(
-        values
-            .into_iter()
-            .map(|value| char::from_u32(value).unwrap_or(char::REPLACEMENT_CHARACTER))
-            .collect(),
-    )
+    let mut text = String::with_capacity(values.len());
+    for value in values {
+        text.push(char::from_u32(value)?);
+    }
+    Some(text)
 }
 
 pub(crate) fn to_wide_null(value: &str) -> Vec<wchar_t> {

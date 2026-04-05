@@ -4,21 +4,27 @@ set -euo pipefail
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 IMAGE_TAG="${LIBARCHIVE_ORIGINAL_TEST_IMAGE:-libarchive-original-test:ubuntu24.04}"
 ONLY=""
+TARGET="safe"
 
 usage() {
   cat <<'EOF'
-usage: test-original.sh [--only <binary-package>]
+usage: test-original.sh [--target safe|original] [--only <binary-package>]
 
-Builds the vendored Ubuntu 24.04 libarchive source package inside Docker,
-installs the resulting local .debs into the container, and then smoke-tests the
+Builds the selected local libarchive source package inside Docker, installs the
+resulting local .debs into the container, and then smoke-tests the
 libarchive-dependent packages recorded in dependents.json.
 
+--target chooses which source package to build. `safe` is the default.
 --only runs just one dependent by exact .dependents[].binary_package.
 EOF
 }
 
 while (($#)); do
   case "$1" in
+    --target)
+      TARGET="${2:?missing value for --target}"
+      shift 2
+      ;;
     --only)
       ONLY="${2:?missing value for --only}"
       shift 2
@@ -35,6 +41,16 @@ while (($#)); do
   esac
 done
 
+case "$TARGET" in
+  safe|original)
+    ;;
+  *)
+    printf 'unsupported target: %s\n' "$TARGET" >&2
+    usage >&2
+    exit 1
+    ;;
+esac
+
 for tool in docker jq; do
   command -v "$tool" >/dev/null 2>&1 || {
     printf 'missing required host tool: %s\n' "$tool" >&2
@@ -42,10 +58,17 @@ for tool in docker jq; do
   }
 done
 
-[[ -d "$ROOT/original/libarchive-3.7.2" ]] || {
-  echo "missing original/libarchive-3.7.2" >&2
-  exit 1
-}
+if [[ "$TARGET" == "safe" ]]; then
+  [[ -d "$ROOT/safe" ]] || {
+    echo "missing safe" >&2
+    exit 1
+  }
+else
+  [[ -d "$ROOT/original/libarchive-3.7.2" ]] || {
+    echo "missing original/libarchive-3.7.2" >&2
+    exit 1
+  }
+fi
 
 [[ -f "$ROOT/dependents.json" ]] || {
   echo "missing dependents.json" >&2
@@ -101,6 +124,7 @@ RUN sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.s
       binutils \
       build-essential \
       ca-certificates \
+      cargo \
       dbus-x11 \
       dpkg-dev \
       extract \
@@ -113,6 +137,7 @@ RUN sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.s
       gir1.2-gnomeautoar-0.1 \
       gnome-epub-thumbnailer \
       jq \
+      lld \
       kodi \
       kodi-vfs-libarchive \
       libarchive-tools \
@@ -122,6 +147,7 @@ RUN sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.s
       python3-gi \
       python3-libarchive-c \
       python3-pil \
+      rustc \
       xauth \
       xdotool \
       xvfb \
@@ -135,6 +161,7 @@ docker run --rm -i \
   --device /dev/fuse \
   --cap-add SYS_ADMIN \
   --security-opt apparmor:unconfined \
+  -e "LIBARCHIVE_BUILD_TARGET=$TARGET" \
   -e "LIBARCHIVE_TEST_ONLY=$ONLY" \
   -v "$ROOT:/work:ro" \
   "$IMAGE_TAG" \
@@ -147,6 +174,7 @@ export DEBIAN_FRONTEND=noninteractive
 export XDG_RUNTIME_DIR=/tmp/runtime-root
 
 ROOT=/work
+BUILD_TARGET="${LIBARCHIVE_BUILD_TARGET:-safe}"
 ONLY_FILTER="${LIBARCHIVE_TEST_ONLY:-}"
 TEST_ROOT=/tmp/libarchive-dependent-tests
 BUILD_ROOT=/tmp/libarchive-local
@@ -412,16 +440,32 @@ build_and_install_local_libarchive() {
 
   rm -rf "$BUILD_ROOT" "$RUNTIME_EXTRACT_ROOT"
   mkdir -p "$BUILD_ROOT"
-  cp -a "$ROOT/original" "$BUILD_ROOT/"
-
-  (
-    cd "$BUILD_ROOT/original/libarchive-3.7.2"
-    dpkg-buildpackage -b -uc -us
-  )
-
-  LIBARCHIVE_RUNTIME_DEB="$(find "$BUILD_ROOT/original" -maxdepth 1 -type f -name 'libarchive13t64_*.deb' | head -n1)"
-  LIBARCHIVE_DEV_DEB="$(find "$BUILD_ROOT/original" -maxdepth 1 -type f -name 'libarchive-dev_*.deb' | head -n1)"
-  LIBARCHIVE_TOOLS_DEB="$(find "$BUILD_ROOT/original" -maxdepth 1 -type f -name 'libarchive-tools_*.deb' | head -n1)"
+  if [[ "$BUILD_TARGET" == "safe" ]]; then
+    tar --exclude='safe/target' -C "$ROOT" -cf - safe | tar -C "$BUILD_ROOT" -xf -
+    (
+      cd "$BUILD_ROOT/safe"
+      cat >"$BUILD_ROOT/link-with-lld.sh" <<'EOF'
+#!/usr/bin/env bash
+exec cc -fuse-ld=lld "$@"
+EOF
+      chmod +x "$BUILD_ROOT/link-with-lld.sh"
+      export CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER="$BUILD_ROOT/link-with-lld.sh"
+      export DEB_BUILD_OPTIONS="${DEB_BUILD_OPTIONS:+$DEB_BUILD_OPTIONS }nostrip noautodbgsym"
+      dpkg-buildpackage -b -uc -us
+    )
+    LIBARCHIVE_RUNTIME_DEB="$(find "$BUILD_ROOT" -maxdepth 1 -type f -name 'libarchive13t64_*.deb' | head -n1)"
+    LIBARCHIVE_DEV_DEB="$(find "$BUILD_ROOT" -maxdepth 1 -type f -name 'libarchive-dev_*.deb' | head -n1)"
+    LIBARCHIVE_TOOLS_DEB="$(find "$BUILD_ROOT" -maxdepth 1 -type f -name 'libarchive-tools_*.deb' | head -n1)"
+  else
+    cp -a "$ROOT/original" "$BUILD_ROOT/"
+    (
+      cd "$BUILD_ROOT/original/libarchive-3.7.2"
+      dpkg-buildpackage -b -uc -us
+    )
+    LIBARCHIVE_RUNTIME_DEB="$(find "$BUILD_ROOT/original" -maxdepth 1 -type f -name 'libarchive13t64_*.deb' | head -n1)"
+    LIBARCHIVE_DEV_DEB="$(find "$BUILD_ROOT/original" -maxdepth 1 -type f -name 'libarchive-dev_*.deb' | head -n1)"
+    LIBARCHIVE_TOOLS_DEB="$(find "$BUILD_ROOT/original" -maxdepth 1 -type f -name 'libarchive-tools_*.deb' | head -n1)"
+  fi
 
   [[ -n "$LIBARCHIVE_RUNTIME_DEB" ]] || die "failed to locate built libarchive13t64 .deb"
   [[ -n "$LIBARCHIVE_DEV_DEB" ]] || die "failed to locate built libarchive-dev .deb"

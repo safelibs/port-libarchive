@@ -3,7 +3,7 @@ use std::ffi::{c_char, c_int, c_void};
 use crate::common::backend::{BackendWriteDiskCleanupCallback, BackendWriteDiskLookupCallback};
 use crate::ffi::archive;
 
-unsafe extern "C" {
+extern "C" {
     pub fn archive_write_disk_new() -> *mut archive;
     pub fn archive_write_disk_set_skip_file(a: *mut archive, dev: i64, ino: i64) -> c_int;
     pub fn archive_write_disk_set_options(a: *mut archive, flags: c_int) -> c_int;

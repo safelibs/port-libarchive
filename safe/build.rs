@@ -171,7 +171,7 @@ fn write_backend_linked_rs(out_dir: &Path, backend_rs: &Path) -> PathBuf {
     let fields = extract_api_entries(&source);
 
     let linked_path = out_dir.join("backend_linked.rs");
-    let mut output = String::from("unsafe extern \"C\" {\n");
+    let mut output = String::from("extern \"C\" {\n");
     for (name, signature) in &fields {
         output.push_str("    fn backend_");
         output.push_str(name);
@@ -196,8 +196,7 @@ fn write_backend_linked_rs(out_dir: &Path, backend_rs: &Path) -> PathBuf {
     linked_path
 }
 
-fn libarchive_backend_sources(original_dir: &Path) -> Vec<PathBuf> {
-    let libarchive_dir = original_dir.join("libarchive");
+fn libarchive_backend_sources(libarchive_dir: &Path) -> Vec<PathBuf> {
     let names = [
         "archive_acl.c",
         "archive_blake2s_ref.c",
@@ -253,6 +252,7 @@ fn libarchive_backend_sources(original_dir: &Path) -> Vec<PathBuf> {
         "archive_read_support_format_ar.c",
         "archive_read_support_format_cab.c",
         "archive_read_support_format_cpio.c",
+        "archive_read_support_format_by_code.c",
         "archive_read_support_format_empty.c",
         "archive_read_support_format_iso9660.c",
         "archive_read_support_format_lha.c",
@@ -321,7 +321,7 @@ fn libarchive_backend_sources(original_dir: &Path) -> Vec<PathBuf> {
 
 fn build_vendored_backend(
     manifest_dir: &Path,
-    original_dir: &Path,
+    libarchive_dir: &Path,
     generated_config_dir: &Path,
     out_dir: &Path,
 ) {
@@ -348,7 +348,7 @@ fn build_vendored_backend(
         .define("LIBARCHIVE_STATIC", None)
         .include(generated_config_dir)
         .include("/usr/include/libxml2")
-        .include(original_dir.join("libarchive"))
+        .include(libarchive_dir)
         .flag_if_supported("-std=gnu99")
         .flag("-include")
         .flag(
@@ -357,7 +357,7 @@ fn build_vendored_backend(
                 .unwrap_or_else(|| panic!("non-utf8 path: {}", prefix_header.display())),
         );
 
-    for source in libarchive_backend_sources(original_dir) {
+    for source in libarchive_backend_sources(libarchive_dir) {
         println!("cargo:rerun-if-changed={}", source.display());
         backend_build.file(source);
     }
@@ -375,56 +375,41 @@ fn main() {
     let manifest_dir = PathBuf::from(
         env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR must be set for build.rs"),
     );
-    let original_dir = manifest_dir.join("../original/libarchive-3.7.2");
-    let version_path = original_dir.join("build/version");
-    let cmake_path = original_dir.join("CMakeLists.txt");
-    let configure_ac_path = original_dir.join("configure.ac");
+    let libarchive_dir = manifest_dir.join("c_src/libarchive");
     let map_path = manifest_dir.join("abi/libarchive.map");
     let build_contract_path = manifest_dir.join("generated/original_build_contract.json");
+    let package_metadata_path = manifest_dir.join("generated/original_package_metadata.json");
     let generated_config_dir = manifest_dir.join("generated/original_c_build");
     let generated_config_path = generated_config_dir.join("config.h");
     let variadic_shim = manifest_dir.join("c_shims/archive_set_error.c");
 
-    println!("cargo:rerun-if-changed={}", version_path.display());
-    println!("cargo:rerun-if-changed={}", cmake_path.display());
-    println!("cargo:rerun-if-changed={}", configure_ac_path.display());
+    println!("cargo:rerun-if-changed={}", libarchive_dir.display());
     println!("cargo:rerun-if-changed={}", map_path.display());
     println!("cargo:rerun-if-changed={}", build_contract_path.display());
+    println!("cargo:rerun-if-changed={}", package_metadata_path.display());
     println!("cargo:rerun-if-changed={}", generated_config_path.display());
     println!("cargo:rerun-if-changed={}", variadic_shim.display());
 
-    let version_digits = fs::read_to_string(&version_path)
-        .unwrap_or_else(|err| panic!("failed to read {}: {err}", version_path.display()))
-        .trim()
-        .to_owned();
+    let package_version =
+        env::var("CARGO_PKG_VERSION").expect("CARGO_PKG_VERSION must be set for build.rs");
+    let mut version_components = package_version.split('.');
+    let major_raw = version_components
+        .next()
+        .unwrap_or_else(|| panic!("missing major version component in {package_version}"));
+    let minor_raw = version_components
+        .next()
+        .unwrap_or_else(|| panic!("missing minor version component in {package_version}"));
+    let revision_raw = version_components
+        .next()
+        .unwrap_or_else(|| panic!("missing revision version component in {package_version}"));
     assert!(
-        version_digits.len() >= 7 && version_digits.chars().all(|ch| ch.is_ascii_digit()),
-        "unexpected build/version contents: {version_digits}"
+        version_components.next().is_none(),
+        "unexpected package version format: {package_version}"
     );
-
-    let major = &version_digits[0..1];
-    let minor_raw = &version_digits[1..4];
-    let revision_raw = &version_digits[4..7];
+    let major = trim_component(major_raw);
     let minor = trim_component(minor_raw);
     let revision = trim_component(revision_raw);
-    let package_version = format!("{major}.{minor}.{revision}");
-
-    let cmake = fs::read_to_string(&cmake_path)
-        .unwrap_or_else(|err| panic!("failed to read {}: {err}", cmake_path.display()));
-    assert!(
-        cmake.contains("math(EXPR INTERFACE_VERSION  \"13 + ${_minor}\")")
-            && cmake.contains("SET(SOVERSION \"${INTERFACE_VERSION}\")"),
-        "unexpected CMake SONAME logic"
-    );
-
-    let configure_ac = fs::read_to_string(&configure_ac_path)
-        .unwrap_or_else(|err| panic!("failed to read {}: {err}", configure_ac_path.display()));
-    assert!(
-        configure_ac.contains(
-            "ARCHIVE_LIBTOOL_VERSION=$ARCHIVE_INTERFACE:$ARCHIVE_REVISION:$ARCHIVE_MINOR"
-        ),
-        "unexpected configure.ac libtool version logic"
-    );
+    let version_digits = format!("{major}{minor:03}{revision:03}");
 
     let build_contract = fs::read_to_string(&build_contract_path)
         .unwrap_or_else(|err| panic!("failed to read {}: {err}", build_contract_path.display()));
@@ -443,6 +428,17 @@ fn main() {
         "unexpected original build contract link libraries"
     );
 
+    let package_metadata = fs::read_to_string(&package_metadata_path).unwrap_or_else(|err| {
+        panic!(
+            "failed to read {}: {err}",
+            package_metadata_path.display()
+        )
+    });
+    assert!(
+        package_metadata.contains(&format!("\"package_version\": \"{package_version}\"")),
+        "unexpected original package metadata version"
+    );
+
     let cmake_interface_version = 13 + minor;
     let libtool_current = cmake_interface_version;
     let libtool_age = minor;
@@ -454,6 +450,10 @@ fn main() {
     assert_eq!(version_digits, "3007002");
     assert_eq!(package_version, "3.7.2");
     assert_eq!(soname, "libarchive.so.13");
+    assert!(
+        package_metadata.contains(&format!("/{}", soname)),
+        "unexpected original package metadata SONAME"
+    );
 
     let version_string = format!("libarchive {package_version}");
     let version_string_bytes = format!("{version_string}\\0");
@@ -479,12 +479,7 @@ pub const LIBARCHIVE_LIBTOOL_AGE: u32 = {libtool_age};
     cc::Build::new()
         .file(&variadic_shim)
         .compile("archive_variadic_shim");
-    build_vendored_backend(
-        &manifest_dir,
-        &original_dir,
-        &generated_config_dir,
-        &out_dir,
-    );
+    build_vendored_backend(&manifest_dir, &libarchive_dir, &generated_config_dir, &out_dir);
 
     let target = env::var("TARGET").unwrap_or_default();
     if target.contains("linux") {

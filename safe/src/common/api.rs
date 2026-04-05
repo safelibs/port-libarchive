@@ -16,7 +16,7 @@ use crate::generated::{LIBARCHIVE_VERSION_NUMBER, LIBARCHIVE_VERSION_STRING};
 static VERSION_STRING: &[u8] = b"libarchive 3.7.2\0";
 
 #[link(name = "archive_variadic_shim", kind = "static")]
-unsafe extern "C" {
+extern "C" {
     fn archive_variadic_shim_link_anchor();
     fn archive_variadic_shim_set_callback(
         callback: unsafe extern "C" fn(*mut archive, c_int, *const c_char),
@@ -160,12 +160,18 @@ pub unsafe extern "C" fn archive_filter_count(a: *mut archive) -> c_int {
 #[no_mangle]
 pub unsafe extern "C" fn archive_filter_bytes(a: *mut archive, n: c_int) -> i64 {
     let magic = archive_magic(a);
-    if matches!(
-        magic,
-        crate::common::error::ARCHIVE_READ_DISK_MAGIC
-            | crate::common::error::ARCHIVE_WRITE_DISK_MAGIC
-    ) {
+    if magic == crate::common::error::ARCHIVE_READ_DISK_MAGIC {
         return 0;
+    }
+    if magic == crate::common::error::ARCHIVE_WRITE_DISK_MAGIC {
+        let Some(handle) = crate::common::state::write_disk_from_archive(a) else {
+            return 0;
+        };
+        return if n == -1 || n == 0 {
+            handle.extraction.total_bytes_written
+        } else {
+            -1
+        };
     }
     let backend = backend_archive(a);
     if backend.is_null() {

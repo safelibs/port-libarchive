@@ -4,7 +4,6 @@ set -euo pipefail
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 MANIFEST="$ROOT/generated/test_manifest.json"
 CONTRACT="$ROOT/generated/original_build_contract.json"
-LINK_MANIFEST="$ROOT/generated/link_compat_manifest.json"
 SUITE=""
 PHASE_GROUP=""
 LIST_ONLY=0
@@ -64,10 +63,6 @@ done
   printf 'missing build contract: %s\n' "$CONTRACT" >&2
   exit 1
 }
-[[ -f "$LINK_MANIFEST" ]] || {
-  printf 'missing link manifest: %s\n' "$LINK_MANIFEST" >&2
-  exit 1
-}
 
 if [[ $LIST_ONLY -eq 1 ]]; then
   python3 - "$MANIFEST" "$SUITE" "$PHASE_GROUP" <<'PY'
@@ -104,7 +99,7 @@ BUILD_DIR="$ROOT/target/upstream-c-tests/${SUITE}-${PHASE_GROUP}"
 rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 
-python3 - "$ROOT" "$MANIFEST" "$CONTRACT" "$LINK_MANIFEST" "$SUITE" "$PHASE_GROUP" "$BUILD_DIR" <<'PY'
+python3 - "$ROOT" "$MANIFEST" "$CONTRACT" "$SUITE" "$PHASE_GROUP" "$BUILD_DIR" <<'PY'
 import json
 import sys
 from pathlib import Path
@@ -112,31 +107,20 @@ from pathlib import Path
 root = Path(sys.argv[1])
 manifest_path = Path(sys.argv[2])
 contract_path = Path(sys.argv[3])
-link_manifest_path = Path(sys.argv[4])
-suite = sys.argv[5]
-phase_group = sys.argv[6]
-build_dir = Path(sys.argv[7])
+suite = sys.argv[4]
+phase_group = sys.argv[5]
+build_dir = Path(sys.argv[6])
 
 manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
 contract = json.loads(contract_path.read_text(encoding="utf-8"))
-link_manifest = json.loads(link_manifest_path.read_text(encoding="utf-8"))
 
-repo_root = root.parent
-
-def resolve_artifact(path: str) -> Path:
+def resolve(path: str) -> Path:
     artifact = Path(path)
     if artifact.is_absolute():
         return artifact
-
-    safe_relative = root / artifact
-    if safe_relative.exists():
-        return safe_relative
-
-    repo_relative = repo_root / artifact
-    if repo_relative.exists():
-        return repo_relative
-
-    return safe_relative
+    if str(artifact).startswith("safe/"):
+        return root / artifact.relative_to("safe")
+    return root.parent / artifact
 
 rows = [
     row for row in manifest["rows"]
@@ -146,8 +130,18 @@ if not rows:
     raise SystemExit(f"no tests selected for suite={suite!r} phase_group={phase_group!r}")
 
 selected_names = {row["define_test"] for row in rows}
-selected_sources = {row["source_file"] for row in rows}
-generated_list = resolve_artifact(contract["generated_headers"]["list_h_by_suite"][suite])
+selected_sources = []
+seen_sources = set()
+for row in rows:
+    source = row["source_file"]
+    if source in seen_sources:
+        continue
+    seen_sources.add(source)
+    if source.startswith("original/libarchive-3.7.2/"):
+        selected_sources.append(root / "c_src" / Path(source).relative_to("original/libarchive-3.7.2"))
+    else:
+        selected_sources.append(resolve(source))
+generated_list = resolve(contract["generated_headers"]["list_h_by_suite"][suite])
 
 ordered_names = []
 for line in generated_list.read_text(encoding="utf-8").splitlines():
@@ -160,29 +154,12 @@ for line in generated_list.read_text(encoding="utf-8").splitlines():
 
 list_h = build_dir / "list.h"
 list_h.write_text("".join(f"DEFINE_TEST({name})\n" for name in ordered_names), encoding="utf-8")
-
-objects = []
-for row in link_manifest["objects"]:
-    if row["target_name"] != "libarchive_test":
-        continue
-    if row["source_path"] == "original/libarchive-3.7.2/test_utils/test_utils.c":
-        objects.append((row["link_order"], resolve_artifact(row["preserved_object_path"])))
-    elif row["source_path"] == "original/libarchive-3.7.2/libarchive/test/read_open_memory.c":
-        objects.append((row["link_order"], resolve_artifact(row["preserved_object_path"])))
-    elif row["source_path"] in selected_sources:
-        objects.append((row["link_order"], resolve_artifact(row["preserved_object_path"])))
-
-objects.sort(key=lambda item: item[0])
-(build_dir / "objects.txt").write_text(
-    "".join(f"{path}\n" for _, path in objects),
+(build_dir / "sources.txt").write_text(
+    "".join(f"{path}\n" for path in selected_sources),
     encoding="utf-8",
 )
 (build_dir / "tests.txt").write_text(
     "".join(f"{name}\n" for name in ordered_names),
-    encoding="utf-8",
-)
-(build_dir / "extra_libs.txt").write_text(
-    " ".join(contract["link_targets"]["libarchive_test"]["extra_libraries"]),
     encoding="utf-8",
 )
 PY
@@ -190,57 +167,94 @@ PY
 printf 'selected tests:\n'
 sed 's/^/  /' "$BUILD_DIR/tests.txt"
 
-cargo build >/dev/null
-ln -sf libarchive.so "$ROOT/target/debug/libarchive.so.13"
+cargo build --release >/dev/null
+"$ROOT/scripts/build-c-frontends.sh" --suite "$SUITE" --build-dir "$BUILD_DIR/frontends"
 
-CC_BIN="${CC:-cc}"
-TEST_MAIN_SRC="$ROOT/../original/libarchive-3.7.2/test_utils/test_main.c"
 CONFIG_DIR="$ROOT/generated/original_c_build"
 SAFE_INCLUDE_DIR="$ROOT/include"
-ORIGINAL_LIBARCHIVE_DIR="$ROOT/../original/libarchive-3.7.2/libarchive"
-ORIGINAL_TEST_DIR="$ROOT/../original/libarchive-3.7.2/libarchive/test"
-ORIGINAL_TEST_UTILS_DIR="$ROOT/../original/libarchive-3.7.2/test_utils"
-TEST_MAIN_OBJ="$BUILD_DIR/test_main.o"
+LIBARCHIVE_DIR="$ROOT/c_src/libarchive"
+TEST_UTILS_DIR="$ROOT/c_src/test_utils"
+SUITE_DIR="$ROOT/c_src/$SUITE"
+SUITE_TEST_DIR="$SUITE_DIR/test"
 TEST_BIN="$BUILD_DIR/${SUITE}-${PHASE_GROUP}-tests"
+CC_BIN="${CC:-cc}"
 
-"$CC_BIN" -c "$TEST_MAIN_SRC" \
-  -o "$TEST_MAIN_OBJ" \
-  -DHAVE_CONFIG_H=1 \
-  -D__LIBARCHIVE_TEST=1 \
-  -I"$BUILD_DIR" \
-  -I"$CONFIG_DIR" \
-  -I"$SAFE_INCLUDE_DIR" \
-  -I"$ORIGINAL_LIBARCHIVE_DIR" \
-  -I"$ORIGINAL_TEST_DIR" \
-  -I"$ORIGINAL_TEST_UTILS_DIR"
+read -r -a COMMON_FLAG_ARR <<<"${CPPFLAGS:-} ${CFLAGS:-}"
+read -r -a LDFLAG_ARR <<<"${LDFLAGS:-}"
+COMMON_FLAG_ARR+=(
+  -DHAVE_CONFIG_H=1
+  -DLIST_H
+  -I"$BUILD_DIR"
+  -I"$CONFIG_DIR"
+  -I"$SAFE_INCLUDE_DIR"
+  -I"$LIBARCHIVE_DIR"
+  -I"$TEST_UTILS_DIR"
+  -I"$ROOT/c_src/libarchive_fe"
+  -I"$SUITE_DIR"
+  -I"$SUITE_TEST_DIR"
+)
 
-mapfile -t OBJECTS < "$BUILD_DIR/objects.txt"
-EXTRA_LIBS="$(<"$BUILD_DIR/extra_libs.txt")"
+EXTRA_TEST_LIBS=()
+if grep -Eq '^#define HAVE_LIBACL 1$' "$CONFIG_DIR/config.h"; then
+  EXTRA_TEST_LIBS+=(-lacl)
+fi
+
+mapfile -t SELECTED_SOURCES < "$BUILD_DIR/sources.txt"
+
+case "$SUITE" in
+  tar)
+    FRONTEND_BIN="$BUILD_DIR/frontends/bsdtar"
+    SUPPORT_SOURCES=()
+    ;;
+  cpio)
+    FRONTEND_BIN="$BUILD_DIR/frontends/bsdcpio"
+    SUPPORT_SOURCES=(
+      "$ROOT/c_src/cpio/cmdline.c"
+      "$ROOT/c_src/libarchive_fe/err.c"
+    )
+    ;;
+  cat)
+    FRONTEND_BIN="$BUILD_DIR/frontends/bsdcat"
+    SUPPORT_SOURCES=()
+    ;;
+  unzip)
+    FRONTEND_BIN="$BUILD_DIR/frontends/bsdunzip"
+    SUPPORT_SOURCES=(
+      "$ROOT/c_src/libarchive_fe/err.c"
+    )
+    ;;
+  *)
+    printf 'unsupported suite: %s\n' "$SUITE" >&2
+    exit 1
+    ;;
+esac
 
 "$CC_BIN" \
-  -o "$TEST_BIN" \
-  "$TEST_MAIN_OBJ" \
-  "${OBJECTS[@]}" \
-  -L"$ROOT/target/debug" \
-  -Wl,-rpath,"$ROOT/target/debug" \
-  -larchive \
-  $EXTRA_LIBS
+  "${COMMON_FLAG_ARR[@]}" \
+  "$TEST_UTILS_DIR/test_utils.c" \
+  "$TEST_UTILS_DIR/test_main.c" \
+  "${SUPPORT_SOURCES[@]}" \
+  "${SELECTED_SOURCES[@]}" \
+  "${EXTRA_TEST_LIBS[@]}" \
+  "${LDFLAG_ARR[@]}" \
+  -o "$TEST_BIN"
 
+EXPECTED_ARCHIVE="$(readlink -f "$ROOT/target/release/libarchive.so.13")"
 RESOLVED_ARCHIVE="$(
-  LD_LIBRARY_PATH="$ROOT/target/debug${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
-    ldd "$TEST_BIN" | awk '/libarchive\.so\.13/ {print $3; exit}'
+  LD_LIBRARY_PATH="$ROOT/target/release${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+    ldd "$FRONTEND_BIN" | awk '/libarchive\.so\.13/ {print $3; exit}'
 )"
-EXPECTED_ARCHIVE="$(readlink -f "$ROOT/target/debug/libarchive.so.13")"
 if [[ -z "$RESOLVED_ARCHIVE" ]]; then
-  printf 'failed to resolve libarchive.so.13 for %s\n' "$TEST_BIN" >&2
+  printf 'failed to resolve libarchive.so.13 for %s\n' "$FRONTEND_BIN" >&2
   exit 1
 fi
 if [[ "$(readlink -f "$RESOLVED_ARCHIVE")" != "$EXPECTED_ARCHIVE" ]]; then
-  printf 'test harness resolved libarchive to %s, expected %s\n' \
+  printf 'frontend %s resolved libarchive to %s, expected %s\n' \
+    "$FRONTEND_BIN" \
     "$RESOLVED_ARCHIVE" \
     "$EXPECTED_ARCHIVE" >&2
   exit 1
 fi
 
-LD_LIBRARY_PATH="$ROOT/target/debug${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
-  "$TEST_BIN" -r "$ORIGINAL_TEST_DIR"
+LD_LIBRARY_PATH="$ROOT/target/release${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+  "$TEST_BIN" -p "$FRONTEND_BIN" -r "$SUITE_TEST_DIR" -vv

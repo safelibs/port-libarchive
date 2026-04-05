@@ -85,6 +85,7 @@ pub struct Api {
     pub archive_entry_free: unsafe extern "C" fn(*mut BackendEntry),
     pub archive_entry_clear: unsafe extern "C" fn(*mut BackendEntry) -> *mut BackendEntry,
     pub archive_entry_pathname: unsafe extern "C" fn(*mut BackendEntry) -> *const c_char,
+    pub archive_entry_sourcepath: unsafe extern "C" fn(*mut BackendEntry) -> *const c_char,
     pub archive_entry_mode: unsafe extern "C" fn(*mut BackendEntry) -> mode_t,
     pub archive_entry_size: unsafe extern "C" fn(*mut BackendEntry) -> LaInt64,
     pub archive_entry_size_is_set: unsafe extern "C" fn(*mut BackendEntry) -> c_int,
@@ -140,6 +141,7 @@ pub struct Api {
     pub archive_entry_sparse_next:
         unsafe extern "C" fn(*mut BackendEntry, *mut LaInt64, *mut LaInt64) -> c_int,
     pub archive_entry_copy_pathname: unsafe extern "C" fn(*mut BackendEntry, *const c_char),
+    pub archive_entry_copy_sourcepath: unsafe extern "C" fn(*mut BackendEntry, *const c_char),
     pub archive_entry_set_mode: unsafe extern "C" fn(*mut BackendEntry, mode_t),
     pub archive_entry_set_size: unsafe extern "C" fn(*mut BackendEntry, LaInt64),
     pub archive_entry_unset_size: unsafe extern "C" fn(*mut BackendEntry),

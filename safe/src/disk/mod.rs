@@ -55,6 +55,9 @@ pub(crate) unsafe fn custom_entry_to_backend(
     if let Some(pathname) = cached_c_string_opt(&src_data.pathname) {
         (api.archive_entry_copy_pathname)(dst, pathname.as_ptr());
     }
+    if let Some(sourcepath) = cached_c_string_opt(&src_data.sourcepath) {
+        (api.archive_entry_copy_sourcepath)(dst, sourcepath.as_ptr());
+    }
     (api.archive_entry_set_mode)(dst, src_data.mode);
     if src_data.size_set {
         (api.archive_entry_set_size)(dst, src_data.size);
@@ -163,6 +166,13 @@ pub(crate) unsafe fn backend_entry_to_custom(
         .pathname
         .set_bytes((!((api.archive_entry_pathname)(src)).is_null()).then(|| {
             CStr::from_ptr((api.archive_entry_pathname)(src))
+                .to_bytes()
+                .to_vec()
+        }));
+    dst_data
+        .sourcepath
+        .set_bytes((!((api.archive_entry_sourcepath)(src)).is_null()).then(|| {
+            CStr::from_ptr((api.archive_entry_sourcepath)(src))
                 .to_bytes()
                 .to_vec()
         }));
@@ -305,14 +315,14 @@ pub(crate) unsafe fn backend_entry_to_custom(
     }
 
     dst_data.sparse.clear();
-    let _ = (api.archive_entry_sparse_reset)(src);
-    loop {
+    let sparse_count = (api.archive_entry_sparse_reset)(src);
+    if sparse_count < 0 {
+        return sparse_count;
+    }
+    for _ in 0..sparse_count {
         let mut offset = 0;
         let mut length = 0;
         let status = (api.archive_entry_sparse_next)(src, &mut offset, &mut length);
-        if status == crate::common::error::ARCHIVE_WARN {
-            break;
-        }
         if status != ARCHIVE_OK {
             return status;
         }
