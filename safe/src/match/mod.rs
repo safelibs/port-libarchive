@@ -1,3 +1,6 @@
+pub(crate) mod api;
+pub(crate) mod internal;
+
 use std::ffi::CString;
 use std::ptr;
 

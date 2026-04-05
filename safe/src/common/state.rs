@@ -1,194 +1,278 @@
-use std::ffi::{c_char, c_int, c_longlong, c_uint, c_ulong, c_void, CString};
+use std::ffi::{c_char, c_int, CString};
 use std::fs;
 use std::path::PathBuf;
 use std::ptr;
 
+use libc::{size_t, wchar_t};
+
 use crate::common::error::{
-    ARCHIVE_EOF, ARCHIVE_FAILED, ARCHIVE_OK, ARCHIVE_READ_DISK_MAGIC, ARCHIVE_READ_MAGIC,
-    ARCHIVE_STATE_CLOSED, ARCHIVE_STATE_NEW, ARCHIVE_WRITE_DISK_MAGIC, ARCHIVE_WRITE_MAGIC,
+    ARCHIVE_EOF, ARCHIVE_FAILED, ARCHIVE_FATAL, ARCHIVE_MATCH_MAGIC, ARCHIVE_OK,
+    ARCHIVE_READ_DISK_MAGIC, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_ANY, ARCHIVE_STATE_CLOSED,
+    ARCHIVE_STATE_FATAL, ARCHIVE_STATE_NEW, ARCHIVE_WRITE_DISK_MAGIC, ARCHIVE_WRITE_MAGIC,
 };
+use crate::common::helpers::{from_optional_c_str, from_optional_wide};
 use crate::ffi::{archive, archive_entry};
 
-#[repr(C)]
-pub(crate) struct ArchiveString {
-    pub(crate) s: *mut c_char,
-    pub(crate) length: usize,
-    pub(crate) buffer_length: usize,
-}
-
-type ArchiveCloseFn = unsafe extern "C" fn(*mut archive) -> c_int;
-type ArchiveFreeFn = unsafe extern "C" fn(*mut archive) -> c_int;
-type ArchiveWriteHeaderFn = unsafe extern "C" fn(*mut archive, *mut archive_entry) -> c_int;
-type ArchiveWriteFinishEntryFn = unsafe extern "C" fn(*mut archive) -> c_int;
-type ArchiveWriteDataFn = unsafe extern "C" fn(*mut archive, *const c_void, usize) -> isize;
-type ArchiveWriteDataBlockFn =
-    unsafe extern "C" fn(*mut archive, *const c_void, usize, c_longlong) -> isize;
-type ArchiveReadNextHeaderFn =
-    unsafe extern "C" fn(*mut archive, *mut *mut archive_entry) -> c_int;
-type ArchiveReadNextHeader2Fn = unsafe extern "C" fn(*mut archive, *mut archive_entry) -> c_int;
-type ArchiveReadDataBlockFn =
-    unsafe extern "C" fn(*mut archive, *mut *const c_void, *mut usize, *mut c_longlong) -> c_int;
-type ArchiveFilterCountFn = unsafe extern "C" fn(*mut archive) -> c_int;
-type ArchiveFilterBytesFn = unsafe extern "C" fn(*mut archive, c_int) -> c_longlong;
-type ArchiveFilterCodeFn = unsafe extern "C" fn(*mut archive, c_int) -> c_int;
-type ArchiveFilterNameFn = unsafe extern "C" fn(*mut archive, c_int) -> *const c_char;
-
-#[repr(C)]
-pub(crate) struct ArchiveVTable {
-    pub(crate) archive_close: ArchiveCloseFn,
-    pub(crate) archive_free: ArchiveFreeFn,
-    pub(crate) archive_write_header: Option<ArchiveWriteHeaderFn>,
-    pub(crate) archive_write_finish_entry: Option<ArchiveWriteFinishEntryFn>,
-    pub(crate) archive_write_data: Option<ArchiveWriteDataFn>,
-    pub(crate) archive_write_data_block: Option<ArchiveWriteDataBlockFn>,
-    pub(crate) archive_read_next_header: Option<ArchiveReadNextHeaderFn>,
-    pub(crate) archive_read_next_header2: Option<ArchiveReadNextHeader2Fn>,
-    pub(crate) archive_read_data_block: Option<ArchiveReadDataBlockFn>,
-    pub(crate) archive_filter_count: ArchiveFilterCountFn,
-    pub(crate) archive_filter_bytes: ArchiveFilterBytesFn,
-    pub(crate) archive_filter_code: ArchiveFilterCodeFn,
-    pub(crate) archive_filter_name: ArchiveFilterNameFn,
+#[repr(u32)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum ArchiveKind {
+    Read = ARCHIVE_READ_MAGIC,
+    Write = ARCHIVE_WRITE_MAGIC,
+    ReadDisk = ARCHIVE_READ_DISK_MAGIC,
+    WriteDisk = ARCHIVE_WRITE_DISK_MAGIC,
+    Match = ARCHIVE_MATCH_MAGIC,
 }
 
 #[repr(C)]
-pub(crate) struct ArchiveHandle {
-    pub(crate) magic: c_uint,
-    pub(crate) state: c_uint,
-    pub(crate) vtable: *const ArchiveVTable,
+pub(crate) struct ArchiveCore {
+    pub(crate) magic: u32,
+    pub(crate) state: u32,
     pub(crate) archive_format: c_int,
-    pub(crate) archive_format_name: *const c_char,
+    pub(crate) archive_format_name: Option<CString>,
     pub(crate) file_count: c_int,
     pub(crate) archive_error_number: c_int,
-    pub(crate) error: *const c_char,
-    pub(crate) error_string: ArchiveString,
-    pub(crate) current_code: *mut c_char,
-    pub(crate) current_codepage: c_uint,
-    pub(crate) current_oemcp: c_uint,
-    pub(crate) sconv: *mut c_void,
-    pub(crate) read_data_block: *const c_char,
-    pub(crate) read_data_offset: c_longlong,
-    pub(crate) read_data_output_offset: c_longlong,
-    pub(crate) read_data_remaining: usize,
-    pub(crate) read_data_is_posix_read: c_char,
-    pub(crate) read_data_requested: usize,
-}
-
-#[derive(Clone, Copy, Debug)]
-pub(crate) enum ArchiveKind {
-    Read,
-    Write,
-    ReadDisk,
-    WriteDisk,
-}
-
-impl ArchiveKind {
-    fn magic(self) -> c_uint {
-        match self {
-            Self::Read => ARCHIVE_READ_MAGIC,
-            Self::Write => ARCHIVE_WRITE_MAGIC,
-            Self::ReadDisk => ARCHIVE_READ_DISK_MAGIC,
-            Self::WriteDisk => ARCHIVE_WRITE_DISK_MAGIC,
-        }
-    }
-}
-
-impl ArchiveHandle {
-    fn new(kind: ArchiveKind) -> Self {
-        Self {
-            magic: kind.magic(),
-            state: ARCHIVE_STATE_NEW,
-            vtable: ptr::addr_of!(ARCHIVE_STUB_VTABLE),
-            archive_format: 0,
-            archive_format_name: ptr::null(),
-            file_count: 0,
-            archive_error_number: 0,
-            error: ptr::null(),
-            error_string: ArchiveString {
-                s: ptr::null_mut(),
-                length: 0,
-                buffer_length: 0,
-            },
-            current_code: ptr::null_mut(),
-            current_codepage: 0,
-            current_oemcp: 0,
-            sconv: ptr::null_mut(),
-            read_data_block: ptr::null(),
-            read_data_offset: 0,
-            read_data_output_offset: 0,
-            read_data_remaining: 0,
-            read_data_is_posix_read: 0,
-            read_data_requested: 0,
-        }
-    }
+    pub(crate) error_string: Option<CString>,
+    pub(crate) position_compressed: i64,
+    pub(crate) position_uncompressed: i64,
 }
 
 #[repr(C)]
-struct ReadArchiveHandle {
-    base: ArchiveHandle,
-    data: Vec<u8>,
-    header_emitted: bool,
-    data_emitted: bool,
-    entry: *mut archive_entry,
+pub(crate) struct ArchiveBaseHandle {
+    pub(crate) core: ArchiveCore,
 }
 
-unsafe extern "C" {
-    fn archive_string_free(astring: *mut ArchiveString);
-    fn archive_entry_new() -> *mut archive_entry;
-    fn archive_entry_free(entry: *mut archive_entry);
+#[repr(C)]
+pub(crate) struct ReadArchiveHandle {
+    pub(crate) core: ArchiveCore,
+    pub(crate) data: Vec<u8>,
+    pub(crate) header_emitted: bool,
+    pub(crate) data_emitted: bool,
+    pub(crate) entry: *mut archive_entry,
 }
 
-unsafe extern "C" fn archive_stub_close(a: *mut archive) -> c_int {
+impl ArchiveCore {
+    pub(crate) fn new(kind: ArchiveKind) -> Self {
+        Self {
+            magic: kind as u32,
+            state: ARCHIVE_STATE_NEW,
+            archive_format: 0,
+            archive_format_name: None,
+            file_count: 0,
+            archive_error_number: 0,
+            error_string: None,
+            position_compressed: 0,
+            position_uncompressed: 0,
+        }
+    }
+}
+
+pub(crate) unsafe fn core_from_archive<'a>(a: *mut archive) -> Option<&'a mut ArchiveCore> {
+    a.cast::<ArchiveCore>().as_mut()
+}
+
+pub(crate) unsafe fn read_from_archive<'a>(a: *mut archive) -> Option<&'a mut ReadArchiveHandle> {
+    a.cast::<ReadArchiveHandle>().as_mut()
+}
+
+pub(crate) fn alloc_archive(kind: ArchiveKind) -> *mut archive {
+    match kind {
+        ArchiveKind::Read => Box::into_raw(Box::new(ReadArchiveHandle {
+            core: ArchiveCore::new(kind),
+            data: Vec::new(),
+            header_emitted: false,
+            data_emitted: false,
+            entry: ptr::null_mut(),
+        })) as *mut archive,
+        _ => Box::into_raw(Box::new(ArchiveBaseHandle {
+            core: ArchiveCore::new(kind),
+        })) as *mut archive,
+    }
+}
+
+pub(crate) unsafe fn archive_magic(a: *mut archive) -> u32 {
+    core_from_archive(a).map_or(0, |core| core.magic)
+}
+
+pub(crate) unsafe fn archive_check_magic(
+    a: *mut archive,
+    expected_magic: u32,
+    allowed_states: u32,
+    function: &str,
+) -> c_int {
+    let Some(core) = core_from_archive(a) else {
+        return ARCHIVE_FATAL;
+    };
+
+    if core.magic != expected_magic {
+        set_error_string(
+            core,
+            -1,
+            format!(
+                "PROGRAMMER ERROR: Function '{function}' invoked on wrong archive object"
+            ),
+        );
+        core.state = ARCHIVE_STATE_FATAL;
+        return ARCHIVE_FATAL;
+    }
+
+    if (core.state & allowed_states) == 0 {
+        if core.state != ARCHIVE_STATE_FATAL {
+            set_error_string(
+                core,
+                -1,
+                format!(
+                    "INTERNAL ERROR: Function '{function}' invoked with archive structure in state '{}'",
+                    state_name(core.state)
+                ),
+            );
+        }
+        core.state = ARCHIVE_STATE_FATAL;
+        return ARCHIVE_FATAL;
+    }
+
+    ARCHIVE_OK
+}
+
+fn state_name(state: u32) -> &'static str {
+    match state {
+        crate::common::error::ARCHIVE_STATE_NEW => "new",
+        crate::common::error::ARCHIVE_STATE_HEADER => "header",
+        crate::common::error::ARCHIVE_STATE_DATA => "data",
+        crate::common::error::ARCHIVE_STATE_EOF => "eof",
+        crate::common::error::ARCHIVE_STATE_CLOSED => "closed",
+        crate::common::error::ARCHIVE_STATE_FATAL => "fatal",
+        _ => "unknown",
+    }
+}
+
+pub(crate) fn set_error_string(core: &mut ArchiveCore, errno: c_int, message: String) {
+    core.archive_error_number = errno;
+    core.error_string = Some(CString::new(message).expect("error message must not contain NUL"));
+}
+
+pub(crate) fn set_error_option(core: &mut ArchiveCore, errno: c_int, message: Option<String>) {
+    core.archive_error_number = errno;
+    core.error_string = message
+        .map(|message| CString::new(message).expect("error message must not contain NUL"));
+}
+
+pub(crate) fn clear_error(core: &mut ArchiveCore) {
+    core.archive_error_number = 0;
+    core.error_string = None;
+}
+
+pub(crate) fn error_string_ptr(core: &ArchiveCore) -> *const c_char {
+    core.error_string
+        .as_ref()
+        .map_or(ptr::null(), |value| value.as_ptr())
+}
+
+pub(crate) unsafe fn free_archive(a: *mut archive) -> c_int {
     if a.is_null() {
         return ARCHIVE_OK;
     }
 
-    let handle = &mut *a.cast::<ArchiveHandle>();
-    handle.state = ARCHIVE_STATE_CLOSED;
+    match archive_magic(a) {
+        ARCHIVE_READ_MAGIC => {
+            let handle = a.cast::<ReadArchiveHandle>();
+            if !(*handle).entry.is_null() {
+                crate::entry::internal::free_raw_entry((*handle).entry);
+            }
+            drop(Box::from_raw(handle));
+        }
+        ARCHIVE_MATCH_MAGIC => {
+            crate::r#match::internal::free_match_archive(a);
+        }
+        ARCHIVE_WRITE_MAGIC | ARCHIVE_READ_DISK_MAGIC | ARCHIVE_WRITE_DISK_MAGIC => {
+            drop(Box::from_raw(a.cast::<ArchiveBaseHandle>()));
+        }
+        _ => return ARCHIVE_FATAL,
+    }
+
     ARCHIVE_OK
 }
 
-unsafe extern "C" fn archive_stub_free(a: *mut archive) -> c_int {
-    if a.is_null() {
-        return ARCHIVE_OK;
-    }
-
-    let handle = a.cast::<ArchiveHandle>();
-    archive_string_free(ptr::addr_of_mut!((*handle).error_string));
-    drop(Box::from_raw(handle));
+pub(crate) unsafe fn close_archive(a: *mut archive) -> c_int {
+    let Some(core) = core_from_archive(a) else {
+        return ARCHIVE_FATAL;
+    };
+    core.state = ARCHIVE_STATE_CLOSED;
     ARCHIVE_OK
 }
 
-unsafe extern "C" fn archive_read_free_impl(a: *mut archive) -> c_int {
-    if a.is_null() {
-        return ARCHIVE_OK;
+pub(crate) unsafe fn read_archive_support_format(a: *mut archive) -> c_int {
+    if archive_check_magic(a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_ANY, "archive_read_support_format")
+        == ARCHIVE_FATAL
+    {
+        return ARCHIVE_FATAL;
     }
-
-    let handle = a.cast::<ReadArchiveHandle>();
-    if !(*handle).entry.is_null() {
-        archive_entry_free((*handle).entry);
-    }
-    archive_string_free(ptr::addr_of_mut!((*handle).base.error_string));
-    drop(Box::from_raw(handle));
     ARCHIVE_OK
 }
 
-unsafe extern "C" fn archive_read_next_header_impl(
+pub(crate) unsafe fn read_archive_open_filename(
+    a: *mut archive,
+    path: *const c_char,
+) -> c_int {
+    if path.is_null() {
+        return ARCHIVE_FAILED;
+    }
+    let Some(path) = from_optional_c_str(path) else {
+        return ARCHIVE_FAILED;
+    };
+    read_archive_load_path(a, &PathBuf::from(path))
+}
+
+pub(crate) unsafe fn read_archive_open_filename_w(
+    a: *mut archive,
+    path: *const wchar_t,
+) -> c_int {
+    if path.is_null() {
+        return ARCHIVE_FAILED;
+    }
+    let Some(path) = from_optional_wide(path) else {
+        return ARCHIVE_FAILED;
+    };
+    read_archive_load_path(a, &PathBuf::from(path))
+}
+
+unsafe fn read_archive_load_path(a: *mut archive, path: &PathBuf) -> c_int {
+    if archive_check_magic(a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_ANY, "archive_read_open_filename")
+        == ARCHIVE_FATAL
+    {
+        return ARCHIVE_FATAL;
+    }
+    let Some(handle) = read_from_archive(a) else {
+        return ARCHIVE_FATAL;
+    };
+
+    match fs::read(path) {
+        Ok(data) => {
+            handle.data = data;
+            handle.header_emitted = false;
+            handle.data_emitted = false;
+            ARCHIVE_OK
+        }
+        Err(err) => {
+            set_error_string(&mut handle.core, err.raw_os_error().unwrap_or(-1), err.to_string());
+            ARCHIVE_FAILED
+        }
+    }
+}
+
+pub(crate) unsafe fn read_archive_next_header(
     a: *mut archive,
     entry: *mut *mut archive_entry,
 ) -> c_int {
-    if a.is_null() {
-        return ARCHIVE_FAILED;
+    if archive_check_magic(a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_ANY, "archive_read_next_header")
+        == ARCHIVE_FATAL
+    {
+        return ARCHIVE_FATAL;
     }
+    let Some(handle) = read_from_archive(a) else {
+        return ARCHIVE_FATAL;
+    };
 
-    let handle = &mut *a.cast::<ReadArchiveHandle>();
-    if handle.header_emitted {
-        if !entry.is_null() {
-            *entry = ptr::null_mut();
-        }
-        return ARCHIVE_EOF;
-    }
-    if handle.data.is_empty() {
-        handle.header_emitted = true;
+    if handle.header_emitted || handle.data.is_empty() {
         if !entry.is_null() {
             *entry = ptr::null_mut();
         }
@@ -196,9 +280,9 @@ unsafe extern "C" fn archive_read_next_header_impl(
     }
 
     if handle.entry.is_null() {
-        handle.entry = archive_entry_new();
+        handle.entry = crate::entry::internal::new_raw_entry(ptr::null_mut());
         if handle.entry.is_null() {
-            return ARCHIVE_FAILED;
+            return ARCHIVE_FATAL;
         }
     }
     handle.header_emitted = true;
@@ -208,17 +292,21 @@ unsafe extern "C" fn archive_read_next_header_impl(
     ARCHIVE_OK
 }
 
-unsafe extern "C" fn archive_read_data_block_impl(
+pub(crate) unsafe fn read_archive_data_block(
     a: *mut archive,
-    buff: *mut *const c_void,
-    size: *mut usize,
-    offset: *mut c_longlong,
+    buff: *mut *const std::ffi::c_void,
+    size: *mut size_t,
+    offset: *mut i64,
 ) -> c_int {
-    if a.is_null() {
-        return ARCHIVE_FAILED;
+    if archive_check_magic(a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_ANY, "archive_read_data_block")
+        == ARCHIVE_FATAL
+    {
+        return ARCHIVE_FATAL;
     }
+    let Some(handle) = read_from_archive(a) else {
+        return ARCHIVE_FATAL;
+    };
 
-    let handle = &mut *a.cast::<ReadArchiveHandle>();
     if handle.data_emitted {
         if !buff.is_null() {
             *buff = ptr::null();
@@ -234,7 +322,7 @@ unsafe extern "C" fn archive_read_data_block_impl(
 
     handle.data_emitted = true;
     if !buff.is_null() {
-        *buff = handle.data.as_ptr().cast::<c_void>();
+        *buff = handle.data.as_ptr().cast();
     }
     if !size.is_null() {
         *size = handle.data.len();
@@ -243,115 +331,4 @@ unsafe extern "C" fn archive_read_data_block_impl(
         *offset = 0;
     }
     ARCHIVE_OK
-}
-
-unsafe extern "C" fn archive_stub_filter_count(_a: *mut archive) -> c_int {
-    0
-}
-
-unsafe extern "C" fn archive_stub_filter_bytes(_a: *mut archive, _n: c_int) -> c_longlong {
-    0
-}
-
-unsafe extern "C" fn archive_stub_filter_code(_a: *mut archive, _n: c_int) -> c_int {
-    0
-}
-
-unsafe extern "C" fn archive_stub_filter_name(_a: *mut archive, _n: c_int) -> *const c_char {
-    ptr::null()
-}
-
-static ARCHIVE_STUB_VTABLE: ArchiveVTable = ArchiveVTable {
-    archive_close: archive_stub_close,
-    archive_free: archive_stub_free,
-    archive_write_header: None,
-    archive_write_finish_entry: None,
-    archive_write_data: None,
-    archive_write_data_block: None,
-    archive_read_next_header: None,
-    archive_read_next_header2: None,
-    archive_read_data_block: None,
-    archive_filter_count: archive_stub_filter_count,
-    archive_filter_bytes: archive_stub_filter_bytes,
-    archive_filter_code: archive_stub_filter_code,
-    archive_filter_name: archive_stub_filter_name,
-};
-
-static ARCHIVE_READ_VTABLE: ArchiveVTable = ArchiveVTable {
-    archive_close: archive_stub_close,
-    archive_free: archive_read_free_impl,
-    archive_write_header: None,
-    archive_write_finish_entry: None,
-    archive_write_data: None,
-    archive_write_data_block: None,
-    archive_read_next_header: Some(archive_read_next_header_impl),
-    archive_read_next_header2: None,
-    archive_read_data_block: Some(archive_read_data_block_impl),
-    archive_filter_count: archive_stub_filter_count,
-    archive_filter_bytes: archive_stub_filter_bytes,
-    archive_filter_code: archive_stub_filter_code,
-    archive_filter_name: archive_stub_filter_name,
-};
-
-pub(crate) fn alloc_archive(kind: ArchiveKind) -> *mut archive {
-    match kind {
-        ArchiveKind::Read => Box::into_raw(Box::new(ReadArchiveHandle {
-            base: ArchiveHandle {
-                vtable: ptr::addr_of!(ARCHIVE_READ_VTABLE),
-                ..ArchiveHandle::new(kind)
-            },
-            data: Vec::new(),
-            header_emitted: false,
-            data_emitted: false,
-            entry: ptr::null_mut(),
-        })) as *mut archive,
-        _ => Box::into_raw(Box::new(ArchiveHandle::new(kind))) as *mut archive,
-    }
-}
-
-pub(crate) unsafe fn read_archive_support_format(_a: *mut archive) -> c_int {
-    ARCHIVE_OK
-}
-
-pub(crate) unsafe fn read_archive_open_filename(a: *mut archive, path: *const c_char) -> c_int {
-    if a.is_null() || path.is_null() {
-        return ARCHIVE_FAILED;
-    }
-
-    let path = match std::ffi::CStr::from_ptr(path).to_str() {
-        Ok(path) => PathBuf::from(path),
-        Err(_) => return ARCHIVE_FAILED,
-    };
-    read_archive_load_path(a, &path)
-}
-
-pub(crate) unsafe fn read_archive_open_filename_w(
-    a: *mut archive,
-    path: *const libc::wchar_t,
-) -> c_int {
-    if a.is_null() || path.is_null() {
-        return ARCHIVE_FAILED;
-    }
-
-    let mut chars = Vec::new();
-    let mut current = path;
-    while *current != 0 {
-        chars.push(std::char::from_u32(*current as u32).unwrap_or(char::REPLACEMENT_CHARACTER));
-        current = current.add(1);
-    }
-    let path: String = chars.into_iter().collect();
-    read_archive_load_path(a, &PathBuf::from(path))
-}
-
-unsafe fn read_archive_load_path(a: *mut archive, path: &PathBuf) -> c_int {
-    let handle = &mut *a.cast::<ReadArchiveHandle>();
-    match fs::read(path) {
-        Ok(data) => {
-            handle.data = data;
-            handle.header_emitted = false;
-            handle.data_emitted = false;
-            ARCHIVE_OK
-        }
-        Err(_) => ARCHIVE_FAILED,
-    }
 }

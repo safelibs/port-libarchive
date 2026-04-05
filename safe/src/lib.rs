@@ -1,5 +1,7 @@
 pub mod common {
+    pub(crate) mod api;
     pub mod error;
+    pub(crate) mod helpers;
     pub mod panic_boundary;
     pub mod state;
 }
