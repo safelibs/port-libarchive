@@ -983,9 +983,9 @@ pub(crate) fn file_times_from_path(path: &str) -> Option<PathTimeFilter> {
     }
     Some(PathTimeFilter {
         flag: 0,
-        mtime_sec: st.st_mtime,
+        mtime_sec: i64::from(st.st_mtime),
         mtime_nsec: 0,
-        ctime_sec: st.st_ctime,
+        ctime_sec: i64::from(st.st_ctime),
         ctime_nsec: 0,
     })
 }

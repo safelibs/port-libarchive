@@ -493,6 +493,62 @@ fn emulate_placeholder_format_options_string(
     }
 }
 
+fn parse_zisofs_layout_option(value: &str) -> Option<(u8, u64)> {
+    let (block_shift, uncompressed_size) = value.split_once(':')?;
+    let block_shift = block_shift.parse::<u8>().ok()?;
+    let uncompressed_size = uncompressed_size.parse::<u64>().ok()?;
+    Some((block_shift, uncompressed_size))
+}
+
+fn emulate_security_format_option(
+    handle: &mut crate::common::state::ReadArchiveHandle,
+    module: Option<&str>,
+    option: Option<&str>,
+    value: Option<&str>,
+) -> Option<c_int> {
+    let module = module.unwrap_or("");
+    let option = option.unwrap_or("");
+    if !module.is_empty() && module != "iso9660" {
+        return None;
+    }
+    if option != "zisofs-layout" {
+        return None;
+    }
+
+    let Some(value) = value else {
+        set_error_string(
+            &mut handle.core,
+            libc::EINVAL,
+            "iso9660:zisofs-layout requires BLOCK_SHIFT:UNCOMPRESSED_SIZE".to_string(),
+        );
+        return Some(ARCHIVE_FAILED);
+    };
+    let Some((block_shift, uncompressed_size)) = parse_zisofs_layout_option(value) else {
+        set_error_string(
+            &mut handle.core,
+            libc::EINVAL,
+            format!("Invalid iso9660:zisofs-layout value `{value}`"),
+        );
+        return Some(ARCHIVE_FAILED);
+    };
+    if crate::read::format::checked_zisofs_layout(block_shift, uncompressed_size, usize::MAX as u64)
+        .is_some()
+    {
+        clear_error(&mut handle.core);
+        Some(ARCHIVE_OK)
+    } else {
+        set_error_string(
+            &mut handle.core,
+            libc::EOVERFLOW,
+            format!(
+                "Unsafe zisofs layout for a {}-bit target: block shift {block_shift}, size {uncompressed_size}",
+                usize::BITS
+            ),
+        );
+        Some(ARCHIVE_FAILED)
+    }
+}
+
 #[no_mangle]
 pub extern "C" fn backend_archive_read_support_format_by_code(
     a: *mut BackendArchive,
@@ -1725,23 +1781,67 @@ pub extern "C" fn archive_read_data_skip(a: *mut archive) -> c_int {
                 sync_backend_core(a);
                 status
             }
-            ReadLike::Disk(reader) => loop {
+            ReadLike::Disk(reader) => {
+                let mut saw_block = false;
+                let mut previous_offset = 0u64;
+                let mut previous_size = 0u64;
                 let mut block = ptr::null();
                 let mut block_size = 0usize;
                 let mut block_offset = 0i64;
-                let status = native_read_disk_data_block(
-                    reader,
-                    &mut block,
-                    &mut block_size,
-                    &mut block_offset,
-                );
-                if status == ARCHIVE_EOF {
-                    return ARCHIVE_OK;
+                loop {
+                    let status = native_read_disk_data_block(
+                        reader,
+                        &mut block,
+                        &mut block_size,
+                        &mut block_offset,
+                    );
+                    if status == ARCHIVE_EOF {
+                        return ARCHIVE_OK;
+                    }
+                    if status != ARCHIVE_OK {
+                        return status;
+                    }
+                    let Some(current_offset) = u64::try_from(block_offset).ok() else {
+                        set_error_string(
+                            &mut reader.core,
+                            libc::EINVAL,
+                            "disk reader returned a negative block offset".to_string(),
+                        );
+                        return ARCHIVE_FATAL;
+                    };
+                    let current_size = block_size as u64;
+                    if saw_block {
+                        if !crate::read::format::monotonic_seek_ok(
+                            previous_offset,
+                            current_offset,
+                            i64::MAX as u64,
+                        ) || !crate::read::format::forward_progress(
+                            previous_offset,
+                            current_offset,
+                            previous_size,
+                            current_size,
+                        ) {
+                            set_error_string(
+                                &mut reader.core,
+                                libc::EIO,
+                                "disk reader made no forward progress while skipping data"
+                                    .to_string(),
+                            );
+                            return ARCHIVE_FATAL;
+                        }
+                    } else if current_size == 0 {
+                        set_error_string(
+                            &mut reader.core,
+                            libc::EIO,
+                            "disk reader returned an empty block while skipping data".to_string(),
+                        );
+                        return ARCHIVE_FATAL;
+                    }
+                    saw_block = true;
+                    previous_offset = current_offset;
+                    previous_size = current_size;
                 }
-                if status != ARCHIVE_OK {
-                    return status;
-                }
-            },
+            }
         }
     })
 }
@@ -1780,6 +1880,15 @@ pub extern "C" fn archive_read_set_format_option(
         else {
             return ARCHIVE_FATAL;
         };
+        if let Some(status) = emulate_security_format_option(
+            handle,
+            from_optional_c_str(module).as_deref(),
+            from_optional_c_str(option).as_deref(),
+            from_optional_c_str(value).as_deref(),
+        ) {
+            clear_backend_error(handle);
+            return status;
+        }
         if let Some(status) = emulate_placeholder_format_option(
             handle,
             from_optional_c_str(module).as_deref(),
@@ -1840,6 +1949,15 @@ pub extern "C" fn archive_read_set_option(
         else {
             return ARCHIVE_FATAL;
         };
+        if let Some(status) = emulate_security_format_option(
+            handle,
+            from_optional_c_str(module).as_deref(),
+            from_optional_c_str(option).as_deref(),
+            from_optional_c_str(value).as_deref(),
+        ) {
+            clear_backend_error(handle);
+            return status;
+        }
         if let Some(status) = emulate_placeholder_format_option(
             handle,
             from_optional_c_str(module).as_deref(),
@@ -1987,6 +2105,9 @@ pub extern "C" fn archive_read_extract2(
             return status;
         }
 
+        let mut saw_block = false;
+        let mut previous_offset = 0u64;
+        let mut previous_size = 0u64;
         loop {
             let mut block = ptr::null();
             let mut block_size = 0usize;
@@ -1998,6 +2119,44 @@ pub extern "C" fn archive_read_extract2(
             if status != ARCHIVE_OK {
                 return status;
             }
+            let Some(current_offset) = u64::try_from(block_offset).ok() else {
+                set_error_string(
+                    &mut handle.core,
+                    libc::EINVAL,
+                    "reader returned a negative block offset during extraction".to_string(),
+                );
+                return ARCHIVE_FATAL;
+            };
+            let current_size = block_size as u64;
+            if saw_block {
+                if !crate::read::format::monotonic_seek_ok(
+                    previous_offset,
+                    current_offset,
+                    i64::MAX as u64,
+                ) || !crate::read::format::forward_progress(
+                    previous_offset,
+                    current_offset,
+                    previous_size,
+                    current_size,
+                ) {
+                    set_error_string(
+                        &mut handle.core,
+                        libc::EIO,
+                        "reader made no forward progress while extracting data".to_string(),
+                    );
+                    return ARCHIVE_FATAL;
+                }
+            } else if current_size == 0 {
+                set_error_string(
+                    &mut handle.core,
+                    libc::EIO,
+                    "reader returned an empty block while extracting data".to_string(),
+                );
+                return ARCHIVE_FATAL;
+            }
+            saw_block = true;
+            previous_offset = current_offset;
+            previous_size = current_size;
             let write_status =
                 crate::write::archive_write_data_block(disk, block, block_size, block_offset);
             if write_status < 0 {

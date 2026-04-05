@@ -89,6 +89,45 @@ fn c_path(path: &Path) -> Result<CString, c_int> {
     CString::new(path.as_os_str().as_bytes()).map_err(|_| libc::EINVAL)
 }
 
+fn stat_dev_key(value: libc::dev_t) -> u64 {
+    value as u64
+}
+
+fn stat_ino_key(value: libc::ino_t) -> u64 {
+    value as u64
+}
+
+fn off_t_from_i64(value: i64) -> Option<libc::off_t> {
+    libc::off_t::try_from(value).ok()
+}
+
+fn time_t_from_i64_clamped(value: i64) -> libc::time_t {
+    if value < libc::time_t::MIN as i64 {
+        libc::time_t::MIN
+    } else if value > libc::time_t::MAX as i64 {
+        libc::time_t::MAX
+    } else {
+        value as libc::time_t
+    }
+}
+
+fn c_long_from_i64_clamped(value: i64) -> libc::c_long {
+    if value < libc::c_long::MIN as i64 {
+        libc::c_long::MIN
+    } else if value > libc::c_long::MAX as i64 {
+        libc::c_long::MAX
+    } else {
+        value as libc::c_long
+    }
+}
+
+fn timespec_from_pair(sec: i64, nsec: i64) -> timespec {
+    timespec {
+        tv_sec: time_t_from_i64_clamped(sec),
+        tv_nsec: c_long_from_i64_clamped(nsec),
+    }
+}
+
 fn path_stat(path: &Path, follow: bool) -> Result<stat, c_int> {
     let c_path = c_path(path)?;
     let mut st = unsafe { std::mem::zeroed::<stat>() };
@@ -184,7 +223,13 @@ fn load_sparse_layout(path: &Path, size: i64) -> Option<SparseLayout> {
     };
     let mut offset = 0i64;
     while offset < size {
-        let data_offset = unsafe { libc::lseek(fd, offset, libc::SEEK_DATA) };
+        let Some(seek_offset) = off_t_from_i64(offset) else {
+            unsafe {
+                libc::close(fd);
+            }
+            return None;
+        };
+        let data_offset = unsafe { libc::lseek(fd, seek_offset, libc::SEEK_DATA) };
         if data_offset < 0 {
             let errno = last_errno();
             if errno == libc::ENXIO {
@@ -197,15 +242,21 @@ fn load_sparse_layout(path: &Path, size: i64) -> Option<SparseLayout> {
             return None;
         }
 
-        let data_offset = data_offset.min(size);
-        let hole_offset = unsafe { libc::lseek(fd, data_offset, libc::SEEK_HOLE) };
+        let data_offset = i64::from(data_offset).min(size);
+        let Some(data_offset_off_t) = off_t_from_i64(data_offset) else {
+            unsafe {
+                libc::close(fd);
+            }
+            return None;
+        };
+        let hole_offset = unsafe { libc::lseek(fd, data_offset_off_t, libc::SEEK_HOLE) };
         if hole_offset < 0 {
             unsafe {
                 libc::close(fd);
             }
             return None;
         }
-        let hole_offset = hole_offset.min(size);
+        let hole_offset = i64::from(hole_offset).min(size);
         if hole_offset > data_offset {
             result.extents.push(SparseEntry {
                 offset: data_offset,
@@ -546,7 +597,10 @@ fn populate_entry_from_path(
         if let Ok(target_stat) = path_stat(filesystem_path, true) {
             let candidate =
                 fs::canonicalize(filesystem_path).unwrap_or_else(|_| filesystem_path.to_path_buf());
-            let candidate_key = (target_stat.st_dev, target_stat.st_ino);
+            let candidate_key = (
+                stat_dev_key(target_stat.st_dev),
+                stat_ino_key(target_stat.st_ino),
+            );
             let is_dir = filetype_from_mode(target_stat.st_mode) == AE_IFDIR;
             if !is_dir || !ancestor_dirs.contains(&candidate_key) {
                 effective_stat = target_stat;
@@ -594,7 +648,8 @@ fn populate_entry_from_path(
     if filetype_from_mode(effective_stat.st_mode) == AE_IFREG
         && (handle.behavior_flags & ARCHIVE_READDISK_NO_SPARSE) == 0
     {
-        if let Some(layout) = load_sparse_layout(&effective_path, effective_stat.st_size) {
+        if let Some(layout) = load_sparse_layout(&effective_path, i64::from(effective_stat.st_size))
+        {
             for extent in layout.extents {
                 add_sparse(entry_data, extent.offset, extent.length);
             }
@@ -620,7 +675,7 @@ fn push_children(handle: &mut ReadDiskArchiveHandle) -> c_int {
     };
     let mut ancestor_dirs = current.ancestor_dirs.clone();
     if let Some(st) = handle.traversal.current_stat {
-        ancestor_dirs.push((st.st_dev, st.st_ino));
+        ancestor_dirs.push((stat_dev_key(st.st_dev), stat_ino_key(st.st_ino)));
     }
     if (handle.behavior_flags & ARCHIVE_READDISK_RESTORE_ATIME) != 0 {
         if let Ok(atime_stat) = path_stat(&current_path, current.follow_final_symlink) {
@@ -733,7 +788,7 @@ pub(crate) unsafe fn read_disk_next_header(
         handle.traversal.current_resolved_path = Some(resolved_path.clone());
         handle.traversal.current_can_descend = can_descend;
         handle.traversal.current_stat = Some(st);
-        handle.traversal.current_size = st.st_size;
+        handle.traversal.current_size = i64::from(st.st_size);
         if let Some(entry_data) = entry_from_raw(entry) {
             handle.traversal.current_sparse = entry_data.sparse.clone();
             handle.traversal.current_sparse_index = 0;
@@ -741,7 +796,7 @@ pub(crate) unsafe fn read_disk_next_header(
                 && filetype_from_mode(st.st_mode) == AE_IFREG
                 && (handle.behavior_flags & ARCHIVE_READDISK_NO_SPARSE) == 0
                 && handle.traversal.current_sparse.is_empty()
-                && load_sparse_layout(&resolved_path, st.st_size)
+                && load_sparse_layout(&resolved_path, i64::from(st.st_size))
                     .map(|layout| layout.fully_sparse)
                     .unwrap_or(false);
         }
@@ -1056,7 +1111,7 @@ fn current_time_pair() -> (i64, i64) {
     };
     unsafe {
         if libc::clock_gettime(libc::CLOCK_REALTIME, &mut ts) == 0 {
-            (ts.tv_sec, ts.tv_nsec as i64)
+            (i64::from(ts.tv_sec), ts.tv_nsec as i64)
         } else {
             (0, 0)
         }
@@ -1773,12 +1828,12 @@ fn make_fixup(
         uid,
         gid,
         atime: if entry.atime.set {
-            Some((entry.atime.sec, entry.atime.nsec))
+            Some((entry.atime.sec, i64::from(entry.atime.nsec)))
         } else {
             now
         },
         mtime: if entry.mtime.set {
-            Some((entry.mtime.sec, entry.mtime.nsec))
+            Some((entry.mtime.sec, i64::from(entry.mtime.nsec)))
         } else {
             now
         },
@@ -1850,14 +1905,8 @@ fn apply_fixup(handle: &mut WriteDiskArchiveHandle, mut fixup: WriteDiskPendingF
         let atime = fixup.atime.unwrap_or((0, 0));
         let mtime = fixup.mtime.unwrap_or((0, 0));
         let times = [
-            timespec {
-                tv_sec: atime.0,
-                tv_nsec: atime.1 as _,
-            },
-            timespec {
-                tv_sec: mtime.0,
-                tv_nsec: mtime.1 as _,
-            },
+            timespec_from_pair(atime.0, atime.1),
+            timespec_from_pair(mtime.0, mtime.1),
         ];
         let rc = unsafe {
             if fixup.target_fd >= 0 && fixup.follow {
@@ -2176,7 +2225,7 @@ pub(crate) unsafe fn write_disk_header(
             stat_at(target.parent_fd, target.name.as_c_str(), 0),
             entry_data.mtime.set,
         ) {
-            if existing.st_mtime > entry_data.mtime.sec {
+            if i64::from(existing.st_mtime) > entry_data.mtime.sec {
                 handle.extraction.current = Some(skip_current_state(target.display_path.clone()));
                 close_fd_if_valid(target.parent_fd);
                 return ARCHIVE_OK;
@@ -2518,13 +2567,25 @@ pub(crate) unsafe fn write_disk_data_block(
         }
         to_write = to_write.min((limit - offset) as usize);
     }
+    let end_offset = offset.saturating_add(to_write as i64);
     let slice = std::slice::from_raw_parts(buffer.cast::<u8>(), to_write);
+    let Some(offset) = off_t_from_i64(offset) else {
+        set_error_string(
+            &mut handle.core,
+            libc::EOVERFLOW,
+            "write offset exceeds platform off_t range".to_string(),
+        );
+        handle.core.state = crate::common::error::ARCHIVE_STATE_FATAL;
+        return ARCHIVE_FATAL as isize;
+    };
     let rc = libc::pwrite(current.fd, slice.as_ptr().cast(), slice.len(), offset);
     if rc < 0 {
         handle.core.state = crate::common::error::ARCHIVE_STATE_FATAL;
         return ARCHIVE_FATAL as isize;
     }
-    current.written = current.written.max(offset + rc as i64);
+    current.written = current
+        .written
+        .max(end_offset.min(current.written.saturating_add(rc as i64)));
     ARCHIVE_OK as isize
 }
 
@@ -2553,8 +2614,19 @@ pub(crate) fn write_disk_finish_entry(handle: &mut WriteDiskArchiveHandle) -> c_
     };
     if truncate_fd >= 0 {
         if let Some(limit) = current.size_limit {
-            if unsafe { libc::ftruncate(truncate_fd, limit) } != 0 {
-                status = ARCHIVE_WARN;
+            if let Some(limit) = off_t_from_i64(limit) {
+                if unsafe { libc::ftruncate(truncate_fd, limit) } != 0 {
+                    status = ARCHIVE_WARN;
+                }
+            } else {
+                status = record_error(
+                    &mut handle.core,
+                    libc::EOVERFLOW,
+                    format!(
+                        "entry size for {} exceeds platform off_t range",
+                        current.display_path.display()
+                    ),
+                );
             }
         }
     }

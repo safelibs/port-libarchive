@@ -545,6 +545,39 @@ unsafe fn ensure_write_backend(handle: &mut crate::common::state::WriteArchiveHa
     ARCHIVE_OK
 }
 
+fn validate_write_filter_option_security(
+    handle: &mut crate::common::state::WriteArchiveHandle,
+    module: Option<&str>,
+    option: Option<&str>,
+    value: Option<&str>,
+) -> Option<c_int> {
+    let module = module.unwrap_or("");
+    let option = option.unwrap_or("");
+    if !(module.is_empty() || module == "zstd") || option != "long" {
+        return None;
+    }
+
+    let Some(value) = value else {
+        return None;
+    };
+    let Ok(long_distance) = value.parse::<i64>() else {
+        return None;
+    };
+    let max_distance = i64::from(crate::write::format::zstd_long_window_limit(usize::BITS));
+    if !(10..=max_distance).contains(&long_distance) {
+        set_error_string(
+            &mut handle.core,
+            libc::EINVAL,
+            format!(
+                "zstd long distance must be between 10 and {max_distance} on a {}-bit target",
+                usize::BITS
+            ),
+        );
+        return Some(crate::common::error::ARCHIVE_FAILED);
+    }
+    None
+}
+
 unsafe fn ensure_write_backend_open(
     handle: &mut crate::common::state::WriteArchiveHandle,
 ) -> c_int {
@@ -1337,6 +1370,14 @@ pub extern "C" fn archive_write_set_filter_option(
         let Some(handle) = validate_writer(a, "archive_write_set_filter_option") else {
             return ARCHIVE_FATAL;
         };
+        if let Some(status) = validate_write_filter_option_security(
+            handle,
+            from_optional_c_str(module).as_deref(),
+            from_optional_c_str(option).as_deref(),
+            from_optional_c_str(value).as_deref(),
+        ) {
+            return status;
+        }
         push_or_apply_option(
             handle,
             WriteOptionConfig::FilterOption {

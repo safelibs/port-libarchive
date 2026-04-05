@@ -1354,22 +1354,42 @@ pub(crate) fn entry_has_acl(entry: &ArchiveEntryData) -> bool {
     !entry.acl.entries.is_empty()
 }
 
+fn time_t_from_i64_clamped(value: i64) -> libc::time_t {
+    if value < libc::time_t::MIN as i64 {
+        libc::time_t::MIN
+    } else if value > libc::time_t::MAX as i64 {
+        libc::time_t::MAX
+    } else {
+        value as libc::time_t
+    }
+}
+
+fn off_t_from_i64_clamped(value: i64) -> libc::off_t {
+    if value < libc::off_t::MIN as i64 {
+        libc::off_t::MIN
+    } else if value > libc::off_t::MAX as i64 {
+        libc::off_t::MAX
+    } else {
+        value as libc::off_t
+    }
+}
+
 pub(crate) fn copy_stat(entry: &mut ArchiveEntryData, st: &stat) {
     entry.stat_cache = *st;
     entry.stat_dirty = false;
     entry.atime = EntryTime {
-        sec: st.st_atime,
+        sec: i64::from(st.st_atime),
         nsec: 0,
         set: true,
     };
     entry.birthtime = EntryTime::default();
     entry.ctime = EntryTime {
-        sec: st.st_ctime,
+        sec: i64::from(st.st_ctime),
         nsec: 0,
         set: true,
     };
     entry.mtime = EntryTime {
-        sec: st.st_mtime,
+        sec: i64::from(st.st_mtime),
         nsec: 0,
         set: true,
     };
@@ -1380,7 +1400,7 @@ pub(crate) fn copy_stat(entry: &mut ArchiveEntryData, st: &stat) {
     entry.ino_set = true;
     entry.mode = st.st_mode;
     entry.nlink = st.st_nlink as u32;
-    entry.size = st.st_size;
+    entry.size = i64::from(st.st_size);
     entry.size_set = true;
     entry.uid = st.st_uid as i64;
 }
@@ -1388,16 +1408,20 @@ pub(crate) fn copy_stat(entry: &mut ArchiveEntryData, st: &stat) {
 pub(crate) fn materialize_stat(entry: &mut ArchiveEntryData) -> &stat {
     if entry.stat_dirty {
         let mut st: stat = unsafe { mem::zeroed() };
-        st.st_atime = entry.atime.sec;
-        st.st_ctime = entry.ctime.sec;
-        st.st_mtime = entry.mtime.sec;
+        st.st_atime = time_t_from_i64_clamped(entry.atime.sec);
+        st.st_ctime = time_t_from_i64_clamped(entry.ctime.sec);
+        st.st_mtime = time_t_from_i64_clamped(entry.mtime.sec);
         st.st_dev = entry.dev;
         st.st_gid = entry.gid as _;
         st.st_ino = entry.ino as _;
         st.st_mode = entry.mode;
         st.st_nlink = entry.nlink as _;
         st.st_rdev = entry.rdev;
-        st.st_size = if entry.size_set { entry.size } else { 0 };
+        st.st_size = if entry.size_set {
+            off_t_from_i64_clamped(entry.size)
+        } else {
+            0
+        };
         st.st_uid = entry.uid as _;
         entry.stat_cache = st;
         entry.stat_dirty = false;

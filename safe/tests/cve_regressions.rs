@@ -4,11 +4,13 @@ mod security_support;
 mod support;
 
 use std::collections::BTreeSet;
+use std::ffi::CString;
 use std::path::Path;
 
-use archive::common::error::ARCHIVE_OK;
+use archive::common::error::{ARCHIVE_FAILED, ARCHIVE_OK};
 use archive::ffi::archive_common as common;
 use archive::ffi::archive_entry_api as entry;
+use archive::ffi::archive_read as read;
 use archive::ffi::archive_write as write;
 
 #[test]
@@ -165,23 +167,115 @@ fn forward_progress_and_bounds_guards_cover_decoder_edge_cases() {
 
 #[test]
 fn i686_zisofs_pointer_table_overflow_is_rejected() {
-    let usize32 = u32::MAX as u64;
-    assert!(
-        archive::read::format::checked_zisofs_layout(7, u64::from(u32::MAX) << 7, usize32)
-            .is_none()
-    );
+    unsafe {
+        let reader = read::archive_read_new();
+        assert!(!reader.is_null());
+        assert_eq!(
+            ARCHIVE_OK,
+            read::archive_read_support_format_iso9660(reader)
+        );
+
+        let overflow_size = if usize::BITS <= 32 {
+            u64::from(u32::MAX) << 7
+        } else {
+            u64::MAX
+        };
+        let layout = CString::new(format!("7:{overflow_size}")).unwrap();
+        assert_eq!(
+            ARCHIVE_FAILED,
+            read::archive_read_set_format_option(
+                reader,
+                c"iso9660".as_ptr(),
+                c"zisofs-layout".as_ptr(),
+                layout.as_ptr(),
+            )
+        );
+
+        assert_eq!(ARCHIVE_OK, common::archive_read_free(reader));
+    }
 }
 
 #[test]
 fn i686_zisofs_block_shift_is_validated() {
-    let usize32 = u32::MAX as u64;
-    assert!(archive::read::format::checked_zisofs_layout(7, 4096, usize32).is_some());
-    assert!(archive::read::format::checked_zisofs_layout(6, 4096, usize32).is_none());
-    assert!(archive::read::format::checked_zisofs_layout(31, 4096, usize32).is_none());
+    unsafe {
+        let reader = read::archive_read_new();
+        assert!(!reader.is_null());
+        assert_eq!(
+            ARCHIVE_OK,
+            read::archive_read_support_format_iso9660(reader)
+        );
+
+        let valid = CString::new("7:4096").unwrap();
+        assert_eq!(
+            ARCHIVE_OK,
+            read::archive_read_set_option(
+                reader,
+                c"iso9660".as_ptr(),
+                c"zisofs-layout".as_ptr(),
+                valid.as_ptr(),
+            )
+        );
+
+        for invalid in ["6:4096", "31:4096"] {
+            let invalid = CString::new(invalid).unwrap();
+            assert_eq!(
+                ARCHIVE_FAILED,
+                read::archive_read_set_option(
+                    reader,
+                    c"iso9660".as_ptr(),
+                    c"zisofs-layout".as_ptr(),
+                    invalid.as_ptr(),
+                )
+            );
+        }
+
+        assert_eq!(ARCHIVE_OK, common::archive_read_free(reader));
+
+        let iso = security_support::write_zisofs_iso("zisofs.txt", b"zisofs payload");
+        let (pathname, data) = security_support::first_entry_from_memory(&iso);
+        assert_eq!("zisofs.txt", pathname);
+        assert_eq!(b"zisofs payload", data.as_slice());
+    }
 }
 
 #[test]
 fn i686_zstd_long_window_matches_ubuntu_patch_context() {
-    assert_eq!(26, archive::write::format::zstd_long_window_limit(32));
-    assert_eq!(27, archive::write::format::zstd_long_window_limit(64));
+    unsafe {
+        let writer = write::archive_write_new();
+        assert!(!writer.is_null());
+        assert_eq!(ARCHIVE_OK, write::archive_write_add_filter_zstd(writer));
+
+        let accepted = CString::new(if usize::BITS <= 32 { "26" } else { "27" }).unwrap();
+        assert_eq!(
+            ARCHIVE_OK,
+            write::archive_write_set_filter_option(
+                writer,
+                std::ptr::null(),
+                c"long".as_ptr(),
+                accepted.as_ptr(),
+            )
+        );
+
+        let rejected = CString::new(if usize::BITS <= 32 { "27" } else { "28" }).unwrap();
+        assert_eq!(
+            ARCHIVE_FAILED,
+            write::archive_write_set_filter_option(
+                writer,
+                std::ptr::null(),
+                c"long".as_ptr(),
+                rejected.as_ptr(),
+            )
+        );
+        assert_eq!(
+            ARCHIVE_FAILED,
+            write::archive_write_set_filter_option(
+                writer,
+                std::ptr::null(),
+                c"long".as_ptr(),
+                c"-1".as_ptr(),
+            )
+        );
+
+        assert_eq!(ARCHIVE_OK, common::archive_write_free(writer));
+    }
 }
