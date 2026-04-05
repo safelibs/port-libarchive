@@ -4,7 +4,10 @@ pub mod common {
     pub mod state;
 }
 
+pub mod entry;
 pub mod ffi;
+pub mod r#match;
+pub mod util;
 
 pub(crate) mod generated {
     include!(concat!(env!("OUT_DIR"), "/version.rs"));

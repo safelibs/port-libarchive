@@ -1,6 +1,6 @@
 use std::env;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 fn trim_component(component: &str) -> u32 {
     component
@@ -15,15 +15,19 @@ fn main() {
         env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR must be set for build.rs"),
     );
     let original_dir = manifest_dir.join("../original/libarchive-3.7.2");
+    let original_libarchive_dir = original_dir.join("libarchive");
     let version_path = original_dir.join("build/version");
     let cmake_path = original_dir.join("CMakeLists.txt");
     let configure_ac_path = original_dir.join("configure.ac");
     let map_path = manifest_dir.join("abi/libarchive.map");
+    let generated_config_dir = manifest_dir.join("generated/original_c_build");
+    let generated_config_path = generated_config_dir.join("config.h");
 
     println!("cargo:rerun-if-changed={}", version_path.display());
     println!("cargo:rerun-if-changed={}", cmake_path.display());
     println!("cargo:rerun-if-changed={}", configure_ac_path.display());
     println!("cargo:rerun-if-changed={}", map_path.display());
+    println!("cargo:rerun-if-changed={}", generated_config_path.display());
 
     let version_digits = fs::read_to_string(&version_path)
         .unwrap_or_else(|err| panic!("failed to read {}: {err}", version_path.display()))
@@ -89,6 +93,8 @@ pub const LIBARCHIVE_LIBTOOL_AGE: u32 = {libtool_age};
     fs::write(out_dir.join("version.rs"), version_rs)
         .unwrap_or_else(|err| panic!("failed to write generated version.rs: {err}"));
 
+    compile_foundation_c_sources(&original_libarchive_dir, &generated_config_dir);
+
     let target = env::var("TARGET").unwrap_or_default();
     if target.contains("linux") {
         println!(
@@ -96,5 +102,53 @@ pub const LIBARCHIVE_LIBTOOL_AGE: u32 = {libtool_age};
             map_path.display()
         );
         println!("cargo:rustc-cdylib-link-arg=-Wl,-soname,{}", soname);
+    }
+}
+
+fn compile_foundation_c_sources(original_libarchive_dir: &Path, generated_config_dir: &Path) {
+    let sources = [
+        "archive_acl.c",
+        "archive_check_magic.c",
+        "archive_entry.c",
+        "archive_entry_copy_stat.c",
+        "archive_entry_link_resolver.c",
+        "archive_entry_sparse.c",
+        "archive_entry_stat.c",
+        "archive_entry_strmode.c",
+        "archive_entry_xattr.c",
+        "archive_getdate.c",
+        "archive_match.c",
+        "archive_pathmatch.c",
+        "archive_random.c",
+        "archive_rb.c",
+        "archive_string.c",
+        "archive_string_sprintf.c",
+        "archive_util.c",
+        "archive_version_details.c",
+        "archive_virtual.c",
+    ];
+
+    let mut build = cc::Build::new();
+    build
+        .cargo_metadata(false)
+        .warnings(false)
+        .include(generated_config_dir)
+        .include(original_libarchive_dir)
+        .define("HAVE_CONFIG_H", "1");
+
+    for source in sources {
+        let path = original_libarchive_dir.join(source);
+        println!("cargo:rerun-if-changed={}", path.display());
+        build.file(path);
+    }
+
+    build.compile("archive_foundation");
+
+    let out_dir = PathBuf::from(env::var("OUT_DIR").expect("OUT_DIR must be set for build.rs"));
+    println!("cargo:rustc-link-search=native={}", out_dir.display());
+    println!("cargo:rustc-link-lib=static:+whole-archive=archive_foundation");
+
+    for library in ["bz2", "lz4", "lzma", "z", "zstd"] {
+        println!("cargo:rustc-link-lib={library}");
     }
 }
