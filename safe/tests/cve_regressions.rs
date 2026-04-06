@@ -1,5 +1,7 @@
 #![allow(warnings, clippy::all)]
 
+#[path = "libarchive/advanced/mod.rs"]
+mod advanced_support;
 #[path = "libarchive/security/mod.rs"]
 mod security_support;
 #[path = "support/mod.rs"]
@@ -8,17 +10,20 @@ mod support;
 use std::collections::BTreeSet;
 use std::ffi::CString;
 use std::path::Path;
+use std::ptr;
 
-use archive::common::error::{ARCHIVE_FAILED, ARCHIVE_OK};
+use archive::common::error::{ARCHIVE_EOF, ARCHIVE_FAILED, ARCHIVE_OK};
 use archive::ffi::archive_common as common;
 use archive::ffi::archive_entry_api as entry;
 use archive::ffi::archive_read as read;
+use archive::ffi::archive_read_disk as read_disk;
 use archive::ffi::archive_write as write;
 
 #[test]
 fn matrix_covers_relevant_cves_and_verification_targets_are_present() {
     let relevant = security_support::load_json("relevant_cves.json");
     let matrix = security_support::load_json("safe/generated/cve_matrix.json");
+    let safe_root = Path::new(env!("CARGO_MANIFEST_DIR"));
 
     let relevant_ids = security_support::cve_ids(&relevant, "records")
         .into_iter()
@@ -36,9 +41,28 @@ fn matrix_covers_relevant_cves_and_verification_targets_are_present() {
         assert!(row["required_controls"]
             .as_array()
             .is_some_and(|controls| !controls.is_empty()));
-        assert!(row["verification"]
-            .as_str()
-            .is_some_and(|value| !value.is_empty()));
+        let verification = row["verification"].as_str().expect("verification");
+        assert!(!verification.is_empty());
+
+        let tokens = verification.split_whitespace().collect::<Vec<_>>();
+        assert!(!tokens.is_empty());
+        match tokens[0] {
+            "./scripts/check-i686-cve.sh" | "./scripts/run-upstream-c-tests.sh" => {
+                let script = safe_root.join(tokens[0].trim_start_matches("./"));
+                assert!(script.exists(), "missing verification script {script:?}");
+            }
+            "cargo" => {
+                assert_eq!(Some(&"test"), tokens.get(1));
+                assert_eq!(Some(&"--test"), tokens.get(2));
+                let test_bin = tokens.get(3).expect("cargo test binary");
+                let test_file = safe_root.join("tests").join(format!("{test_bin}.rs"));
+                assert!(
+                    test_file.exists(),
+                    "missing verification test file {test_file:?}"
+                );
+            }
+            other => panic!("unsupported verification target {other}"),
+        }
     }
 }
 
@@ -165,6 +189,122 @@ fn forward_progress_and_bounds_guards_cover_decoder_edge_cases() {
     assert!(!archive::read::format::longlink_complete(b"name"));
     assert!(archive::read::format::cpio_symlink_size_ok(4, 4));
     assert!(!archive::read::format::cpio_symlink_size_ok(5, 4));
+}
+
+#[test]
+fn callback_reader_extract2_streams_multiple_blocks_through_rust_guard() {
+    let payload = vec![b'x'; 32 * 1024];
+    let archive = unsafe {
+        advanced_support::write_single_entry_archive("streamed.txt", &payload, |writer| {
+            assert_eq!(ARCHIVE_OK, write::archive_write_set_format_pax(writer));
+        })
+    };
+    let temp = support::TempDir::new("cve-callback-extract");
+    let _cwd = support::pushd(temp.path());
+
+    unsafe {
+        let reader = read::archive_read_new();
+        assert!(!reader.is_null());
+        let mut state = security_support::CallbackReader::new(&archive, 257);
+        assert_eq!(
+            ARCHIVE_OK,
+            security_support::open_reader_with_callbacks(reader, &mut state)
+        );
+
+        let mut raw_entry = ptr::null_mut();
+        assert_eq!(
+            ARCHIVE_OK,
+            read::archive_read_next_header(reader, &mut raw_entry)
+        );
+
+        let disk = security_support::secure_disk_writer();
+        assert_eq!(
+            ARCHIVE_OK,
+            read::archive_read_extract2(reader, raw_entry, disk)
+        );
+        assert_eq!(ARCHIVE_OK, common::archive_write_free(disk));
+        assert_eq!(ARCHIVE_OK, common::archive_read_free(reader));
+
+        assert_eq!(1, state.opens);
+        assert_eq!(1, state.closes);
+        assert!(state.read_calls > 1);
+    }
+
+    assert_eq!(payload, support::read_file(Path::new("streamed.txt")));
+}
+
+#[test]
+fn disk_reader_skip_covers_sparse_monotonic_block_offsets() {
+    unsafe fn seek_to_sparse_file(
+        reader: *mut archive::ffi::archive,
+        entry_ptr: *mut archive::ffi::archive_entry,
+    ) {
+        loop {
+            let status = read::archive_read_next_header2(reader, entry_ptr);
+            assert!(matches!(status, ARCHIVE_OK | ARCHIVE_EOF));
+            assert_eq!(ARCHIVE_OK, status, "expected sparse.bin entry");
+            let pathname = std::ffi::CStr::from_ptr(entry::archive_entry_pathname(entry_ptr))
+                .to_string_lossy()
+                .into_owned();
+            if pathname.ends_with("sparse.bin") {
+                return;
+            }
+            if read_disk::archive_read_disk_can_descend(reader) == 1 {
+                assert_eq!(ARCHIVE_OK, read_disk::archive_read_disk_descend(reader));
+            }
+        }
+    }
+
+    let temp = support::TempDir::new("cve-disk-skip");
+    let _cwd = support::pushd(temp.path());
+    support::make_dir(Path::new("root"));
+    security_support::write_sparse_file(
+        Path::new("root/sparse.bin"),
+        1 << 20,
+        &[(0, b"A"), (1 << 19, b"B")],
+    );
+
+    unsafe {
+        let reader = read_disk::archive_read_disk_new();
+        assert!(!reader.is_null());
+        assert_eq!(
+            ARCHIVE_OK,
+            read_disk::archive_read_disk_open(reader, c"root".as_ptr())
+        );
+        let entry_ptr = entry::archive_entry_new();
+        assert!(!entry_ptr.is_null());
+        seek_to_sparse_file(reader, entry_ptr);
+
+        let mut blocks = Vec::new();
+        loop {
+            let mut block = ptr::null();
+            let mut size = 0usize;
+            let mut offset = 0i64;
+            let status = read::archive_read_data_block(reader, &mut block, &mut size, &mut offset);
+            if status == ARCHIVE_EOF {
+                break;
+            }
+            assert_eq!(ARCHIVE_OK, status);
+            blocks.push((offset, size));
+        }
+        assert!(blocks.len() >= 2, "expected multiple sparse data blocks");
+        assert!(blocks.windows(2).all(|pair| pair[1].0 > pair[0].0));
+        entry::archive_entry_free(entry_ptr);
+        assert_eq!(ARCHIVE_OK, common::archive_read_free(reader));
+
+        let reader = read_disk::archive_read_disk_new();
+        assert!(!reader.is_null());
+        assert_eq!(
+            ARCHIVE_OK,
+            read_disk::archive_read_disk_open(reader, c"root".as_ptr())
+        );
+        let entry_ptr = entry::archive_entry_new();
+        assert!(!entry_ptr.is_null());
+        seek_to_sparse_file(reader, entry_ptr);
+        assert_eq!(ARCHIVE_OK, read::archive_read_data_skip(reader));
+        entry::archive_entry_free(entry_ptr);
+        assert_eq!(ARCHIVE_OK, common::archive_read_free(reader));
+    }
 }
 
 #[test]

@@ -87,15 +87,15 @@ fn advanced_zip_option_wrappers_cover_compression_and_passphrase_callback() {
         assert_eq!(ARCHIVE_OK, write::archive_write_set_format_zip(writer));
         assert_eq!(
             ARCHIVE_OK,
-            write::archive_write_set_options(writer, std::ptr::null())
+            options::archive_write_set_options(writer, std::ptr::null())
         );
         assert_eq!(
             ARCHIVE_FAILED,
-            write::archive_write_set_passphrase(writer, std::ptr::null())
+            options::archive_write_set_passphrase(writer, std::ptr::null())
         );
         assert_eq!(
             ARCHIVE_OK,
-            write::archive_write_set_passphrase_callback(
+            options::archive_write_set_passphrase_callback(
                 writer,
                 std::ptr::null_mut(),
                 Some(zip_passphrase_callback),
@@ -111,4 +111,45 @@ fn advanced_zip_option_wrappers_cover_compression_and_passphrase_callback() {
         );
         assert_eq!(ARCHIVE_OK, common::archive_write_free(writer));
     }
+}
+
+#[test]
+fn advanced_option_module_round_trips_real_iso9660_path() {
+    let payload = b"wrapped payload";
+    let iso = unsafe {
+        advanced_support::write_single_entry_archive("wrapped.txt", payload, |writer| {
+            let format = CString::new("iso9660").unwrap();
+            assert_eq!(
+                ARCHIVE_OK,
+                write::archive_write_set_format_by_name(writer, format.as_ptr())
+            );
+            assert_eq!(
+                ARCHIVE_OK,
+                options::archive_write_set_option(
+                    writer,
+                    std::ptr::null(),
+                    c"zisofs".as_ptr(),
+                    c"1".as_ptr(),
+                )
+            );
+        })
+    };
+
+    let (pathname, data) = unsafe {
+        advanced_support::first_entry_from_memory_with_reader(&iso, |reader| {
+            let layout = CString::new("7:4096").unwrap();
+            assert_eq!(
+                ARCHIVE_OK,
+                options::archive_read_set_format_option(
+                    reader,
+                    c"iso9660".as_ptr(),
+                    c"zisofs-layout".as_ptr(),
+                    layout.as_ptr(),
+                )
+            );
+        })
+    };
+
+    assert_eq!("wrapped.txt", pathname);
+    assert_eq!(payload, data.as_slice());
 }

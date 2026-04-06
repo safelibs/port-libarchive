@@ -31,7 +31,7 @@
         "bind filter and copy operations to the active window bounds before decoding",
         "treat inconsistent decoder state transitions as hard parse failures"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+      "verification": "./scripts/run-upstream-c-tests.sh libarchive advanced_formats"
     },
     {
       "cve_id": "CVE-2026-4111",
@@ -41,7 +41,7 @@
         "bound decompressor work relative to consumed bytes",
         "treat checksum-valid archives as still untrusted for progress guarantees"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+      "verification": "cargo test --test cve_regressions -- --exact callback_reader_extract2_streams_multiple_blocks_through_rust_guard"
     },
     {
       "cve_id": "CVE-2025-5916",
@@ -51,7 +51,7 @@
         "use checked arithmetic when adding framing overhead to claimed body sizes",
         "cap read, skip, and allocation paths derived from WARC length metadata"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact checked_arithmetic_helpers_cover_legacy_and_advanced_formats"
+      "verification": "./scripts/run-upstream-c-tests.sh libarchive advanced_formats"
     },
     {
       "cve_id": "CVE-2025-5915",
@@ -61,7 +61,7 @@
         "reject archives that require copying or reading beyond the decoder window",
         "keep filter execution state synchronized with window-size updates"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+      "verification": "./scripts/run-upstream-c-tests.sh libarchive advanced_formats"
     },
     {
       "cve_id": "CVE-2025-5914",
@@ -71,7 +71,7 @@
         "reject entries whose derived seek positions wrap or move backward unexpectedly",
         "keep reader state transitions single-owner and monotonic across seek calculations"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact checked_arithmetic_helpers_cover_legacy_and_advanced_formats"
+      "verification": "cargo test --test cve_regressions -- --exact disk_reader_skip_covers_sparse_monotonic_block_offsets"
     },
     {
       "cve_id": "CVE-2024-57970",
@@ -81,7 +81,7 @@
         "require complete name termination before longlink material is consumed",
         "keep path-buffer length bookkeeping synchronized with truncated input"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+      "verification": "./scripts/run-upstream-c-tests.sh libarchive advanced_formats"
     },
     {
       "cve_id": "CVE-2024-48958",
@@ -91,7 +91,7 @@
         "reject filters whose computed `src` position runs past `dst`",
         "keep filter-state transitions explicit and bounds-checked"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+      "verification": "./scripts/run-upstream-c-tests.sh libarchive advanced_formats"
     },
     {
       "cve_id": "CVE-2024-48957",
@@ -101,7 +101,7 @@
         "forbid filter state that allows `src` to advance beyond `dst`",
         "convert inconsistent filter metadata into a hard decode error"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+      "verification": "./scripts/run-upstream-c-tests.sh libarchive advanced_formats"
     },
     {
       "cve_id": "CVE-2024-37407",
@@ -111,7 +111,7 @@
         "keep name-length checks consistent between local and central directory parsing",
         "avoid deriving path or metadata state from zero-length names without an explicit rule"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+      "verification": "./scripts/run-upstream-c-tests.sh libarchive advanced_formats"
     },
     {
       "cve_id": "CVE-2023-30571",
@@ -151,7 +151,7 @@
         "reject corrupted headers before any derived cursor movement or allocation",
         "require header length fields to fit the remaining input window"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+      "verification": "./scripts/run-upstream-c-tests.sh libarchive advanced_formats"
     },
     {
       "cve_id": "CVE-2019-1000020",
@@ -161,7 +161,7 @@
         "guarantee progress on every Rock Ridge parsing step",
         "fail closed when a continuation record repeats or regresses"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+      "verification": "cargo test --test cve_regressions -- --exact callback_reader_extract2_streams_multiple_blocks_through_rust_guard"
     },
     {
       "cve_id": "CVE-2018-1000880",
@@ -171,7 +171,7 @@
         "reject implausible body lengths before streaming work begins",
         "budget CPU and disk work for records that expand attacker-controlled content"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+      "verification": "cargo test --test cve_regressions -- --exact callback_reader_extract2_streams_multiple_blocks_through_rust_guard"
     },
     {
       "cve_id": "CVE-2016-8689",
@@ -181,7 +181,7 @@
         "bound EmptyStream-derived indexing against the file count",
         "treat repeated or contradictory header attributes as malformed input"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+      "verification": "./scripts/run-upstream-c-tests.sh libarchive advanced_formats"
     },
     {
       "cve_id": "CVE-2016-8688",
@@ -191,7 +191,7 @@
         "enforce maximum line sizes before extending the lookahead buffer",
         "recompute parser cursors after read-ahead growth instead of assuming prior offsets stay valid"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+      "verification": "./scripts/run-upstream-c-tests.sh libarchive advanced_formats"
     },
     {
       "cve_id": "CVE-2016-7166",
@@ -201,7 +201,7 @@
         "cap total decompressed output and intermediate expansion",
         "surface hard failure instead of continuing after budget exhaustion"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+      "verification": "cargo test --test cve_regressions -- --exact callback_reader_extract2_streams_multiple_blocks_through_rust_guard"
     },
     {
       "cve_id": "CVE-2016-6250",
@@ -211,7 +211,7 @@
         "reject filenames whose encoded size exceeds format limits before buffer or record construction",
         "avoid lossy conversions between host lengths and on-disk field widths"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact checked_arithmetic_helpers_cover_legacy_and_advanced_formats"
+      "verification": "./scripts/run-upstream-c-tests.sh libarchive advanced_formats"
     },
     {
       "cve_id": "CVE-2016-5418",
@@ -231,7 +231,7 @@
         "reject entries whose declared symlink length exceeds the remaining archive data",
         "treat oversized or truncated symlink metadata as a hard parse error"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+      "verification": "./scripts/run-upstream-c-tests.sh libarchive advanced_formats"
     },
     {
       "cve_id": "CVE-2016-5844",
@@ -241,7 +241,7 @@
         "reject records whose claimed layout cannot fit within the input",
         "treat arithmetic overflow as a parse error, not a recoverable condition"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact checked_arithmetic_helpers_cover_legacy_and_advanced_formats"
+      "verification": "cargo test --test advanced_formats -- --exact advanced_option_module_round_trips_real_iso9660_path"
     },
     {
       "cve_id": "CVE-2016-4300",
@@ -251,7 +251,7 @@
         "use checked multiplication when sizing per-substream tables",
         "reject metadata whose aggregate decoded structure cannot fit in memory or the input model"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact checked_arithmetic_helpers_cover_legacy_and_advanced_formats"
+      "verification": "./scripts/run-upstream-c-tests.sh libarchive advanced_formats"
     },
     {
       "cve_id": "CVE-2015-8933",
@@ -261,7 +261,7 @@
         "reject tar entries whose claimed size would wrap or exceed the remaining stream",
         "preserve monotonic reader-position invariants across skip operations"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact checked_arithmetic_helpers_cover_legacy_and_advanced_formats"
+      "verification": "cargo test --test cve_regressions -- --exact disk_reader_skip_covers_sparse_monotonic_block_offsets"
     },
     {
       "cve_id": "CVE-2015-8932",
@@ -271,7 +271,7 @@
         "bound compression parameters to the format's legal range",
         "convert malformed bidder state into an early parse error"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact checked_arithmetic_helpers_cover_legacy_and_advanced_formats"
+      "verification": "./scripts/run-upstream-c-tests.sh libarchive advanced_formats"
     },
     {
       "cve_id": "CVE-2015-8931",
@@ -281,7 +281,7 @@
         "reject mtree values outside representable bounds",
         "keep min and max helper logic free of wraparound assumptions"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact checked_arithmetic_helpers_cover_legacy_and_advanced_formats"
+      "verification": "./scripts/run-upstream-c-tests.sh libarchive advanced_formats"
     },
     {
       "cve_id": "CVE-2015-8930",
@@ -291,7 +291,7 @@
         "bound directory walk depth and node revisits",
         "fail closed when parent-child relationships are inconsistent"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+      "verification": "./scripts/run-upstream-c-tests.sh libarchive advanced_formats"
     },
     {
       "cve_id": "CVE-2015-8923",
@@ -301,7 +301,7 @@
         "check every cursor advance against the available buffer",
         "reject malformed ZIP extra fields before partial parsing mutates state"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact checked_arithmetic_helpers_cover_legacy_and_advanced_formats"
+      "verification": "./scripts/run-upstream-c-tests.sh libarchive advanced_formats"
     },
     {
       "cve_id": "CVE-2015-2304",
@@ -321,7 +321,7 @@
         "reject host-side lengths that cannot be represented in the target ZIP encoding",
         "test writer behavior on both 32-bit and 64-bit platforms"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact checked_arithmetic_helpers_cover_legacy_and_advanced_formats"
+      "verification": "./scripts/run-upstream-c-tests.sh libarchive advanced_formats"
     },
     {
       "cve_id": "CVE-2007-3644",
@@ -331,7 +331,7 @@
         "treat EOF inside an extended header as a hard parse failure",
         "bound the number of malformed-record recovery attempts"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+      "verification": "cargo test --test cve_regressions -- --exact callback_reader_extract2_streams_multiple_blocks_through_rust_guard"
     },
     {
       "cve_id": "CVE-2006-5680",
@@ -341,7 +341,7 @@
         "treat repeated zero-byte reads during a skip as fatal",
         "maintain monotonic stream-position invariants in the reader core"
       ],
-      "verification": "cargo test --test cve_regressions -- --exact forward_progress_and_bounds_guards_cover_decoder_edge_cases"
+      "verification": "cargo test --test cve_regressions -- --exact disk_reader_skip_covers_sparse_monotonic_block_offsets"
     }
   ]
 }

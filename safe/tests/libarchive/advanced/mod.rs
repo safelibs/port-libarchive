@@ -53,33 +53,46 @@ where
 }
 
 pub unsafe fn first_entry_from_memory(bytes: &[u8]) -> (String, Vec<u8>) {
+    first_entry_from_memory_with_reader(bytes, |_| {})
+}
+
+pub unsafe fn first_entry_from_memory_with_reader<F>(
+    bytes: &[u8],
+    configure: F,
+) -> (String, Vec<u8>)
+where
+    F: FnOnce(*mut archive::ffi::archive),
+{
     let reader = read::archive_read_new();
     assert!(!reader.is_null());
     assert_eq!(ARCHIVE_OK, read::archive_read_support_filter_all(reader));
     assert_eq!(ARCHIVE_OK, read::archive_read_support_format_all(reader));
+    configure(reader);
     assert_eq!(
         ARCHIVE_OK,
         read::archive_read_open_memory(reader, bytes.as_ptr().cast(), bytes.len())
     );
 
     let mut raw_entry = ptr::null_mut();
-    assert_eq!(
-        ARCHIVE_OK,
-        read::archive_read_next_header(reader, &mut raw_entry)
-    );
-    let pathname = std::ffi::CStr::from_ptr(entry::archive_entry_pathname(raw_entry))
-        .to_string_lossy()
-        .into_owned();
+    loop {
+        assert_eq!(
+            ARCHIVE_OK,
+            read::archive_read_next_header(reader, &mut raw_entry)
+        );
+        if entry::archive_entry_filetype(raw_entry) == entry::AE_IFDIR {
+            assert_eq!(ARCHIVE_OK, read::archive_read_data_skip(reader));
+            continue;
+        }
 
-    let mut data = vec![0u8; 4096];
-    let read_size = read::archive_read_data(reader, data.as_mut_ptr().cast(), data.len());
-    assert!(read_size >= 0);
-    data.truncate(read_size as usize);
+        let pathname = std::ffi::CStr::from_ptr(entry::archive_entry_pathname(raw_entry))
+            .to_string_lossy()
+            .into_owned();
+        let mut data = vec![0u8; 4096];
+        let read_size = read::archive_read_data(reader, data.as_mut_ptr().cast(), data.len());
+        assert!(read_size >= 0);
+        data.truncate(read_size as usize);
 
-    assert_eq!(
-        ARCHIVE_EOF,
-        read::archive_read_next_header(reader, &mut raw_entry)
-    );
-    assert_eq!(ARCHIVE_OK, common::archive_read_free(reader));
-    (pathname, data)
+        assert_eq!(ARCHIVE_OK, common::archive_read_free(reader));
+        return (pathname, data);
+    }
 }

@@ -1,6 +1,9 @@
 #![allow(dead_code)]
 
+use std::fs::File;
+use std::io::{Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
+use std::{ffi::c_void, ptr};
 
 use archive::common::error::{ARCHIVE_EOF, ARCHIVE_OK};
 use archive::ffi::archive_common as common;
@@ -25,6 +28,116 @@ pub fn cve_ids(value: &Value, key: &str) -> Vec<String> {
         .iter()
         .map(|row| row["cve_id"].as_str().expect("cve id").to_string())
         .collect()
+}
+
+pub struct CallbackReader {
+    pub bytes: Vec<u8>,
+    pub cursor: usize,
+    pub chunk_size: usize,
+    pub scratch: Vec<u8>,
+    pub opens: usize,
+    pub closes: usize,
+    pub read_calls: usize,
+}
+
+impl CallbackReader {
+    pub fn new(bytes: &[u8], chunk_size: usize) -> Self {
+        Self {
+            bytes: bytes.to_vec(),
+            cursor: 0,
+            chunk_size,
+            scratch: Vec::new(),
+            opens: 0,
+            closes: 0,
+            read_calls: 0,
+        }
+    }
+}
+
+pub unsafe extern "C" fn open_callback(
+    _archive: *mut archive::ffi::archive,
+    client_data: *mut c_void,
+) -> i32 {
+    let state = &mut *(client_data as *mut CallbackReader);
+    state.opens += 1;
+    state.cursor = 0;
+    ARCHIVE_OK
+}
+
+pub unsafe extern "C" fn read_callback(
+    _archive: *mut archive::ffi::archive,
+    client_data: *mut c_void,
+    buffer: *mut *const c_void,
+) -> isize {
+    let state = &mut *(client_data as *mut CallbackReader);
+    if state.cursor >= state.bytes.len() {
+        if !buffer.is_null() {
+            *buffer = ptr::null();
+        }
+        return 0;
+    }
+
+    let end = (state.cursor + state.chunk_size).min(state.bytes.len());
+    state.scratch.clear();
+    state
+        .scratch
+        .extend_from_slice(&state.bytes[state.cursor..end]);
+    state.cursor = end;
+    state.read_calls += 1;
+    if !buffer.is_null() {
+        *buffer = state.scratch.as_ptr().cast();
+    }
+    state.scratch.len() as isize
+}
+
+pub unsafe extern "C" fn skip_callback(
+    _archive: *mut archive::ffi::archive,
+    client_data: *mut c_void,
+    request: i64,
+) -> i64 {
+    let state = &mut *(client_data as *mut CallbackReader);
+    let remaining = state.bytes.len().saturating_sub(state.cursor);
+    let skip = remaining.min(request.max(0) as usize);
+    state.cursor += skip;
+    skip as i64
+}
+
+pub unsafe extern "C" fn close_callback(
+    _archive: *mut archive::ffi::archive,
+    client_data: *mut c_void,
+) -> i32 {
+    let state = &mut *(client_data as *mut CallbackReader);
+    state.closes += 1;
+    ARCHIVE_OK
+}
+
+pub unsafe fn open_reader_with_callbacks(
+    reader: *mut archive::ffi::archive,
+    state: *mut CallbackReader,
+) -> i32 {
+    assert_eq!(ARCHIVE_OK, read::archive_read_support_filter_all(reader));
+    assert_eq!(ARCHIVE_OK, read::archive_read_support_format_all(reader));
+    read::archive_read_open2(
+        reader,
+        state.cast(),
+        Some(open_callback),
+        Some(read_callback),
+        Some(skip_callback),
+        Some(close_callback),
+    )
+}
+
+pub fn write_sparse_file(path: &Path, length: u64, extents: &[(u64, &[u8])]) {
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).expect("create sparse parent");
+    }
+    let mut file = File::create(path).expect("create sparse file");
+    file.set_len(length).expect("set sparse length");
+    for (offset, data) in extents {
+        file.seek(SeekFrom::Start(*offset))
+            .expect("seek sparse extent");
+        file.write_all(data).expect("write sparse extent");
+    }
 }
 
 pub unsafe fn secure_disk_writer() -> *mut archive::ffi::archive {
