@@ -1,0 +1,998 @@
+name: libarchive-safe-port
+backend: codex
+phases:
+  - id: impl_safe_scaffold
+    type: implement
+    bounce_target: null
+    prompt: |
+      You are implementing `impl_safe_scaffold`.
+
+      This prompt is self-contained. Consume or update existing repository artifacts in place. Do not refetch, recollect, rediscover, or regenerate checked-in or already-generated local artifacts from scratch when they already exist. Keep `original/` immutable. Derive reusable phase-1 artifacts from the checked-in sources and preserve them so later phases consume those artifacts in place instead of rebuilding or reinventing them.
+
+      Preexisting Inputs:
+      - `original/libarchive-3.7.2/libarchive/archive.h`
+      - `original/libarchive-3.7.2/libarchive/archive_entry.h`
+      - `original/libarchive-3.7.2/configure.ac`
+      - `original/libarchive-3.7.2/config.h.in`
+      - `original/libarchive-3.7.2/build/autogen.sh`
+      - `original/libarchive-3.7.2/build/version`
+      - `original/libarchive-3.7.2/CMakeLists.txt`
+      - `original/libarchive-3.7.2/Makefile.am`
+      - `original/libarchive-3.7.2/build/pkgconfig/libarchive.pc.in`
+      - `original/libarchive-3.7.2/libarchive/CMakeLists.txt`
+      - `original/libarchive-3.7.2/libarchive/test/CMakeLists.txt`
+      - `original/libarchive-3.7.2/tar/test/CMakeLists.txt`
+      - `original/libarchive-3.7.2/cpio/test/CMakeLists.txt`
+      - `original/libarchive-3.7.2/cat/test/CMakeLists.txt`
+      - `original/libarchive-3.7.2/unzip/test/CMakeLists.txt`
+      - `original/libarchive-3.7.2/test_utils/test_common.h`
+      - `original/libarchive-3.7.2/test_utils/test_main.c`
+      - `original/libarchive-3.7.2/debian/control`
+      - `original/libarchive-3.7.2/debian/rules`
+      - `original/libarchive-3.7.2/debian/libarchive-dev.docs`
+      - `original/libarchive-3.7.2/debian/libarchive13t64.symbols`
+      - `original/libarchive-3.7.2/debian/tests/control`
+      - `original/libarchive-3.7.2/debian/tests/minitar`
+      - `original/libarchive-3.7.2/debian/patches/series`
+      - `original/libarchive-3.7.2/examples/minitar/minitar.c`
+      - `original/libarchive-3.7.2/examples/untar.c`
+      - `original/libarchive-3.7.2/libarchive/test/`
+      - `original/libarchive-3.7.2/tar/test/`
+      - `original/libarchive-3.7.2/cpio/test/`
+      - `original/libarchive-3.7.2/cat/test/`
+      - `original/libarchive-3.7.2/unzip/test/`
+      - `test-original.sh`
+      - `dependents.json`
+      - `relevant_cves.json`
+
+      New Outputs:
+      - `safe/Cargo.toml`
+      - `safe/build.rs`
+      - `safe/src/lib.rs`
+      - `safe/src/common/error.rs`
+      - `safe/src/common/state.rs`
+      - `safe/src/common/panic_boundary.rs`
+      - `safe/src/ffi/mod.rs`
+      - `safe/src/ffi/bootstrap.rs`
+      - `safe/include/archive.h`
+      - `safe/include/archive_entry.h`
+      - `safe/pkgconfig/libarchive.pc.in`
+      - `safe/config/libarchive_test_phase_groups.json`
+      - `safe/abi/libarchive.map`
+      - `safe/abi/exported_symbols.txt`
+      - `safe/abi/original_exported_symbols.txt`
+      - `safe/abi/original_version_info.txt`
+      - `safe/generated/api_inventory.json`
+      - `safe/generated/link_compat_manifest.json`
+      - `safe/generated/original_build_contract.json`
+      - `safe/generated/original_link_objects/**`
+      - `safe/generated/original_c_build/config.h`
+      - `safe/generated/original_c_build/libarchive/test/list.h`
+      - `safe/generated/original_c_build/tar/test/list.h`
+      - `safe/generated/original_c_build/cpio/test/list.h`
+      - `safe/generated/original_c_build/cat/test/list.h`
+      - `safe/generated/original_c_build/unzip/test/list.h`
+      - `safe/generated/original_pkgconfig/libarchive.pc`
+      - `safe/generated/pkgconfig/libarchive.pc`
+      - `safe/generated/test_manifest.json`
+      - `safe/generated/original_package_metadata.json`
+      - `safe/scripts/build-original-oracle.sh`
+      - `safe/scripts/check-abi.sh`
+      - `safe/scripts/check-source-compat.sh`
+      - `safe/scripts/render-pkg-config.sh`
+      - `safe/scripts/run-upstream-c-tests.sh`
+      - `safe/tools/gen_api_inventory.py`
+      - `safe/tools/gen_link_compat_manifest.py`
+      - `safe/tools/gen_test_manifest.py`
+
+      Required work:
+      - Create the initial `safe/` Cargo package and build glue. The library name must be `archive`, and the crate types must include at least `cdylib` and `staticlib` so the build emits `libarchive.so` and `libarchive.a`.
+      - Copy `original/libarchive-3.7.2/libarchive/archive.h` and `original/libarchive-3.7.2/libarchive/archive_entry.h` verbatim into `safe/include/`. Later phases may not replace them with generated headers.
+      - Derive version values from the oracle instead of hardcoding them. Read `original/libarchive-3.7.2/build/version` and the SOVERSION logic in `original/libarchive-3.7.2/CMakeLists.txt`, and verify the resulting values are `ARCHIVE_VERSION_NUMBER = 3007002`, package version `3.7.2`, and SONAME `libarchive.so.13`.
+      - Copy `original/libarchive-3.7.2/build/pkgconfig/libarchive.pc.in` into `safe/pkgconfig/libarchive.pc.in`. Implement `./scripts/render-pkg-config.sh` so it renders `safe/generated/pkgconfig/libarchive.pc` for the current build tree. Its `--check` mode must be read-only and must compare the normalized non-path contract of the rendered safe file against `safe/generated/original_pkgconfig/libarchive.pc`, allowing only `prefix`, `exec_prefix`, `libdir`, and `includedir` to differ.
+      - Implement `./scripts/build-original-oracle.sh` so it performs all phase-1 oracle captures in one deterministic write pass and a separate read-only `--check` pass. It must:
+        - build the local original Debian package in a temporary working directory and extract the produced `libarchive13t64_*.deb` and `libarchive-dev_*.deb`
+        - record the exact defined dynamic symbol list and exact ELF version-info output
+        - write `safe/generated/original_package_metadata.json` with at least the package version, Debian revision, multiarch triplet, runtime shared-library install path, development `pkg-config` install path, and produced `.deb` filenames needed by later checks
+        - capture the installed original `pkg-config` contract as `safe/generated/original_pkgconfig/libarchive.pc`
+        - create a separate out-of-tree Autotools build of `original/libarchive-3.7.2/` using the effective Debian configure contract from `debian/rules`, then copy the resulting `config.h` plus generated suite `list.h` files into `safe/generated/original_c_build/`
+        - build and preserve the original-built consumer object set required for later link compatibility
+        - derive the `libarchive_test` consumer-source list from the checked-in `original/libarchive-3.7.2/libarchive/test/CMakeLists.txt` target `libarchive_test_SOURCES`, cross-check it against `original/libarchive-3.7.2/Makefile.am` by subtracting `$(libarchive_la_SOURCES)` and ignoring `test.h`, and preserve only consumer objects from `../../test_utils/test_utils.c`, `../../test_utils/test_main.c`, `read_open_memory.c`, and `test_*.c`
+        - copy only those preserved consumer objects into `safe/generated/original_link_objects/libarchive_test/`
+        - record any non-libarchive link dependencies in `safe/generated/link_compat_manifest.json` as extra libraries, but do not preserve, copy, or later relink any original libarchive implementation object or `archive_static` member
+        - compile `original/libarchive-3.7.2/examples/minitar/minitar.c` and `original/libarchive-3.7.2/examples/untar.c` to preserved original-built objects using the captured original headers and `safe/generated/original_pkgconfig/libarchive.pc`, then copy them into `safe/generated/original_link_objects/examples/`
+        - write `safe/generated/original_build_contract.json` describing the reusable original C-suite compile contract, including generated-header paths, suite-specific generated `list.h` paths, ordered include roots, and required preprocessor defines
+        - require later C-oracle builds to search headers in this order: `safe/include`, then `safe/generated/original_c_build`, then `safe/generated/original_c_build/<suite>/test`, and only then the original internal and test-harness source roots
+        - in `--check` mode, validate that every required output already exists, counts still match the fixed expectations, `safe/generated/original_pkgconfig/libarchive.pc` and `safe/generated/original_link_objects/**` are present, the `libarchive_test` snapshot contains only preserved consumer objects from `test_utils/*.c` and `libarchive/test/{read_open_memory.c,test_*.c}`, and no package build, autoreconf, configure, make, or object recompilation is performed
+      - Implement `safe/generated/api_inventory.json` as the authoritative inventory for later phases. Derive it from the copied public headers, the live entries in `debian/libarchive13t64.symbols`, and the captured original shared-object export list. Discard `#MISSING:` historical lines, the `* Build-Depends-Package` directive, and any symbol name absent from the captured original export list. Classify each remaining symbol as `header-declared public API`, `deprecated compatibility alias`, or `live symbol-file-only export that still must remain link-compatible`.
+      - Implement `safe/config/libarchive_test_phase_groups.json` as a checked-in deterministic classification table for the 604 source-defined `libarchive/test` entries present in `safe/generated/original_c_build/libarchive/test/list.h`. Derive it only from the defining `source_file`; every `DEFINE_TEST(...)` row from the same source file must receive the same `phase_group`; no source file may be split across phases. Apply the exact ordered rules from the phase specification and preserve the fixed counts `foundation = 16`, `write_disk = 73`, `read_mainstream = 147`, and `advanced_formats = 368`.
+      - Implement `safe/generated/test_manifest.json` as the authoritative test inventory for later phases. Generate it from `safe/generated/original_c_build/*/test/list.h` as the primary ordered inventory and use source-file scanning only to map each `DEFINE_TEST(...)` name back to its defining source file and fixture references. Each row must record at least `suite`, `define_test`, `source_file`, `suite_order`, `fixture_refs`, and `phase_group`.
+      - `safe/tools/gen_test_manifest.py` must fail if any generated suite `list.h` entry is missing from the manifest, if any `libarchive/test` entry is missing from `safe/config/libarchive_test_phase_groups.json`, if the phase-group table contains an unknown or duplicate name, if any `DEFINE_TEST(...)` entry found by source scanning is absent from the generated `list.h` snapshot, or if the fixed counts do not hold. For `tar/test`, `cpio/test`, `cat/test`, and `unzip/test`, the generated `phase_group` value must be the literal `all`.
+      - Implement `safe/generated/link_compat_manifest.json` as the authoritative object-link inventory for later phases. It must contain explicit target records for `libarchive_test`, `minitar`, and `untar`, plus the preserved original-built object membership for those targets. For each target, record at least the final link target name, ordered object list, any additional non-libarchive libraries needed at link time, whether the target must be run as part of link-compat verification, and a `run_contract` object when runnable.
+      - The `run_contract` schema must be specific enough that `./scripts/check-link-compat.sh` can execute it without guessing. Record the working-directory policy, setup actions, exact argv, named fixture roots, environment overrides, expected exit status for each run, and required post-run assertions. Preserve the fixed runnable-target contracts for `libarchive_test`, `minitar`, and `untar` exactly as specified by the phase file.
+      - Add the minimal exported functions needed for smoke builds and ABI inventory checks: `archive_version_number`, `archive_version_string`, `archive_version_details`, `archive_read_new`, `archive_write_new`, `archive_read_disk_new`, `archive_write_disk_new`, `archive_entry_new`, `archive_entry_new2`, `archive_match_new`, `archive_free`, `archive_read_free`, `archive_write_free`, `archive_entry_free`, and `archive_match_free`. Stub behavior is acceptable in this phase if the ABI and panic boundary are correct.
+      - Add a panic boundary helper that wraps every exported `extern "C"` entry point with `catch_unwind` and converts unwinds into `ARCHIVE_FATAL`, `NULL`, or another ABI-appropriate failure result instead of unwinding through C.
+      - Consume the checked-in oracle artifacts in place and keep `original/` immutable. Later phases must consume the generated phase-1 outputs instead of rescanning the tree, regenerating new inventories, new generated headers, new pkg-config contracts, or new compiler and linker contracts.
+
+      Before yielding, commit all phase work to git. The commit message must begin with `impl_safe_scaffold:`.
+
+  - id: check_safe_scaffold_build
+    type: check
+    bounce_target: impl_safe_scaffold
+    prompt: |
+      Reviewer Role: build verifier for `check_safe_scaffold_build`. Review only; do not make code changes.
+
+      Verify all of the following:
+      - the initial Rust package, build scripts, and bootstrap FFI exports build successfully
+      - `safe/Cargo.toml`, `safe/build.rs`, `safe/src/lib.rs`, the common bootstrap files, copied public headers, and the ABI map are present and consistent with the scaffold phase
+      - the commands below succeed exactly as written
+
+      Preexisting Inputs:
+      - `safe/Cargo.toml`
+      - `safe/build.rs`
+      - `safe/src/lib.rs`
+      - `safe/src/common/error.rs`
+      - `safe/src/common/state.rs`
+      - `safe/src/common/panic_boundary.rs`
+      - `safe/src/ffi/mod.rs`
+      - `safe/src/ffi/bootstrap.rs`
+      - `safe/include/archive.h`
+      - `safe/include/archive_entry.h`
+      - `safe/abi/libarchive.map`
+
+      Run these commands exactly:
+      ```bash
+      cd safe
+      cargo check
+      cargo build --release
+      ```
+
+      End with exactly one of:
+      VERDICT: PASS
+      VERDICT: FAIL: <reason>
+
+  - id: check_safe_scaffold_abi_contract
+    type: check
+    bounce_target: impl_safe_scaffold
+    prompt: |
+      Reviewer Role: ABI, oracle, and inventory verifier for `check_safe_scaffold_abi_contract`. Review only; do not make code changes.
+
+      Verify all of the following:
+      - phase 1 captured the exact ABI, pkg-config, package-metadata, generated-build-contract, and test-oracle artifacts from the existing local original sources
+      - `safe/generated/api_inventory.json` is derived from the copied headers, live Debian symbols entries, and captured export list without resurrecting `#MISSING:` or absent symbols
+      - `safe/generated/test_manifest.json` and `safe/config/libarchive_test_phase_groups.json` preserve the fixed suite counts and phase-group counts from the scaffold phase
+      - `safe/generated/link_compat_manifest.json` points at the preserved original-built consumer objects for `libarchive_test`, `minitar`, and `untar` and records the fixed runnable-target contracts explicitly
+      - the commands below succeed exactly as written
+
+      Preexisting Inputs:
+      - `safe/abi/libarchive.map`
+      - `safe/abi/exported_symbols.txt`
+      - `safe/pkgconfig/libarchive.pc.in`
+      - `safe/config/libarchive_test_phase_groups.json`
+      - `safe/abi/original_exported_symbols.txt`
+      - `safe/abi/original_version_info.txt`
+      - `safe/generated/api_inventory.json`
+      - `safe/generated/link_compat_manifest.json`
+      - `safe/generated/original_build_contract.json`
+      - `safe/generated/original_c_build/**`
+      - `safe/generated/original_link_objects/**`
+      - `safe/generated/original_pkgconfig/libarchive.pc`
+      - `safe/generated/original_package_metadata.json`
+      - `safe/generated/pkgconfig/libarchive.pc`
+      - `safe/generated/test_manifest.json`
+      - `safe/scripts/build-original-oracle.sh`
+      - `safe/scripts/check-abi.sh`
+      - `safe/scripts/render-pkg-config.sh`
+      - `safe/tools/gen_api_inventory.py`
+      - `safe/tools/gen_link_compat_manifest.py`
+      - `safe/tools/gen_test_manifest.py`
+      - `original/libarchive-3.7.2/debian/libarchive13t64.symbols`
+      - `original/libarchive-3.7.2/examples/minitar/minitar.c`
+      - `original/libarchive-3.7.2/examples/untar.c`
+
+      Run these commands exactly:
+      ```bash
+      cd safe
+      ./scripts/build-original-oracle.sh --check
+      ./scripts/render-pkg-config.sh --mode build-tree --check
+      python3 tools/gen_api_inventory.py --check
+      python3 tools/gen_test_manifest.py --check
+      python3 tools/gen_link_compat_manifest.py --check
+      ./scripts/check-abi.sh --inventory-only
+      ```
+
+      End with exactly one of:
+      VERDICT: PASS
+      VERDICT: FAIL: <reason>
+
+  - id: impl_foundation_objects
+    type: implement
+    bounce_target: null
+    prompt: |
+      You are implementing `impl_foundation_objects`.
+
+      This prompt is self-contained. Consume or update existing repository artifacts in place. Do not refetch, recollect, rediscover, or regenerate checked-in or already-generated local artifacts from scratch when they already exist. Keep `original/` immutable, and consume the phase-1 generated artifacts in place instead of rebuilding them.
+
+      Preexisting Inputs:
+      - `safe/Cargo.toml`
+      - `safe/build.rs`
+      - `safe/src/lib.rs`
+      - `safe/src/common/error.rs`
+      - `safe/src/common/state.rs`
+      - `safe/src/common/panic_boundary.rs`
+      - `safe/src/ffi/mod.rs`
+      - `safe/src/ffi/bootstrap.rs`
+      - `safe/include/archive.h`
+      - `safe/include/archive_entry.h`
+      - `safe/abi/libarchive.map`
+      - `safe/abi/original_exported_symbols.txt`
+      - `safe/generated/api_inventory.json`
+      - `safe/generated/original_build_contract.json`
+      - `safe/generated/original_c_build/**`
+      - `safe/generated/test_manifest.json`
+      - `safe/config/libarchive_test_phase_groups.json`
+      - `safe/scripts/run-upstream-c-tests.sh`
+      - `original/libarchive-3.7.2/libarchive/archive_private.h`
+      - `original/libarchive-3.7.2/libarchive/archive_entry_private.h`
+      - `original/libarchive-3.7.2/libarchive/archive_entry.c`
+      - `original/libarchive-3.7.2/libarchive/archive_entry_sparse.c`
+      - `original/libarchive-3.7.2/libarchive/archive_entry_stat.c`
+      - `original/libarchive-3.7.2/libarchive/archive_entry_xattr.c`
+      - `original/libarchive-3.7.2/libarchive/archive_entry_link_resolver.c`
+      - `original/libarchive-3.7.2/libarchive/archive_acl.c`
+      - `original/libarchive-3.7.2/libarchive/archive_match.c`
+      - `original/libarchive-3.7.2/libarchive/archive_pathmatch.c`
+      - `original/libarchive-3.7.2/libarchive/archive_getdate.c`
+      - `original/libarchive-3.7.2/libarchive/archive_options.c`
+      - `original/libarchive-3.7.2/libarchive/archive_pack_dev.c`
+      - `original/libarchive-3.7.2/libarchive/archive_string.c`
+      - `original/libarchive-3.7.2/libarchive/archive_string_sprintf.c`
+      - `original/libarchive-3.7.2/libarchive/test/`
+
+      New Outputs:
+      - `safe/src/common/**`
+      - `safe/src/entry/**`
+      - `safe/src/match/**`
+      - `safe/src/util/**`
+      - `safe/src/ffi/archive_entry.rs`
+      - `safe/src/ffi/archive_match.rs`
+      - `safe/src/ffi/archive_common.rs`
+      - `safe/tests/support/**`
+      - `safe/tests/libarchive/foundation/**`
+
+      Required work:
+      - Add the safe Rust object model for `struct archive`, `struct archive_entry`, ACLs, xattrs, sparse maps, link resolution, and `archive_match`.
+      - Add FFI exports for the foundational public APIs, including the live `archive_entry_acl_*` entry-ACL functions and any other foundation-side symbols present in the phase-1 ABI inventory.
+      - Add Rust-native tests for the phase-2 surface and wire the C-oracle group through the shared runner.
+      - Consume the phase-1 generated artifacts in place. Do not regenerate `config.h`, suite `list.h`, the test manifest, or the API inventory in this phase.
+      - Port the `struct archive` magic and state model from `archive_private.h`, including `ARCHIVE_*_MAGIC`, `ARCHIVE_STATE_*`, error number handling, error strings, and `archive_check_magic` semantics. Wrong-state callers must receive the same return-code class and error behavior expected by the original implementation.
+      - Port `struct archive_entry` from `archive_entry_private.h` into a safe Rust model with explicit set and unset flags, ACL, xattr, and sparse collections, digest slots, symlink type, encryption flags, and lazy `stat` materialization.
+      - Preserve public pointer-return semantics by caching C strings and wide-string views inside the object. Functions such as `archive_entry_pathname()`, `archive_entry_pathname_w()`, and `archive_entry_gname_utf8()` must remain valid until the next mutation, matching the original lifetime behavior.
+      - Port `archive_match` with pathname pattern logic, time filters, owner filters, unmatched iteration order, and the same error-message precedence used by the original C implementation.
+      - Port the pure utility logic from `archive_pathmatch`, `archive_getdate`, `archive_options`, `archive_pack_dev`, and the shared string and error helpers that underpin option parsing and path and date behavior.
+      - Implement the foundational exported surface identified by the phase-1 ABI inventory for the entry, matcher, and string subsystem, including the live `archive_entry_acl_*` family and any deprecated compatibility aliases that still appear in the captured original export list. Do not add historical `#MISSING` families such as `archive_acl_*`, `Ppmd8_*`, or any other names absent from `safe/abi/original_exported_symbols.txt`.
+      - Keep unsafe code limited to FFI pointer conversion, `libc::stat` interop, and narrowly scoped raw-buffer handling needed to match the C ABI.
+
+      Before yielding, commit all phase work to git. The commit message must begin with `impl_foundation_objects:`.
+
+  - id: check_foundation_rust_and_c_api
+    type: check
+    bounce_target: impl_foundation_objects
+    prompt: |
+      Reviewer Role: foundational object-model verifier for `check_foundation_rust_and_c_api`. Review only; do not make code changes.
+
+      Verify all of the following:
+      - unchanged C code can create, mutate, query, and free `archive_entry` and `archive_match` objects through the safe library
+      - the file-free foundational object model, error and state logic, `archive_entry`, `archive_match`, and the live `archive_entry_acl_*` APIs behave compatibly
+      - the shared C-oracle runner consumes `safe/generated/test_manifest.json`, `safe/generated/original_build_contract.json`, and `safe/generated/original_c_build/**` in place rather than regenerating them
+      - the foundational exported surface matches the phase-1 ABI inventory, including live compatibility aliases, without reintroducing historical `#MISSING` exports
+      - the commands below succeed exactly as written
+
+      Preexisting Inputs:
+      - `safe/src/common/**`
+      - `safe/src/entry/**`
+      - `safe/src/match/**`
+      - `safe/src/util/**`
+      - `safe/src/ffi/archive_common.rs`
+      - `safe/src/ffi/archive_entry.rs`
+      - `safe/src/ffi/archive_match.rs`
+      - `safe/tests/support/**`
+      - `safe/tests/libarchive/foundation/**`
+      - `safe/generated/test_manifest.json`
+      - `safe/generated/original_build_contract.json`
+      - `safe/generated/original_c_build/**`
+      - `safe/scripts/run-upstream-c-tests.sh`
+      - `original/libarchive-3.7.2/libarchive/test/`
+
+      Run these commands exactly:
+      ```bash
+      cd safe
+      cargo test --test libarchive_entry_api
+      cargo test --test libarchive_match_api
+      cargo test --test libarchive_foundation_support
+      ./scripts/run-upstream-c-tests.sh libarchive foundation
+      ```
+
+      End with exactly one of:
+      VERDICT: PASS
+      VERDICT: FAIL: <reason>
+
+  - id: impl_write_and_disk
+    type: implement
+    bounce_target: null
+    prompt: |
+      You are implementing `impl_write_and_disk`.
+
+      This prompt is self-contained. Consume or update existing repository artifacts in place. Do not refetch, recollect, rediscover, or regenerate checked-in or already-generated local artifacts from scratch when they already exist. Keep `original/` immutable, and consume the phase-1 build contract, generated-header snapshot, and test manifest in place instead of regenerating them.
+
+      Preexisting Inputs:
+      - `safe/Cargo.toml`
+      - `safe/build.rs`
+      - `safe/src/lib.rs`
+      - `safe/src/common/**`
+      - `safe/src/entry/**`
+      - `safe/src/match/**`
+      - `safe/src/util/**`
+      - `safe/src/ffi/mod.rs`
+      - `safe/src/ffi/bootstrap.rs`
+      - `safe/src/ffi/archive_common.rs`
+      - `safe/src/ffi/archive_entry.rs`
+      - `safe/src/ffi/archive_match.rs`
+      - `safe/include/archive.h`
+      - `safe/include/archive_entry.h`
+      - `safe/generated/api_inventory.json`
+      - `safe/generated/original_build_contract.json`
+      - `safe/generated/original_c_build/**`
+      - `safe/generated/test_manifest.json`
+      - `safe/config/libarchive_test_phase_groups.json`
+      - `safe/scripts/run-upstream-c-tests.sh`
+      - `safe/tests/support/**`
+      - `safe/tests/libarchive/foundation/**`
+      - `relevant_cves.json`
+      - `original/libarchive-3.7.2/libarchive/archive_read.c`
+      - `original/libarchive-3.7.2/libarchive/archive_read_private.h`
+      - `original/libarchive-3.7.2/libarchive/archive_read_open_*.c`
+      - `original/libarchive-3.7.2/libarchive/archive_read_set_format.c`
+      - `original/libarchive-3.7.2/libarchive/archive_read_support_filter_*.c`
+      - `original/libarchive-3.7.2/libarchive/archive_read_support_format_*.c`
+      - `original/libarchive-3.7.2/libarchive/archive_write.c`
+      - `original/libarchive-3.7.2/libarchive/archive_write_private.h`
+      - `original/libarchive-3.7.2/libarchive/archive_write_open_*.c`
+      - `original/libarchive-3.7.2/libarchive/archive_write_set_options.c`
+      - `original/libarchive-3.7.2/libarchive/archive_write_set_passphrase.c`
+      - `original/libarchive-3.7.2/libarchive/archive_write_add_filter*.c`
+      - `original/libarchive-3.7.2/libarchive/archive_write_set_format*.c`
+      - `original/libarchive-3.7.2/libarchive/archive_read_disk_*.c`
+      - `original/libarchive-3.7.2/libarchive/archive_read_extract*.c`
+      - `original/libarchive-3.7.2/libarchive/archive_write_disk_posix.c`
+      - `original/libarchive-3.7.2/libarchive/archive_write_disk_private.h`
+      - `original/libarchive-3.7.2/libarchive/test/`
+
+      New Outputs:
+      - `safe/src/read/**`
+      - `safe/src/write/**`
+      - `safe/src/disk/**`
+      - `safe/src/ffi/archive_read.rs`
+      - `safe/src/ffi/archive_write.rs`
+      - `safe/src/ffi/archive_write_disk.rs`
+      - `safe/src/ffi/archive_read_disk.rs`
+      - `safe/tests/libarchive/write_disk/**`
+
+      Required work:
+      - Add the Rust writer core, the minimal reader round-trip subset needed by the phase-3 oracle group, the write formats needed for the early toolchain, and the read-disk and write-disk implementations.
+      - Extend the support and test layer with filesystem helpers equivalent to the existing `test_common.h` behavior.
+      - Add FFI exports for `archive_write_*`, `archive_write_disk_*`, `archive_read_disk_*`, and the `archive_read_*` subset required by the phase-3 round-trip tests.
+      - Port the `archive_write` core object from `archive_write_private.h`, including client callbacks, block-size handling, skip-file handling, filter-chain setup, format callbacks, and passphrase plumbing.
+      - Implement the write formats required by the phase-3 compatibility path: tar family, pax with ACL and xattr metadata, cpio variants, ar, raw, and shar. Defer mtree, WARC, XAR, ZIP, ISO9660, and 7zip write paths to phase 5 because the regrouped `advanced_formats` oracle owns those source files.
+      - Implement the early write filters and wrapper exports required by the Ubuntu ABI and downstream tool flows: none, gzip, bzip2, compress, grzip, lrzip, lz4, lzip, lzma, xz, lzop, zstd, b64encode, uuencode, and program-filter plumbing.
+      - Add the minimal `archive_read` substrate required by the regrouped `write_disk` oracle: `archive_read_new/free/close`, `archive_read_open_memory`, `archive_read_open_filename`, `archive_read_support_filter_all`, the per-filter registrations needed for the phase-3 write filters, `archive_read_support_format_all`, the per-format registrations needed to read tar, gnutar, pax, cpio, ar, and raw output back, `archive_read_next_header`, `archive_read_data`, `archive_read_extract`, and `archive_read_extract2`. Preserve the original registration order for the implemented subset so bid precedence and error ordering already match the C oracle.
+      - Port `archive_read_disk_*` and `archive_write_disk_*` with a safe descriptor-based extraction model. The Rust implementation must not reproduce the process-global `umask()` race described by `CVE-2023-30571`.
+      - Mirror the original deferred-fixup model from `archive_write_disk_posix.c`: queue chmod, chown, times, xattr, and ACL work until after filesystem-object creation, but apply it via file descriptors or `*at` syscalls so metadata updates cannot escape the extraction root.
+      - Integrate the phase-2 entry, ACL, xattr, and match objects with the phase-3 pipelines so `test_acl_pax.c`, `test_acl_platform_nfs4.c`, `test_acl_platform_posix1e.c`, `test_extattr_freebsd.c`, `test_archive_match_time.c`, and `test_archive_cmdline.c` are genuinely in scope. That includes pax ACL and xattr round-trips, `archive_read_disk_entry_from_file()` interoperability with `archive_match`, and the exact command-line tokenization semantics of `archive_write_add_filter_program()`.
+      - Preserve hardlink, symlink, absolute-path, `..`, no-overwrite, safe-writes, sparse-file, ACL, xattr, and timestamp semantics covered by the `write_disk` test group and the filesystem-extraction entries in `relevant_cves.json`.
+      - Keep Linux-specific ownership, ACL, and xattr behavior configurable so Ubuntu 24.04 package builds behave like the current package rules.
+      - Stop the reader work at the round-trip subset consumed by the `write_disk` oracle. Standalone reader APIs such as `archive_read_open_fd`, the close-twice and open2 family, support-by-code registration, mtree/WARC/XAR readers, and the rest of the `read_mainstream` and `advanced_formats` reader surface remain deferred to phases 4 and 5.
+
+      Before yielding, commit all phase work to git. The commit message must begin with `impl_write_and_disk:`.
+
+  - id: check_write_and_disk
+    type: check
+    bounce_target: impl_write_and_disk
+    prompt: |
+      Reviewer Role: writer, disk, and extraction verifier for `check_write_and_disk`. Review only; do not make code changes.
+
+      Verify all of the following:
+      - writer behavior, the reader subset needed by the `write_disk` oracle group, extraction semantics, and filesystem traversal and security behave compatibly
+      - the phase consumes `safe/generated/test_manifest.json`, `safe/generated/original_build_contract.json`, and `safe/generated/original_c_build/**` in place without regenerating them
+      - pax ACL and xattr round-trips, `archive_read_disk_entry_from_file()` plus `archive_match` interoperability, and `archive_write_add_filter_program()` tokenization semantics are covered in this phase
+      - the commands below succeed exactly as written
+
+      Preexisting Inputs:
+      - `safe/src/read/**`
+      - `safe/src/write/**`
+      - `safe/src/disk/**`
+      - `safe/src/ffi/archive_read.rs`
+      - `safe/src/ffi/archive_write.rs`
+      - `safe/src/ffi/archive_write_disk.rs`
+      - `safe/src/ffi/archive_read_disk.rs`
+      - `safe/tests/libarchive/write_disk/**`
+      - `safe/generated/test_manifest.json`
+      - `safe/generated/original_build_contract.json`
+      - `safe/generated/original_c_build/**`
+      - `safe/scripts/run-upstream-c-tests.sh`
+      - `relevant_cves.json`
+      - `original/libarchive-3.7.2/libarchive/test/`
+
+      Run these commands exactly:
+      ```bash
+      cd safe
+      cargo test --test libarchive_write_core
+      cargo test --test libarchive_write_disk
+      cargo test --test libarchive_read_disk
+      ./scripts/run-upstream-c-tests.sh libarchive write_disk
+      ```
+
+      End with exactly one of:
+      VERDICT: PASS
+      VERDICT: FAIL: <reason>
+
+  - id: impl_read_core_mainstream
+    type: implement
+    bounce_target: null
+    prompt: |
+      You are implementing `impl_read_core_mainstream`.
+
+      This prompt is self-contained. Consume or update existing repository artifacts in place. Do not refetch, recollect, rediscover, or regenerate checked-in or already-generated local artifacts from scratch when they already exist. Keep `original/` immutable. Consume the phase-1 safe-side `pkg-config` artifact, the phase-1 original `pkg-config` oracle, and the phase-1 build contract in place instead of substituting manual flags or a new contract.
+
+      Preexisting Inputs:
+      - `safe/Cargo.toml`
+      - `safe/build.rs`
+      - `safe/src/lib.rs`
+      - `safe/src/common/**`
+      - `safe/src/entry/**`
+      - `safe/src/match/**`
+      - `safe/src/util/**`
+      - `safe/src/read/**`
+      - `safe/src/write/**`
+      - `safe/src/disk/**`
+      - `safe/src/ffi/archive_read.rs`
+      - `safe/src/ffi/archive_read_disk.rs`
+      - `safe/src/ffi/archive_write.rs`
+      - `safe/src/ffi/archive_write_disk.rs`
+      - `safe/include/archive.h`
+      - `safe/include/archive_entry.h`
+      - `safe/pkgconfig/libarchive.pc.in`
+      - `safe/generated/api_inventory.json`
+      - `safe/generated/original_build_contract.json`
+      - `safe/generated/original_c_build/**`
+      - `safe/generated/original_pkgconfig/libarchive.pc`
+      - `safe/generated/pkgconfig/libarchive.pc`
+      - `safe/generated/test_manifest.json`
+      - `safe/scripts/check-source-compat.sh`
+      - `safe/scripts/render-pkg-config.sh`
+      - `safe/scripts/run-upstream-c-tests.sh`
+      - `safe/tests/support/**`
+      - `safe/tests/libarchive/write_disk/**`
+      - `original/libarchive-3.7.2/libarchive/archive_read.c`
+      - `original/libarchive-3.7.2/libarchive/archive_read_private.h`
+      - `original/libarchive-3.7.2/libarchive/archive_read_open_*.c`
+      - `original/libarchive-3.7.2/libarchive/archive_read_set_format.c`
+      - `original/libarchive-3.7.2/libarchive/archive_read_set_options.c`
+      - `original/libarchive-3.7.2/libarchive/archive_read_support_filter_*.c`
+      - `original/libarchive-3.7.2/libarchive/archive_read_support_format_*.c`
+      - `original/libarchive-3.7.2/examples/minitar/minitar.c`
+      - `original/libarchive-3.7.2/examples/untar.c`
+      - `original/libarchive-3.7.2/libarchive/test/`
+
+      New Outputs:
+      - `safe/src/read/**`
+      - `safe/src/ffi/archive_read.rs`
+      - `safe/tests/libarchive/read_mainstream/**`
+
+      Required work:
+      - Complete the reader core that phase 3 introduced, including the standalone open and option APIs, callback plumbing, filter and format registration, and the mainstream format handlers.
+      - Extend source-compat tooling so unchanged C examples can compile and run against the safe library and the generated `pkg-config` metadata.
+      - Build on the phase-3 reader subset and finish the `archive_read` object model from `archive_read_private.h`, including client callback datasets, skip, seek, and read trampolines, filter bidding, format bidding, sparse-gap handling, header-position tracking, passphrase queues, and the state and error behavior exercised by the dedicated reader lifecycle tests.
+      - Preserve the original registration order of `archive_read_support_filter_all()` and `archive_read_support_format_all()` so bid precedence, format selection, and error ordering remain unchanged.
+      - Complete the mainstream read formats required by unchanged examples, the early public API surface, and the later frontend phases: tar, gnutar wrapper behavior, pax metadata and filename-encoding paths, cpio, ar, raw, empty, and the common read-core and filter plumbing that those formats depend on. Defer CAB, ZIP and ZIP64 variants, ISO9660, LHA, mtree, RAR, RAR5, WARC, XAR, and 7zip reader coverage to phase 5.
+      - Complete the mainstream filter set and wrappers required by the ABI and package behavior: gzip, bzip2, compress, grzip, lrzip, lz4, lzip, lzma, xz, lzop, zstd, uuencode, rpm, and program filters. Deprecated `archive_read_support_compression_*` symbols must remain exported as wrappers around the modern filter functions.
+      - Port the standalone open and read entry points and option wrappers required by the regrouped `read_mainstream` oracle, including `archive_read_open_fd`, `archive_read_open_file`, `archive_read_open_filename`, `archive_read_open2`, `archive_read_open_memory2`, `archive_read_support_filter_by_code`, `archive_read_append_filter*`, `archive_read_set_format`, `archive_read_set_option`, `archive_read_set_filter_option`, `archive_read_set_format_option`, `archive_read_set_options`, `archive_read_add_passphrase`, `archive_read_data`, `archive_read_data_block`, `archive_read_data_skip`, and `archive_seek_data`.
+      - Make `./scripts/check-source-compat.sh` render the current build-tree `safe/generated/pkgconfig/libarchive.pc`, normalize it against `safe/generated/original_pkgconfig/libarchive.pc` by allowing differences only in `prefix`, `exec_prefix`, `libdir`, and `includedir`, and fail if any other field, token ordering, or dependency list drifts from the phase-1 original oracle. After that comparison passes, set `PKG_CONFIG_LIBDIR` to the generated directory first and then append the host's normal Ubuntu 24.04 `pkg-config` directories needed for dependency metadata resolution, clear any conflicting `PKG_CONFIG_PATH`, and compile and run the unchanged example programs from `original/libarchive-3.7.2/examples/` against the safe headers, safe `pkg-config` metadata, and safe shared library without source changes.
+      - Keep error strings, close-twice behavior, open-failure behavior, and state transitions aligned with the upstream `read_mainstream` group.
+
+      Before yielding, commit all phase work to git. The commit message must begin with `impl_read_core_mainstream:`.
+
+  - id: check_read_core_mainstream
+    type: check
+    bounce_target: impl_read_core_mainstream
+    prompt: |
+      Reviewer Role: mainstream reader and source-compat verifier for `check_read_core_mainstream`. Review only; do not make code changes.
+
+      Verify all of the following:
+      - the completed mainstream reader stack and the standalone reader APIs deferred from phase 3 behave compatibly
+      - unchanged example programs build and run through `./scripts/check-source-compat.sh`
+      - the source-compat check renders `safe/generated/pkgconfig/libarchive.pc` and compares it against `safe/generated/original_pkgconfig/libarchive.pc`, normalizing only `prefix`, `exec_prefix`, `libdir`, and `includedir`
+      - the commands below succeed exactly as written
+
+      Preexisting Inputs:
+      - `safe/src/read/**`
+      - `safe/src/ffi/archive_read.rs`
+      - `safe/tests/libarchive/read_mainstream/**`
+      - `safe/generated/original_pkgconfig/libarchive.pc`
+      - `safe/generated/pkgconfig/libarchive.pc`
+      - `safe/generated/test_manifest.json`
+      - `safe/generated/original_build_contract.json`
+      - `safe/generated/original_c_build/**`
+      - `safe/scripts/check-source-compat.sh`
+      - `safe/scripts/render-pkg-config.sh`
+      - `safe/scripts/run-upstream-c-tests.sh`
+      - `original/libarchive-3.7.2/examples/minitar/minitar.c`
+      - `original/libarchive-3.7.2/examples/untar.c`
+      - `original/libarchive-3.7.2/libarchive/test/`
+
+      Run these commands exactly:
+      ```bash
+      cd safe
+      cargo test --test libarchive_read_core
+      ./scripts/run-upstream-c-tests.sh libarchive read_mainstream
+      ./scripts/check-source-compat.sh
+      ```
+
+      End with exactly one of:
+      VERDICT: PASS
+      VERDICT: FAIL: <reason>
+
+  - id: impl_advanced_formats_cve
+    type: implement
+    bounce_target: null
+    prompt: |
+      You are implementing `impl_advanced_formats_cve`.
+
+      This prompt is self-contained. Consume or update existing repository artifacts in place. Do not refetch, recollect, rediscover, or regenerate checked-in or already-generated local artifacts from scratch when they already exist. Keep `original/` immutable. Consume the existing `all_cves.json` and `relevant_cves.json` artifacts in place and do not regenerate or replace either CVE inventory.
+
+      Preexisting Inputs:
+      - `safe/Cargo.toml`
+      - `safe/src/read/**`
+      - `safe/src/write/**`
+      - `safe/src/disk/**`
+      - `safe/src/ffi/archive_read.rs`
+      - `safe/src/ffi/archive_write.rs`
+      - `safe/generated/api_inventory.json`
+      - `safe/generated/original_build_contract.json`
+      - `safe/generated/original_c_build/**`
+      - `safe/generated/test_manifest.json`
+      - `safe/generated/original_pkgconfig/libarchive.pc`
+      - `safe/generated/pkgconfig/libarchive.pc`
+      - `safe/scripts/run-upstream-c-tests.sh`
+      - `safe/tests/libarchive/read_mainstream/**`
+      - `original/libarchive-3.7.2/libarchive/archive_read_support_format_*.c`
+      - `original/libarchive-3.7.2/libarchive/archive_write_set_format_*.c`
+      - `original/libarchive-3.7.2/libarchive/archive_write_set_format_by_name.c`
+      - `original/libarchive-3.7.2/libarchive/archive_write_set_format_filter_by_ext.c`
+      - `original/libarchive-3.7.2/libarchive/archive_write_set_passphrase.c`
+      - `original/libarchive-3.7.2/libarchive/archive_read_set_options.c`
+      - `original/libarchive-3.7.2/libarchive/archive_write_set_options.c`
+      - `original/libarchive-3.7.2/libarchive/archive_ppmd7.c`
+      - `original/libarchive-3.7.2/libarchive/archive_ppmd8.c`
+      - `original/libarchive-3.7.2/libarchive/archive_blake2*.c`
+      - `original/libarchive-3.7.2/libarchive/xxhash.c`
+      - `original/libarchive-3.7.2/debian/patches/series`
+      - `original/libarchive-3.7.2/libarchive/test/`
+      - `all_cves.json`
+      - `relevant_cves.json`
+
+      New Outputs:
+      - `safe/src/read/format/**`
+      - `safe/src/write/format/**`
+      - `safe/src/algorithms/**`
+      - `safe/src/ffi/archive_options.rs`
+      - `safe/generated/cve_matrix.json`
+      - `safe/scripts/check-i686-cve.sh`
+      - `safe/tests/libarchive/advanced/**`
+      - `safe/tests/libarchive/security/**`
+
+      Required work:
+      - Add the remaining advanced format and algorithm implementations.
+      - Add the by-name, by-code, and option-wrapper exports that the CLI frontends and downstream programs rely on.
+      - Add a machine-readable CVE coverage matrix and the explicit regression tests and scripts that consume it.
+      - Finish the remaining high-complexity parsers and writers: CAB; ZIP, ZIP64, encryption, and secondary codec variants; ISO9660 with Rock Ridge, Joliet, and zisofs; mtree; WARC; XAR; LHA; RAR; RAR5; 7zip; and the advanced ZIP and ISO9660 write paths.
+      - Complete the advanced behavior isolated in the regrouped `advanced_formats` oracle, including mtree digest materialization for `test_archive_digest.c`, ZIP string-conversion and `hdrcharset` behavior for `test_archive_string_conversion.c`, and the mtree, WARC, and XAR writer round-trips that phase 3 intentionally deferred.
+      - Implement the option-wrapper and convenience exports that frontends depend on, including `archive_read_support_format_gnutar`, `archive_write_set_format_ar_bsd`, `archive_write_set_format_ar_svr4`, `archive_write_set_format_mtree_classic`, `archive_write_set_format_pax_restricted`, `archive_write_set_format_shar_dump`, `archive_write_set_format_by_name`, `archive_write_set_format_filter_by_ext`, `archive_read_set_option`, `archive_read_set_filter_option`, `archive_read_set_format_option`, `archive_write_set_option`, `archive_write_set_filter_option`, and `archive_write_set_format_option`.
+      - Use checked arithmetic everywhere attacker-controlled sizes, shifts, offsets, counts, and allocation requests appear. Arithmetic overflow must become a hard parse failure, never a panic or silent wrap.
+      - Add explicit forward-progress guards to decompression loops and continuation parsers, especially for RAR5, recursive filter chains, and Rock Ridge continuation parsing.
+      - Enforce extraction containment for hardlinks, symlinks, ACL application, absolute paths, and metadata writes in the exact areas highlighted by `records[]` in `relevant_cves.json`.
+      - Implement `safe/generated/cve_matrix.json` as the authoritative security crosswalk, with one entry per `records[].cve_id`, the targeted code area, the required controls from `records[].required_controls`, and the exact Rust test or script that verifies the control.
+      - Use `debian/patches/series` as additional behavioral documentation for Ubuntu-specific bug fixes and test deltas. If a Debian patch changes runtime behavior, validation strictness, or diagnostics, the Rust port must match the patched Ubuntu behavior, not pristine upstream behavior.
+      - `./scripts/check-i686-cve.sh` must explicitly exercise overflow-sensitive 32-bit cases, including the zisofs-size cases documented in `relevant_cves.json` and the existing Debian `test-zstd-32bit.patch` context where relevant.
+
+      Before yielding, commit all phase work to git. The commit message must begin with `impl_advanced_formats_cve:`.
+
+  - id: check_advanced_formats
+    type: check
+    bounce_target: impl_advanced_formats_cve
+    prompt: |
+      Reviewer Role: advanced-format verifier for `check_advanced_formats`. Review only; do not make code changes.
+
+      Verify all of the following:
+      - the remaining high-complexity readers, writers, option wrappers, and long-tail compatibility suites are implemented
+      - the `advanced_formats` C-oracle group passes and the advanced Rust tests cover the deferred surface from earlier phases
+      - the commands below succeed exactly as written
+
+      Preexisting Inputs:
+      - `safe/src/read/format/**`
+      - `safe/src/write/format/**`
+      - `safe/src/algorithms/**`
+      - `safe/src/ffi/archive_options.rs`
+      - `safe/tests/libarchive/advanced/**`
+      - `safe/generated/test_manifest.json`
+      - `safe/generated/original_build_contract.json`
+      - `safe/generated/original_c_build/**`
+      - `safe/scripts/run-upstream-c-tests.sh`
+      - `original/libarchive-3.7.2/libarchive/test/`
+
+      Run these commands exactly:
+      ```bash
+      cd safe
+      cargo test --test advanced_formats
+      ./scripts/run-upstream-c-tests.sh libarchive advanced_formats
+      ```
+
+      End with exactly one of:
+      VERDICT: PASS
+      VERDICT: FAIL: <reason>
+
+  - id: check_cve_regressions
+    type: check
+    bounce_target: impl_advanced_formats_cve
+    prompt: |
+      Reviewer Role: security regression verifier for `check_cve_regressions`. Review only; do not make code changes.
+
+      Verify all of the following:
+      - every CVE record in `relevant_cves.json` has a concrete row in `safe/generated/cve_matrix.json`
+      - each CVE row points to a passing regression test or script, including the 32-bit overflow-sensitive cases exercised by `./scripts/check-i686-cve.sh`
+      - the phase consumes the checked-in CVE inventories in place and does not regenerate them
+      - the commands below succeed exactly as written
+
+      Preexisting Inputs:
+      - `safe/generated/cve_matrix.json`
+      - `safe/scripts/check-i686-cve.sh`
+      - `safe/tests/libarchive/security/**`
+      - `all_cves.json`
+      - `relevant_cves.json`
+      - `original/libarchive-3.7.2/debian/patches/series`
+
+      Run these commands exactly:
+      ```bash
+      cd safe
+      cargo test --test cve_regressions
+      ./scripts/check-i686-cve.sh
+      ```
+
+      End with exactly one of:
+      VERDICT: PASS
+      VERDICT: FAIL: <reason>
+
+  - id: impl_packaging_tooling_compat
+    type: implement
+    bounce_target: null
+    prompt: |
+      You are implementing `impl_packaging_tooling_compat`.
+
+      This prompt is self-contained. Consume or update existing repository artifacts in place. Do not refetch, recollect, rediscover, or regenerate checked-in or already-generated local artifacts from scratch when they already exist. Keep `original/` immutable. Consume the captured packaging, pkg-config, link-compat, build-contract, and CVE artifacts in place instead of inventing new ones.
+
+      Preexisting Inputs:
+      - `safe/Cargo.toml`
+      - `safe/build.rs`
+      - `safe/include/archive.h`
+      - `safe/include/archive_entry.h`
+      - `safe/pkgconfig/libarchive.pc.in`
+      - `safe/generated/original_pkgconfig/libarchive.pc`
+      - `safe/generated/original_package_metadata.json`
+      - `safe/generated/original_build_contract.json`
+      - `safe/generated/original_c_build/**`
+      - `safe/generated/original_link_objects/**`
+      - `safe/generated/link_compat_manifest.json`
+      - `safe/generated/test_manifest.json`
+      - `safe/generated/cve_matrix.json`
+      - `safe/generated/api_inventory.json`
+      - `safe/generated/pkgconfig/libarchive.pc`
+      - `safe/scripts/render-pkg-config.sh`
+      - `safe/scripts/check-source-compat.sh`
+      - `safe/scripts/run-upstream-c-tests.sh`
+      - `safe/scripts/check-i686-cve.sh`
+      - `safe/src/**`
+      - `original/libarchive-3.7.2/debian/**`
+      - `original/libarchive-3.7.2/libarchive_fe/**`
+      - `original/libarchive-3.7.2/tar/**`
+      - `original/libarchive-3.7.2/cpio/**`
+      - `original/libarchive-3.7.2/cat/**`
+      - `original/libarchive-3.7.2/unzip/**`
+      - `original/libarchive-3.7.2/examples/**`
+      - `original/libarchive-3.7.2/doc/man/**`
+      - `test-original.sh`
+      - `dependents.json`
+
+      New Outputs:
+      - `safe/c_src/libarchive_fe/**`
+      - `safe/c_src/tar/**`
+      - `safe/c_src/cpio/**`
+      - `safe/c_src/cat/**`
+      - `safe/c_src/unzip/**`
+      - `safe/examples/**`
+      - `safe/doc/man/**`
+      - `safe/debian/**`
+      - `safe/scripts/run-debian-minitar.sh`
+      - `safe/scripts/check-link-compat.sh`
+      - Updated `test-original.sh`
+
+      Required work:
+      - Vendor the existing frontend, helper, example, and manpage sources into `safe/` so the package becomes self-contained.
+      - Adapt the Debian packaging from the original source tree to build the Rust library plus the retained C frontends from `safe/`.
+      - Update the shared top-level dependent-package harness so it builds and installs the safe package by default while still allowing explicit baseline runs against the original source package.
+      - Keep `libarchive_fe`, `bsdtar`, `bsdcpio`, `bsdcat`, and `bsdunzip` in C for this port. Compile them unchanged or with only minimal build-path and include adjustments against the safe headers and safe library.
+      - Vendor those sources from the checked-in `original/` tree into `safe/` so `dpkg-buildpackage` inside `safe/` completes without reading sibling files outside `safe/`.
+      - Preserve the Debian build contract from the current package rules, including the effective configure choices from `debian/rules`: `--without-openssl --with-nettle --enable-bsdtar=shared --enable-bsdcpio=shared --enable-bsdcat=shared --enable-bsdunzip=shared`.
+      - Preserve package names and install behavior for `libarchive13t64`, `libarchive-dev`, and `libarchive-tools`.
+      - Preserve the installed payload expected by those packages: `libarchive.so.13*`, `libarchive.so`, `libarchive.a`, the public headers, `libarchive.pc`, the manpages, the four frontend binaries, and the documentation payload defined by `debian/libarchive-dev.docs`, including `NEWS` and the `examples/` tree under `/usr/share/doc/libarchive-dev/`.
+      - Generate the installed `libarchive.pc` from `safe/pkgconfig/libarchive.pc.in`; do not introduce a second independent `pkg-config` template under `safe/debian/` or hard-code package-facing compiler flags in the packaging rules.
+      - Update `safe/debian/libarchive13t64.symbols` from the original symbols file while preserving Debian comment and directive syntax. Build-fail checks must consider only live symbol entries, excluding `#MISSING:` historical comments and the `* Build-Depends-Package` directive.
+      - Implement `./scripts/run-debian-minitar.sh` so it unpacks the built `safe/` `.deb` artifacts into a temporary sysroot, compares the staged sysroot's installed `libarchive.pc` against `safe/generated/original_pkgconfig/libarchive.pc` using the same path-normalized comparison rules from phase 4, creates a temporary source-style working tree that contains `./debian/tests/minitar` and `./examples/` from the vendored `safe/` source tree at the exact relative paths expected by the original script, and runs the existing `debian/tests/minitar` scenario from that working tree while `PKG_CONFIG_SYSROOT_DIR`, `PKG_CONFIG_LIBDIR`, `LD_LIBRARY_PATH`, `PATH`, and any needed multiarch variables resolve against the staged package sysroot.
+      - Implement `./scripts/check-link-compat.sh` so it compares the built safe library's exported names and version info against the phase-1 oracle and then consumes `safe/generated/link_compat_manifest.json`, `safe/generated/original_link_objects/**`, and `safe/generated/original_package_metadata.json` verbatim. For every manifest target, relink the exact preserved phase-1 object files in recorded target-local link order against the safe library, execute each recorded `run_contract` exactly as specified, bootstrap a temporary locale root when `LANG=en_US.UTF-8` and `LC_ALL=en_US.UTF-8` are unavailable, and never recompile original sources or invent new runtime arguments, fixture paths, or smoke scenarios.
+      - Modify `test-original.sh` in place to add an explicit `--target safe|original` switch. `safe` must become the default, `original` must preserve the current baseline behavior, and the script must keep the existing `--only` behavior while continuing to verify that the active `libarchive.so.13` is the locally built package that was just installed.
+
+      Before yielding, commit all phase work to git. The commit message must begin with `impl_packaging_tooling_compat:`.
+
+  - id: check_packaging_and_dependents
+    type: check
+    bounce_target: impl_packaging_tooling_compat
+    prompt: |
+      Reviewer Role: packaging and dependent-runtime verifier for `check_packaging_and_dependents`. Review only; do not make code changes.
+
+      Verify all of the following:
+      - `dpkg-buildpackage -b -uc -us` succeeds inside `safe/`, producing self-contained `libarchive13t64`, `libarchive-dev`, and `libarchive-tools` packages
+      - `./scripts/run-debian-minitar.sh` succeeds while all compile-time and runtime resolution comes from the staged safe-package sysroot and the staged `libarchive.pc` matches the phase-1 original oracle after path normalization
+      - `./test-original.sh --target safe` succeeds with the safe package installed as the active `libarchive.so.13`
+      - the commands below succeed exactly as written
+
+      Preexisting Inputs:
+      - `safe/debian/**`
+      - `safe/examples/**`
+      - `safe/doc/man/**`
+      - `safe/c_src/**`
+      - `safe/scripts/run-debian-minitar.sh`
+      - `safe/pkgconfig/libarchive.pc.in`
+      - `safe/generated/original_pkgconfig/libarchive.pc`
+      - `safe/generated/original_package_metadata.json`
+      - `test-original.sh`
+      - `dependents.json`
+
+      Run these commands exactly:
+      ```bash
+      cd safe
+      dpkg-buildpackage -b -uc -us
+      ./scripts/run-debian-minitar.sh
+      cd ..
+      ./test-original.sh --target safe
+      ```
+
+      End with exactly one of:
+      VERDICT: PASS
+      VERDICT: FAIL: <reason>
+
+  - id: check_link_compat_and_frontends
+    type: check
+    bounce_target: impl_packaging_tooling_compat
+    prompt: |
+      Reviewer Role: link-compat and frontend-suite verifier for `check_link_compat_and_frontends`. Review only; do not make code changes.
+
+      Verify all of the following:
+      - `./scripts/check-link-compat.sh` relinks every manifest-listed preserved consumer object file without recompilation and executes the recorded runnable-target contracts successfully against the safe library
+      - the front-end suite checks consume the phase-1 original build contract and generated-header snapshot and do not rerun autotools, regenerate suite `list.h`, or relink freshly recompiled original objects
+      - the `tar`, `cpio`, `cat`, and `unzip` frontends still pass their original suite tests while dynamically linked against the safe library
+      - the commands below succeed exactly as written
+
+      Preexisting Inputs:
+      - `safe/c_src/**`
+      - `safe/abi/original_exported_symbols.txt`
+      - `safe/abi/original_version_info.txt`
+      - `safe/scripts/check-link-compat.sh`
+      - `safe/scripts/run-upstream-c-tests.sh`
+      - `safe/generated/link_compat_manifest.json`
+      - `safe/generated/original_link_objects/**`
+      - `safe/generated/original_package_metadata.json`
+      - `safe/generated/original_build_contract.json`
+      - `safe/generated/original_c_build/**`
+      - `safe/generated/test_manifest.json`
+      - `original/libarchive-3.7.2/tar/test/`
+      - `original/libarchive-3.7.2/cpio/test/`
+      - `original/libarchive-3.7.2/cat/test/`
+      - `original/libarchive-3.7.2/unzip/test/`
+
+      Run these commands exactly:
+      ```bash
+      cd safe
+      ./scripts/check-link-compat.sh
+      ./scripts/run-upstream-c-tests.sh tar all
+      ./scripts/run-upstream-c-tests.sh cpio all
+      ./scripts/run-upstream-c-tests.sh cat all
+      ./scripts/run-upstream-c-tests.sh unzip all
+      ```
+
+      End with exactly one of:
+      VERDICT: PASS
+      VERDICT: FAIL: <reason>
+
+  - id: impl_final_test_port_closure
+    type: implement
+    bounce_target: null
+    prompt: |
+      You are implementing `impl_final_test_port_closure`.
+
+      This prompt is self-contained. Consume or update existing repository artifacts in place. Do not refetch, recollect, rediscover, or regenerate checked-in or already-generated local artifacts from scratch when they already exist. Keep `original/` immutable. Consume the existing generated manifests, captured fixtures, packaging artifacts, and verification scripts in place instead of rebuilding the original corpus from scratch.
+
+      Preexisting Inputs:
+      - `safe/abi/original_exported_symbols.txt`
+      - `safe/abi/original_version_info.txt`
+      - `safe/generated/test_manifest.json`
+      - `safe/generated/cve_matrix.json`
+      - `safe/generated/original_pkgconfig/libarchive.pc`
+      - `safe/generated/original_package_metadata.json`
+      - `safe/generated/original_build_contract.json`
+      - `safe/generated/original_c_build/**`
+      - `safe/generated/original_link_objects/**`
+      - `safe/generated/link_compat_manifest.json`
+      - `safe/scripts/check-abi.sh`
+      - `safe/scripts/check-link-compat.sh`
+      - `safe/scripts/check-i686-cve.sh`
+      - `safe/scripts/run-debian-minitar.sh`
+      - `safe/scripts/run-upstream-c-tests.sh`
+      - `safe/tests/libarchive/**`
+      - `safe/c_src/**`
+      - `safe/debian/**`
+      - `safe/examples/**`
+      - `safe/src/**`
+      - `original/libarchive-3.7.2/libarchive/test/`
+      - `original/libarchive-3.7.2/tar/test/`
+      - `original/libarchive-3.7.2/cpio/test/`
+      - `original/libarchive-3.7.2/cat/test/`
+      - `original/libarchive-3.7.2/unzip/test/`
+      - `dependents.json`
+      - `test-original.sh`
+
+      New Outputs:
+      - Completed `safe/tests/libarchive/**`
+      - Completed `safe/tests/tar/**`
+      - Completed `safe/tests/cpio/**`
+      - Completed `safe/tests/cat/**`
+      - Completed `safe/tests/unzip/**`
+      - `safe/tests/fixtures-manifest.toml`
+      - `safe/generated/rust_test_manifest.json`
+      - `safe/scripts/check-rust-test-coverage.sh`
+      - Any final bug fixes across `safe/src/**`
+      - Any final compatibility fixes across `safe/c_src/**`
+      - Any final packaging fixes across `safe/debian/**`
+      - Any final shared-harness fixes in `test-original.sh`
+
+      Required work:
+      - Finish any remaining one-for-one Rust test ports for original `DEFINE_TEST(...)` entries.
+      - Add the final fixture-manifest and helper layer used by the Rust-native test tree.
+      - Fix the remaining compatibility defects revealed by the full matrix.
+      - Finish porting every original `DEFINE_TEST(...)` entry enumerated in `safe/generated/test_manifest.json` into the Rust package layout under the matching suite directory. Multiple original test cases may live in one Rust module or integration-test crate, and Rust file basenames do not need to match the original C basename when the upstream file contains multiple test cases or the upstream test name already diverges from the basename.
+      - Implement `safe/generated/rust_test_manifest.json` as the final Rust-port coverage map. It must contain exactly one row for every entry in `safe/generated/test_manifest.json`, no two rows may share the same `(rust_test_target, rust_test_name)` pair, and each row must record at least `suite`, `define_test`, `source_file`, `rust_test_target`, `rust_test_name`, and any required frontend-binary driver metadata.
+      - Implement `./scripts/check-rust-test-coverage.sh` so it consumes `safe/generated/test_manifest.json` and `safe/generated/rust_test_manifest.json`, runs `cargo test --workspace --all-features -- --list`, and fails if any original `DEFINE_TEST(...)` name is missing, duplicated, mapped to more than one Rust test, shares a `(rust_test_target, rust_test_name)` pair with another original entry, or maps to a Rust test name that is absent from the cargo test listing.
+      - Preserve the existing fixture corpus by consuming the files under `original/.../test/` through a shared manifest and helper layer. Do not regenerate or refetch reference archives. Duplicate fixtures into `safe/` only when an explicit packaging or test-isolation need makes the copy necessary.
+      - Use the final phase to reconcile any remaining ABI drift, symbol-version mismatches, error-string mismatches, path-edge cases, performance regressions in hot loops, or packaging inconsistencies exposed by the full matrix.
+      - Keep the final internal unsafe surface narrowly limited to FFI, raw descriptor handling, and unavoidable low-level algorithm interop.
+
+      Before yielding, commit all phase work to git. The commit message must begin with `impl_final_test_port_closure:`.
+
+  - id: check_full_rust_test_corpus
+    type: check
+    bounce_target: impl_final_test_port_closure
+    prompt: |
+      Reviewer Role: Rust test-port coverage verifier for `check_full_rust_test_corpus`. Review only; do not make code changes.
+
+      Verify all of the following:
+      - `safe/generated/rust_test_manifest.json` covers all original `DEFINE_TEST(...)` entries from `safe/generated/test_manifest.json`
+      - `./scripts/check-rust-test-coverage.sh` passes and the mapped Rust test names appear in `cargo test --workspace --all-features -- --list`
+      - the full Rust-native corpus passes under `cargo test --workspace --all-features`
+      - the commands below succeed exactly as written
+
+      Preexisting Inputs:
+      - `safe/Cargo.toml`
+      - `safe/build.rs`
+      - `safe/generated/test_manifest.json`
+      - `safe/generated/rust_test_manifest.json`
+      - `safe/scripts/check-rust-test-coverage.sh`
+      - `safe/tests/fixtures-manifest.toml`
+      - `safe/tests/libarchive/**`
+      - `safe/tests/tar/**`
+      - `safe/tests/cpio/**`
+      - `safe/tests/cat/**`
+      - `safe/tests/unzip/**`
+      - `safe/src/**`
+
+      Run these commands exactly:
+      ```bash
+      cd safe
+      ./scripts/check-rust-test-coverage.sh
+      cargo test --workspace --all-features
+      ```
+
+      End with exactly one of:
+      VERDICT: PASS
+      VERDICT: FAIL: <reason>
+
+  - id: check_full_matrix_final
+    type: check
+    bounce_target: impl_final_test_port_closure
+    prompt: |
+      Reviewer Role: final full-matrix verifier for `check_full_matrix_final`. Review only; do not make code changes.
+
+      Verify all of the following:
+      - formatting, linting, Rust-native test coverage, the full Rust-native corpus, Debian package build, Debian minitar source-compat, strict ABI verification, link compatibility, the full upstream C suites, CVE checks, and the dependent runtime harness all pass together
+      - `safe/generated/rust_test_manifest.json`, `safe/generated/test_manifest.json`, `safe/generated/cve_matrix.json`, and the phase-1 oracle artifacts remain the authoritative inputs for this matrix
+      - the commands below succeed exactly as written
+
+      Preexisting Inputs:
+      - `safe/Cargo.toml`
+      - `safe/build.rs`
+      - `safe/abi/libarchive.map`
+      - `safe/abi/original_exported_symbols.txt`
+      - `safe/abi/original_version_info.txt`
+      - `safe/include/archive.h`
+      - `safe/include/archive_entry.h`
+      - `safe/pkgconfig/libarchive.pc.in`
+      - `safe/generated/test_manifest.json`
+      - `safe/generated/rust_test_manifest.json`
+      - `safe/generated/cve_matrix.json`
+      - `safe/generated/original_pkgconfig/libarchive.pc`
+      - `safe/generated/original_package_metadata.json`
+      - `safe/generated/original_build_contract.json`
+      - `safe/generated/original_c_build/**`
+      - `safe/generated/original_link_objects/**`
+      - `safe/generated/link_compat_manifest.json`
+      - `safe/scripts/check-rust-test-coverage.sh`
+      - `safe/scripts/check-abi.sh`
+      - `safe/scripts/check-link-compat.sh`
+      - `safe/scripts/check-i686-cve.sh`
+      - `safe/scripts/run-debian-minitar.sh`
+      - `safe/scripts/run-upstream-c-tests.sh`
+      - `safe/tests/fixtures-manifest.toml`
+      - `safe/tests/libarchive/**`
+      - `safe/tests/tar/**`
+      - `safe/tests/cpio/**`
+      - `safe/tests/cat/**`
+      - `safe/tests/unzip/**`
+      - `safe/c_src/**`
+      - `safe/debian/**`
+      - `safe/examples/**`
+      - `safe/doc/man/**`
+      - `safe/src/**`
+      - `dependents.json`
+      - `test-original.sh`
+
+      Run these commands exactly:
+      ```bash
+      cd safe
+      cargo fmt --check
+      cargo clippy --workspace --all-targets --all-features -- -D warnings
+      ./scripts/check-rust-test-coverage.sh
+      cargo test --workspace --all-features
+      dpkg-buildpackage -b -uc -us
+      ./scripts/run-debian-minitar.sh
+      ./scripts/check-abi.sh --strict
+      ./scripts/check-link-compat.sh
+      ./scripts/run-upstream-c-tests.sh libarchive all
+      ./scripts/run-upstream-c-tests.sh tar all
+      ./scripts/run-upstream-c-tests.sh cpio all
+      ./scripts/run-upstream-c-tests.sh cat all
+      ./scripts/run-upstream-c-tests.sh unzip all
+      ./scripts/check-i686-cve.sh
+      cd ..
+      ./test-original.sh --target safe
+      ```
+
+      End with exactly one of:
+      VERDICT: PASS
+      VERDICT: FAIL: <reason>
