@@ -1,15 +1,14 @@
+use std::collections::HashMap;
 use std::ffi::OsString;
 use std::path::PathBuf;
 use std::process::Command;
-use std::sync::OnceLock;
+use std::sync::{Mutex, OnceLock};
 
 use crate::support::fixtures::fixture_manifest;
 
-static LIBARCHIVE_ARTIFACTS: OnceLock<SuiteArtifacts> = OnceLock::new();
-static TAR_ARTIFACTS: OnceLock<SuiteArtifacts> = OnceLock::new();
-static CPIO_ARTIFACTS: OnceLock<SuiteArtifacts> = OnceLock::new();
-static CAT_ARTIFACTS: OnceLock<SuiteArtifacts> = OnceLock::new();
-static UNZIP_ARTIFACTS: OnceLock<SuiteArtifacts> = OnceLock::new();
+static SUITE_ARTIFACTS: OnceLock<Mutex<HashMap<(String, String), SuiteArtifacts>>> =
+    OnceLock::new();
+static TEST_PHASE_GROUPS: OnceLock<HashMap<(String, String), String>> = OnceLock::new();
 
 pub fn run_ported_case(suite: &str, define_test: &str) {
     let suite_fixtures = fixture_manifest().suite(suite);
@@ -17,7 +16,8 @@ pub fn run_ported_case(suite: &str, define_test: &str) {
     let reference_dir = suite_fixtures.root_path();
     case.validate_files_exist(&reference_dir);
 
-    let artifacts = suite_artifacts(suite);
+    let phase_group = phase_group_for_case(suite, define_test);
+    let artifacts = suite_artifacts(suite, &phase_group);
     let mut command = Command::new(&artifacts.test_binary);
     command.arg("-q");
     if let Some(frontend_binary) = &artifacts.frontend_binary {
@@ -37,20 +37,40 @@ pub fn run_ported_case(suite: &str, define_test: &str) {
     );
 }
 
-fn suite_artifacts(suite: &str) -> &'static SuiteArtifacts {
-    match suite {
-        "libarchive" => LIBARCHIVE_ARTIFACTS.get_or_init(|| build_suite_artifacts("libarchive")),
-        "tar" => TAR_ARTIFACTS.get_or_init(|| build_suite_artifacts("tar")),
-        "cpio" => CPIO_ARTIFACTS.get_or_init(|| build_suite_artifacts("cpio")),
-        "cat" => CAT_ARTIFACTS.get_or_init(|| build_suite_artifacts("cat")),
-        "unzip" => UNZIP_ARTIFACTS.get_or_init(|| build_suite_artifacts("unzip")),
-        _ => panic!("unsupported suite {suite}"),
-    }
+pub(crate) fn phase_group_for_case(suite: &str, define_test: &str) -> String {
+    TEST_PHASE_GROUPS
+        .get_or_init(load_test_phase_groups)
+        .get(&(suite.to_owned(), define_test.to_owned()))
+        .cloned()
+        .unwrap_or_else(|| String::from("all"))
 }
 
-fn build_suite_artifacts(suite: &str) -> SuiteArtifacts {
+fn suite_artifacts(suite: &str, phase_group: &str) -> SuiteArtifacts {
+    match suite {
+        "libarchive" | "tar" | "cpio" | "cat" | "unzip" => {}
+        _ => panic!("unsupported suite {suite}"),
+    }
+
+    let cache = SUITE_ARTIFACTS.get_or_init(|| Mutex::new(HashMap::new()));
+    let key = (suite.to_owned(), phase_group.to_owned());
+    let mut cache = cache
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    if let Some(artifacts) = cache.get(&key) {
+        return artifacts.clone();
+    }
+
+    let artifacts = build_suite_artifacts(suite, phase_group);
+    cache.insert(key, artifacts.clone());
+    artifacts
+}
+
+fn build_suite_artifacts(suite: &str, phase_group: &str) -> SuiteArtifacts {
     let suite_fixtures = fixture_manifest().suite(suite);
-    let build_dir = target_dir().join("rust-suite-runners").join(suite);
+    let build_dir = target_dir()
+        .join("rust-suite-runners")
+        .join(suite)
+        .join(phase_group);
     std::fs::create_dir_all(&build_dir).expect("suite runner build dir");
 
     let lib_dir = shared_library_dir();
@@ -66,7 +86,7 @@ fn build_suite_artifacts(suite: &str) -> SuiteArtifacts {
         .arg("--suite")
         .arg(suite)
         .arg("--phase-group")
-        .arg("all")
+        .arg(phase_group)
         .arg("--build-dir")
         .arg(&build_dir)
         .arg("--lib-dir")
@@ -92,7 +112,7 @@ fn build_suite_artifacts(suite: &str) -> SuiteArtifacts {
         );
     }
 
-    let test_binary = build_dir.join(format!("{suite}-all-tests"));
+    let test_binary = build_dir.join(format!("{suite}-{phase_group}-tests"));
     assert!(
         test_binary.is_file(),
         "missing suite test binary {}",
@@ -106,6 +126,7 @@ fn build_suite_artifacts(suite: &str) -> SuiteArtifacts {
     }
 }
 
+#[derive(Clone)]
 struct SuiteArtifacts {
     test_binary: PathBuf,
     frontend_binary: Option<PathBuf>,
@@ -127,6 +148,32 @@ impl SuiteArtifacts {
 
 fn package_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+}
+
+fn load_test_phase_groups() -> HashMap<(String, String), String> {
+    #[derive(serde::Deserialize)]
+    struct TestManifest {
+        rows: Vec<TestManifestRow>,
+    }
+
+    #[derive(serde::Deserialize)]
+    struct TestManifestRow {
+        suite: String,
+        define_test: String,
+        phase_group: String,
+    }
+
+    let manifest_path = package_root().join("generated/test_manifest.json");
+    let manifest = std::fs::read_to_string(&manifest_path)
+        .unwrap_or_else(|error| panic!("failed to read {}: {error}", manifest_path.display()));
+    let manifest: TestManifest = serde_json::from_str(&manifest)
+        .unwrap_or_else(|error| panic!("failed to parse {}: {error}", manifest_path.display()));
+
+    manifest
+        .rows
+        .into_iter()
+        .map(|row| ((row.suite, row.define_test), row.phase_group))
+        .collect()
 }
 
 fn target_dir() -> PathBuf {
