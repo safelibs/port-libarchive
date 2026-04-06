@@ -218,6 +218,10 @@ pub struct Api {
     pub archive_read_support_format_warc: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_support_format_xar: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_support_format_zip: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
+    pub archive_read_support_format_zip_seekable:
+        unsafe extern "C" fn(*mut BackendArchive) -> c_int,
+    pub archive_read_support_format_zip_streamable:
+        unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_set_format: unsafe extern "C" fn(*mut BackendArchive, c_int) -> c_int,
     pub archive_read_append_filter: unsafe extern "C" fn(*mut BackendArchive, c_int) -> c_int,
     pub archive_read_append_filter_program:

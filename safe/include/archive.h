@@ -464,6 +464,8 @@ __LA_DECL int archive_read_support_format_xar(struct archive *);
 /* archive_read_support_format_zip() enables both streamable and seekable
  * zip readers. */
 __LA_DECL int archive_read_support_format_zip(struct archive *);
+__LA_DECL int archive_read_support_format_zip_streamable(struct archive *);
+__LA_DECL int archive_read_support_format_zip_seekable(struct archive *);
 
 /* Functions to manually set the format and filters to be used. This is
  * useful to bypass the bidding process when the format and filters to use

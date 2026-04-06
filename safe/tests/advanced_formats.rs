@@ -63,6 +63,22 @@ fn advanced_writer_aliases_and_direct_exports_cover_remaining_formats() {
 }
 
 #[test]
+fn advanced_zip_reader_convenience_exports_are_linked() {
+    unsafe {
+        for setter in [
+            read::archive_read_support_format_zip as unsafe extern "C" fn(_) -> _,
+            read::archive_read_support_format_zip_seekable,
+            read::archive_read_support_format_zip_streamable,
+        ] {
+            let reader = read::archive_read_new();
+            assert!(!reader.is_null());
+            assert_eq!(ARCHIVE_OK, setter(reader));
+            assert_eq!(ARCHIVE_OK, common::archive_read_free(reader));
+        }
+    }
+}
+
+#[test]
 fn advanced_zip_option_wrappers_cover_compression_and_passphrase_callback() {
     unsafe {
         let writer = write::archive_write_new();

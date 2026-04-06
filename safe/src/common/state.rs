@@ -75,6 +75,13 @@ pub(crate) enum ReadFormatRegistration {
     Tar,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(crate) enum ZipSupportVariant {
+    Generic,
+    Seekable,
+    Streamable,
+}
+
 #[derive(Clone)]
 pub(crate) enum ReadSourceConfig {
     None,
@@ -328,6 +335,7 @@ pub(crate) struct ReadArchiveHandle {
     pub(crate) extract_progress: Option<unsafe extern "C" fn(*mut c_void)>,
     pub(crate) extract_progress_user_data: *mut c_void,
     pub(crate) extract_skip_file: Option<(i64, i64)>,
+    pub(crate) zip_support_variant: Option<ZipSupportVariant>,
     pub(crate) placeholder_formats: u32,
     pub(crate) filter_registrations: Vec<ReadFilterRegistration>,
     pub(crate) format_registrations: Vec<ReadFormatRegistration>,
@@ -476,6 +484,7 @@ pub(crate) fn alloc_archive(kind: ArchiveKind) -> *mut archive {
             extract_progress: None,
             extract_progress_user_data: ptr::null_mut(),
             extract_skip_file: None,
+            zip_support_variant: None,
             placeholder_formats: 0,
             filter_registrations: Vec::new(),
             format_registrations: Vec::new(),

@@ -76,6 +76,8 @@ extern "C" {
     pub fn archive_read_support_format_warc(a: *mut archive) -> c_int;
     pub fn archive_read_support_format_xar(a: *mut archive) -> c_int;
     pub fn archive_read_support_format_zip(a: *mut archive) -> c_int;
+    pub fn archive_read_support_format_zip_seekable(a: *mut archive) -> c_int;
+    pub fn archive_read_support_format_zip_streamable(a: *mut archive) -> c_int;
 
     pub fn archive_read_set_format(a: *mut archive, format_code: c_int) -> c_int;
     pub fn archive_read_append_filter(a: *mut archive, filter_code: c_int) -> c_int;

@@ -21,7 +21,7 @@ use crate::common::state::{
     free_archive, read_disk_from_archive, read_from_archive, set_error_string, sync_backend_core,
     ArchiveCloseCallback, ArchiveKind, ArchiveOpenCallback, ArchivePassphraseCallback,
     ArchiveReadCallback, ArchiveSeekCallback, ArchiveSkipCallback, ArchiveSwitchCallback,
-    ReadCallbackNode,
+    ReadCallbackNode, ZipSupportVariant,
 };
 use crate::disk::{
     backend_entry_to_custom, native_read_disk_data, native_read_disk_data_block,
@@ -348,6 +348,23 @@ unsafe extern "C" fn passphrase_callback_shim(
     })
 }
 
+unsafe fn apply_seek_callback_registration(
+    handle: &mut crate::common::state::ReadArchiveHandle,
+) -> c_int {
+    let callback = if matches!(
+        handle.zip_support_variant,
+        Some(ZipSupportVariant::Streamable)
+    ) {
+        None
+    } else {
+        handle.seek_cb.map(|_| {
+            seek_callback_shim
+                as unsafe extern "C" fn(*mut BackendArchive, *mut c_void, i64, c_int) -> i64
+        })
+    };
+    (backend_api().archive_read_set_seek_callback)(handle.backend, callback)
+}
+
 fn emulate_placeholder_format_option(
     handle: &mut crate::common::state::ReadArchiveHandle,
     module: Option<&str>,
@@ -666,10 +683,71 @@ backend_reader_format_support!(
     archive_read_support_format_xar,
     archive_read_support_format_xar
 );
-backend_reader_format_support!(
-    archive_read_support_format_zip,
-    archive_read_support_format_zip
-);
+
+unsafe fn register_zip_format(
+    a: *mut archive,
+    function: &str,
+    variant: ZipSupportVariant,
+    register: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
+) -> c_int {
+    let Some(handle) = validate_read_with_state(a, function, ARCHIVE_STATE_NEW) else {
+        return ARCHIVE_FATAL;
+    };
+    clear_error(&mut handle.core);
+    let status = ensure_read_backend(handle);
+    if status != ARCHIVE_OK {
+        return status;
+    }
+    handle.zip_support_variant = Some(variant);
+    clear_backend_error(handle);
+    let status = register(handle.backend);
+    if status == ARCHIVE_OK {
+        let seek_status = apply_seek_callback_registration(handle);
+        if seek_status != ARCHIVE_OK {
+            sync_backend_core(a);
+            return seek_status;
+        }
+    }
+    sync_backend_core(a);
+    status
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_support_format_zip(a: *mut archive) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        register_zip_format(
+            a,
+            "archive_read_support_format_zip",
+            ZipSupportVariant::Generic,
+            backend_api().archive_read_support_format_zip,
+        )
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_support_format_zip_seekable(a: *mut archive) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        register_zip_format(
+            a,
+            "archive_read_support_format_zip_seekable",
+            ZipSupportVariant::Seekable,
+            backend_api().archive_read_support_format_zip_seekable,
+        )
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_support_format_zip_streamable(a: *mut archive) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        register_zip_format(
+            a,
+            "archive_read_support_format_zip_streamable",
+            ZipSupportVariant::Streamable,
+            backend_api().archive_read_support_format_zip_streamable,
+        )
+    })
+}
+
 #[no_mangle]
 pub extern "C" fn archive_read_support_compression_all(a: *mut archive) -> c_int {
     crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
@@ -1076,13 +1154,7 @@ pub extern "C" fn archive_read_set_seek_callback(
             return status;
         }
         clear_backend_error(handle);
-        let status = (backend_api().archive_read_set_seek_callback)(
-            handle.backend,
-            callback.map(|_| {
-                seek_callback_shim
-                    as unsafe extern "C" fn(*mut BackendArchive, *mut c_void, i64, c_int) -> i64
-            }),
-        );
+        let status = apply_seek_callback_registration(handle);
         sync_backend_core(a);
         status
     })
