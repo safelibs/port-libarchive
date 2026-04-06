@@ -400,20 +400,28 @@ fn libarchive_backend_sources(libarchive_dir: &Path) -> Vec<PathBuf> {
 
 fn build_vendored_backend(
     manifest_dir: &Path,
+    upstream_root: &Path,
     libarchive_dir: &Path,
     generated_config_dir: &Path,
     out_dir: &Path,
 ) {
     let backend_rs = manifest_dir.join("src/common/backend.rs");
-    let public_headers = [
+    let safe_headers = [
         manifest_dir.join("include/archive.h"),
         manifest_dir.join("include/archive_entry.h"),
     ];
-    let prefix_header = write_backend_symbol_prefix(out_dir, &public_headers);
+    let backend_symbol_headers = [
+        upstream_root.join("libarchive/archive.h"),
+        upstream_root.join("libarchive/archive_entry.h"),
+    ];
+    let prefix_header = write_backend_symbol_prefix(out_dir, &backend_symbol_headers);
     let linked_rs = write_backend_linked_rs(out_dir, &backend_rs);
 
     println!("cargo:rerun-if-changed={}", backend_rs.display());
-    for header in &public_headers {
+    for header in &safe_headers {
+        println!("cargo:rerun-if-changed={}", header.display());
+    }
+    for header in &backend_symbol_headers {
         println!("cargo:rerun-if-changed={}", header.display());
     }
     println!("cargo:rerun-if-changed={}", prefix_header.display());
@@ -551,6 +559,7 @@ pub const LIBARCHIVE_LIBTOOL_AGE: u32 = {libtool_age};
         .compile("archive_variadic_shim");
     build_vendored_backend(
         &manifest_dir,
+        &upstream_root,
         &libarchive_dir,
         &generated_config_dir,
         &out_dir,
