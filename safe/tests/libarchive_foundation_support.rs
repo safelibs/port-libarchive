@@ -84,13 +84,13 @@ fn base_archive_handles_expose_filter_and_version_helpers() {
 }
 
 #[test]
-fn upstream_runner_resolves_case_phase_groups_from_manifest() {
+fn ported_runner_resolves_case_phase_groups_from_manifest() {
     assert_eq!(
         "foundation",
-        support::upstream::phase_group_for_case("libarchive", "test_entry")
+        support::ported::phase_group_for_case("libarchive", "test_entry")
     );
     assert_eq!(
         "write_disk",
-        support::upstream::phase_group_for_case("libarchive", "test_archive_match_time")
+        support::ported::phase_group_for_case("libarchive", "test_archive_match_time")
     );
 }

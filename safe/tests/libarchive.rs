@@ -4,7 +4,7 @@
 mod support;
 
 fn run_case(define_test: &str) {
-    support::upstream::run_ported_case("libarchive", define_test);
+    support::ported::run_ported_case("libarchive", define_test);
 }
 
 macro_rules! define_ported_tests {

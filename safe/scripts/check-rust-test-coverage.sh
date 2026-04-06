@@ -38,6 +38,7 @@ required_fields = {
     "suite",
     "define_test",
     "source_file",
+    "driver_kind",
     "rust_test_target",
     "rust_test_name",
 }
@@ -66,6 +67,18 @@ for index, row in enumerate(rust_rows, start=1):
     missing = sorted(required_fields - row.keys())
     if missing:
         raise SystemExit(f"rust manifest row {index} is missing required fields: {', '.join(missing)}")
+
+    if row["driver_kind"] == "upstream_c_suite":
+        raise SystemExit(
+            f"rust manifest row {index} still uses disallowed driver_kind upstream_c_suite for "
+            f'{row["suite"]}:{row["define_test"]}'
+        )
+
+    if row["suite"] in {"tar", "cpio", "cat", "unzip"} and not row.get("frontend_binary"):
+        raise SystemExit(
+            f"rust manifest row {index} is missing frontend_binary metadata for "
+            f'{row["suite"]}:{row["define_test"]}'
+        )
 
     key = upstream_key(row)
     if key in rust_keys:
