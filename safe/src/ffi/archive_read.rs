@@ -63,16 +63,10 @@ extern "C" {
     pub fn archive_read_support_format_gnutar(a: *mut archive) -> c_int;
     pub fn archive_read_support_format_iso9660(a: *mut archive) -> c_int;
     pub fn archive_read_support_format_lha(a: *mut archive) -> c_int;
-    pub fn archive_read_support_format_mtree(a: *mut archive) -> c_int;
     pub fn archive_read_support_format_rar(a: *mut archive) -> c_int;
     pub fn archive_read_support_format_rar5(a: *mut archive) -> c_int;
     pub fn archive_read_support_format_raw(a: *mut archive) -> c_int;
     pub fn archive_read_support_format_tar(a: *mut archive) -> c_int;
-    pub fn archive_read_support_format_warc(a: *mut archive) -> c_int;
-    pub fn archive_read_support_format_xar(a: *mut archive) -> c_int;
-    pub fn archive_read_support_format_zip(a: *mut archive) -> c_int;
-    pub fn archive_read_support_format_zip_streamable(a: *mut archive) -> c_int;
-    pub fn archive_read_support_format_zip_seekable(a: *mut archive) -> c_int;
 
     pub fn archive_read_open_filename(
         a: *mut archive,

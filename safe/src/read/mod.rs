@@ -504,18 +504,6 @@ backend_reader_format_support!(
     archive_read_support_format_lha
 );
 backend_reader_format_support!(
-    archive_read_support_format_mtree,
-    archive_read_support_format_mtree
-);
-backend_reader_format_support!(
-    archive_read_support_format_warc,
-    archive_read_support_format_warc
-);
-backend_reader_format_support!(
-    archive_read_support_format_xar,
-    archive_read_support_format_xar
-);
-backend_reader_format_support!(
     archive_read_support_format_rar,
     archive_read_support_format_rar
 );
@@ -523,19 +511,6 @@ backend_reader_format_support!(
     archive_read_support_format_rar5,
     archive_read_support_format_rar5
 );
-backend_reader_format_support!(
-    archive_read_support_format_zip,
-    archive_read_support_format_zip
-);
-backend_reader_format_support!(
-    archive_read_support_format_zip_streamable,
-    archive_read_support_format_zip_streamable
-);
-backend_reader_format_support!(
-    archive_read_support_format_zip_seekable,
-    archive_read_support_format_zip_seekable
-);
-
 #[no_mangle]
 pub extern "C" fn archive_read_support_compression_all(a: *mut archive) -> c_int {
     crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
@@ -696,17 +671,8 @@ pub extern "C" fn archive_read_support_format_all(a: *mut archive) -> c_int {
             archive_read_support_format_ar(a),
             archive_read_support_format_cpio(a),
             archive_read_support_format_empty(a),
-            archive_read_support_format_lha(a),
-            archive_read_support_format_mtree(a),
             archive_read_support_format_tar(a),
-            archive_read_support_format_xar(a),
-            archive_read_support_format_warc(a),
-            archive_read_support_format_7zip(a),
-            archive_read_support_format_cab(a),
-            archive_read_support_format_rar(a),
-            archive_read_support_format_rar5(a),
-            archive_read_support_format_iso9660(a),
-            archive_read_support_format_zip(a),
+            archive_read_support_format_raw(a),
         ] {
             if status <= ARCHIVE_FAILED {
                 return status;

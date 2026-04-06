@@ -206,18 +206,10 @@ pub struct Api {
     pub archive_read_support_format_gnutar: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_support_format_iso9660: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_support_format_lha: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
-    pub archive_read_support_format_mtree: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_support_format_rar: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_support_format_rar5: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_support_format_raw: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_support_format_tar: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
-    pub archive_read_support_format_warc: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
-    pub archive_read_support_format_xar: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
-    pub archive_read_support_format_zip: unsafe extern "C" fn(*mut BackendArchive) -> c_int,
-    pub archive_read_support_format_zip_seekable:
-        unsafe extern "C" fn(*mut BackendArchive) -> c_int,
-    pub archive_read_support_format_zip_streamable:
-        unsafe extern "C" fn(*mut BackendArchive) -> c_int,
     pub archive_read_open_memory:
         unsafe extern "C" fn(*mut BackendArchive, *const c_void, size_t) -> c_int,
     pub archive_read_open_filename:

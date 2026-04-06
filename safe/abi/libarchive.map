@@ -289,16 +289,10 @@
     archive_read_support_format_gnutar;
     archive_read_support_format_iso9660;
     archive_read_support_format_lha;
-    archive_read_support_format_mtree;
     archive_read_support_format_rar;
     archive_read_support_format_rar5;
     archive_read_support_format_raw;
     archive_read_support_format_tar;
-    archive_read_support_format_warc;
-    archive_read_support_format_xar;
-    archive_read_support_format_zip;
-    archive_read_support_format_zip_seekable;
-    archive_read_support_format_zip_streamable;
     archive_seek_data;
     archive_set_error;
     archive_utility_string_sort;

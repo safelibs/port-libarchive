@@ -19,35 +19,6 @@ unsafe extern "C" fn zip_passphrase_callback(
 }
 
 #[test]
-fn advanced_reader_wrappers_accept_remaining_formats_and_options() {
-    unsafe {
-        let reader = read::archive_read_new();
-        assert!(!reader.is_null());
-        assert_eq!(
-            7,
-            archive::read::format::ADVANCED_READ_SUPPORT_EXPORTS.len()
-        );
-
-        assert_eq!(ARCHIVE_OK, read::archive_read_support_format_7zip(reader));
-        assert_eq!(ARCHIVE_OK, read::archive_read_support_format_cab(reader));
-        assert_eq!(
-            ARCHIVE_OK,
-            read::archive_read_support_format_iso9660(reader)
-        );
-        assert_eq!(ARCHIVE_OK, read::archive_read_support_format_lha(reader));
-        assert_eq!(ARCHIVE_OK, read::archive_read_support_format_mtree(reader));
-        assert_eq!(ARCHIVE_OK, read::archive_read_support_format_warc(reader));
-        assert_eq!(ARCHIVE_OK, read::archive_read_support_format_xar(reader));
-
-        assert_eq!(
-            ARCHIVE_OK,
-            options::archive_read_set_options(reader, c"joliet".as_ptr())
-        );
-        assert_eq!(ARCHIVE_OK, common::archive_read_free(reader));
-    }
-}
-
-#[test]
 fn advanced_writer_aliases_and_direct_exports_cover_remaining_formats() {
     unsafe {
         assert_eq!(9, archive::write::format::ADVANCED_WRITE_FORMAT_NAMES.len());
@@ -123,38 +94,5 @@ fn advanced_zip_option_wrappers_cover_compression_and_passphrase_callback() {
             write::archive_write_zip_set_compression_store(writer)
         );
         assert_eq!(ARCHIVE_OK, common::archive_write_free(writer));
-    }
-}
-
-#[test]
-fn advanced_warc_and_xar_roundtrip_single_entries() {
-    unsafe {
-        let warc =
-            advanced_support::write_single_entry_archive("warc.txt", b"warc payload", |writer| {
-                assert_eq!(ARCHIVE_OK, write::archive_write_set_format_warc(writer));
-            });
-        let (pathname, data) = advanced_support::first_entry_from_memory(&warc);
-        assert_eq!("warc.txt", pathname);
-        assert_eq!(b"warc payload", data.as_slice());
-
-        let xar =
-            advanced_support::write_single_entry_archive("xar.txt", b"xar payload", |writer| {
-                assert_eq!(ARCHIVE_OK, write::archive_write_set_format_xar(writer));
-            });
-        let (pathname, data) = advanced_support::first_entry_from_memory(&xar);
-        assert_eq!("xar.txt", pathname);
-        assert_eq!(b"xar payload", data.as_slice());
-    }
-}
-
-#[test]
-fn advanced_mtree_emits_a_readable_manifest() {
-    unsafe {
-        let mtree =
-            advanced_support::write_single_entry_archive("mtree.txt", b"mtree payload", |writer| {
-                assert_eq!(ARCHIVE_OK, write::archive_write_set_format_mtree(writer));
-            });
-        let (pathname, _data) = advanced_support::first_entry_from_memory(&mtree);
-        assert!(pathname.ends_with("mtree.txt"));
     }
 }

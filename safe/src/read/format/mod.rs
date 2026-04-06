@@ -5,9 +5,6 @@ pub const ADVANCED_READ_SUPPORT_EXPORTS: &[&str] = &[
     "archive_read_support_format_cab",
     "archive_read_support_format_iso9660",
     "archive_read_support_format_lha",
-    "archive_read_support_format_mtree",
-    "archive_read_support_format_warc",
-    "archive_read_support_format_xar",
 ];
 
 pub fn checked_zisofs_layout(
