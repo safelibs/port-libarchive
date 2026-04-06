@@ -807,50 +807,54 @@ pub extern "C" fn archive_write_disk_set_user_lookup(
 
 #[no_mangle]
 pub extern "C" fn archive_write_disk_gid(a: *mut archive, name: *const c_char, gid: i64) -> i64 {
-    unsafe {
-        let Some(handle) = validate_write_disk(a, "archive_write_disk_gid") else {
-            return -1;
-        };
-        let name = from_optional_c_str(name);
-        let Some(name) = name.filter(|name| !name.is_empty()) else {
-            return gid;
-        };
-        if let Some(lookup) = handle.group_lookup {
-            let name = CString::new(name.as_str()).expect("group name");
-            return lookup(handle.group_lookup_private_data, name.as_ptr(), gid);
-        }
-        if handle.use_standard_lookup {
-            let name = CString::new(name.as_str()).expect("group name");
-            let group = libc::getgrnam(name.as_ptr());
-            if !group.is_null() {
-                return (*group).gr_gid as i64;
+    crate::common::panic_boundary::ffi_value(-1, || unsafe {
+        unsafe {
+            let Some(handle) = validate_write_disk(a, "archive_write_disk_gid") else {
+                return -1;
+            };
+            let name = from_optional_c_str(name);
+            let Some(name) = name.filter(|name| !name.is_empty()) else {
+                return gid;
+            };
+            if let Some(lookup) = handle.group_lookup {
+                let name = CString::new(name.as_str()).expect("group name");
+                return lookup(handle.group_lookup_private_data, name.as_ptr(), gid);
             }
+            if handle.use_standard_lookup {
+                let name = CString::new(name.as_str()).expect("group name");
+                let group = libc::getgrnam(name.as_ptr());
+                if !group.is_null() {
+                    return (*group).gr_gid as i64;
+                }
+            }
+            gid
         }
-        gid
-    }
+    })
 }
 
 #[no_mangle]
 pub extern "C" fn archive_write_disk_uid(a: *mut archive, name: *const c_char, uid: i64) -> i64 {
-    unsafe {
-        let Some(handle) = validate_write_disk(a, "archive_write_disk_uid") else {
-            return -1;
-        };
-        let name = from_optional_c_str(name);
-        let Some(name) = name.filter(|name| !name.is_empty()) else {
-            return uid;
-        };
-        if let Some(lookup) = handle.user_lookup {
-            let name = CString::new(name.as_str()).expect("user name");
-            return lookup(handle.user_lookup_private_data, name.as_ptr(), uid);
-        }
-        if handle.use_standard_lookup {
-            let name = CString::new(name.as_str()).expect("user name");
-            let user = libc::getpwnam(name.as_ptr());
-            if !user.is_null() {
-                return (*user).pw_uid as i64;
+    crate::common::panic_boundary::ffi_value(-1, || unsafe {
+        unsafe {
+            let Some(handle) = validate_write_disk(a, "archive_write_disk_uid") else {
+                return -1;
+            };
+            let name = from_optional_c_str(name);
+            let Some(name) = name.filter(|name| !name.is_empty()) else {
+                return uid;
+            };
+            if let Some(lookup) = handle.user_lookup {
+                let name = CString::new(name.as_str()).expect("user name");
+                return lookup(handle.user_lookup_private_data, name.as_ptr(), uid);
             }
+            if handle.use_standard_lookup {
+                let name = CString::new(name.as_str()).expect("user name");
+                let user = libc::getpwnam(name.as_ptr());
+                if !user.is_null() {
+                    return (*user).pw_uid as i64;
+                }
+            }
+            uid
         }
-        uid
-    }
+    })
 }

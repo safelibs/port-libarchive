@@ -1,24 +1,39 @@
 use std::panic::{catch_unwind, AssertUnwindSafe};
 
+pub(crate) fn ffi_value<T, F>(panic_value: T, f: F) -> T
+where
+    F: FnOnce() -> T,
+{
+    catch_unwind(AssertUnwindSafe(f)).unwrap_or(panic_value)
+}
+
+pub(crate) fn ffi_default<T, F>(f: F) -> T
+where
+    T: Default,
+    F: FnOnce() -> T,
+{
+    ffi_value(T::default(), f)
+}
+
 pub(crate) fn ffi_int<F>(panic_value: i32, f: F) -> i32
 where
     F: FnOnce() -> i32,
 {
-    catch_unwind(AssertUnwindSafe(f)).unwrap_or(panic_value)
+    ffi_value(panic_value, f)
 }
 
 pub(crate) fn ffi_ptr<T, F>(f: F) -> *mut T
 where
     F: FnOnce() -> *mut T,
 {
-    catch_unwind(AssertUnwindSafe(f)).unwrap_or(std::ptr::null_mut())
+    ffi_default(f)
 }
 
 pub(crate) fn ffi_const_ptr<T, F>(f: F) -> *const T
 where
     F: FnOnce() -> *const T,
 {
-    catch_unwind(AssertUnwindSafe(f)).unwrap_or(std::ptr::null())
+    ffi_default(f)
 }
 
 pub(crate) fn ffi_void<F>(f: F)

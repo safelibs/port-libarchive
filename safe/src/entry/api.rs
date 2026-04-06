@@ -113,40 +113,48 @@ fn format_fflags_text(set: c_ulong, clear: c_ulong) -> Option<String> {
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_new() -> *mut archive_entry {
-    new_raw_entry(ptr::null_mut())
+    crate::common::panic_boundary::ffi_ptr(|| unsafe { new_raw_entry(ptr::null_mut()) })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_new2(a: *mut archive) -> *mut archive_entry {
-    new_raw_entry(a)
+    crate::common::panic_boundary::ffi_ptr(|| unsafe { new_raw_entry(a) })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_free(entry: *mut archive_entry) {
-    free_raw_entry(entry);
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        free_raw_entry(entry);
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_clear(entry: *mut archive_entry) -> *mut archive_entry {
-    if let Some(entry_data) = from_raw(entry) {
-        clear_entry(entry_data);
-    }
-    entry
+    crate::common::panic_boundary::ffi_ptr(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            clear_entry(entry_data);
+        }
+        entry
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_clone(entry: *mut archive_entry) -> *mut archive_entry {
-    let Some(entry_data) = from_raw(entry) else {
-        return ptr::null_mut();
-    };
-    Box::into_raw(Box::new(clone_entry(entry_data))) as *mut archive_entry
+    crate::common::panic_boundary::ffi_ptr(|| unsafe {
+        let Some(entry_data) = from_raw(entry) else {
+            return ptr::null_mut();
+        };
+        Box::into_raw(Box::new(clone_entry(entry_data))) as *mut archive_entry
+    })
 }
 
 macro_rules! time_getters {
     ($name:ident, $field:ident, $ty:ty) => {
         #[no_mangle]
         pub unsafe extern "C" fn $name(entry: *mut archive_entry) -> $ty {
-            from_raw(entry).map_or(0, |entry_data| entry_data.$field.sec as $ty)
+            crate::common::panic_boundary::ffi_default(|| unsafe {
+                from_raw(entry).map_or(0, |entry_data| entry_data.$field.sec as $ty)
+            })
         }
     };
 }
@@ -160,7 +168,9 @@ macro_rules! time_nsec_getters {
     ($name:ident, $field:ident) => {
         #[no_mangle]
         pub unsafe extern "C" fn $name(entry: *mut archive_entry) -> c_long {
-            from_raw(entry).map_or(0, |entry_data| entry_data.$field.nsec)
+            crate::common::panic_boundary::ffi_default(|| unsafe {
+                from_raw(entry).map_or(0, |entry_data| entry_data.$field.nsec)
+            })
         }
     };
 }
@@ -174,10 +184,12 @@ macro_rules! time_is_set {
     ($name:ident, $field:ident, $flag:expr) => {
         #[no_mangle]
         pub unsafe extern "C" fn $name(entry: *mut archive_entry) -> c_int {
-            from_raw(entry).map_or(
-                0,
-                |entry_data| if entry_data.$field.set { $flag } else { 0 },
-            )
+            crate::common::panic_boundary::ffi_int(0, || unsafe {
+                from_raw(entry).map_or(
+                    0,
+                    |entry_data| if entry_data.$field.set { $flag } else { 0 },
+                )
+            })
         }
     };
 }
@@ -191,10 +203,12 @@ macro_rules! time_setters {
     ($name:ident, $field:ident) => {
         #[no_mangle]
         pub unsafe extern "C" fn $name(entry: *mut archive_entry, sec: i64, nsec: c_long) {
-            if let Some(entry_data) = from_raw(entry) {
-                entry_data.$field.set(sec, nsec as i64);
-                mark_dirty(entry_data);
-            }
+            crate::common::panic_boundary::ffi_void(|| unsafe {
+                if let Some(entry_data) = from_raw(entry) {
+                    entry_data.$field.set(sec, nsec as i64);
+                    mark_dirty(entry_data);
+                }
+            })
         }
     };
 }
@@ -208,10 +222,12 @@ macro_rules! time_unsetters {
     ($name:ident, $field:ident) => {
         #[no_mangle]
         pub unsafe extern "C" fn $name(entry: *mut archive_entry) {
-            if let Some(entry_data) = from_raw(entry) {
-                entry_data.$field.unset();
-                mark_dirty(entry_data);
-            }
+            crate::common::panic_boundary::ffi_void(|| unsafe {
+                if let Some(entry_data) = from_raw(entry) {
+                    entry_data.$field.unset();
+                    mark_dirty(entry_data);
+                }
+            })
         }
     };
 }
@@ -223,124 +239,162 @@ time_unsetters!(archive_entry_unset_mtime, mtime);
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_dev(entry: *mut archive_entry) -> dev_t {
-    from_raw(entry).map_or(0, |entry_data| entry_data.dev)
+    crate::common::panic_boundary::ffi_default(|| unsafe {
+        from_raw(entry).map_or(0, |entry_data| entry_data.dev)
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_dev_is_set(entry: *mut archive_entry) -> c_int {
-    from_raw(entry).map_or(0, |entry_data| bool_to_int(entry_data.dev_set))
+    crate::common::panic_boundary::ffi_int(0, || unsafe {
+        from_raw(entry).map_or(0, |entry_data| bool_to_int(entry_data.dev_set))
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_devmajor(entry: *mut archive_entry) -> dev_t {
-    from_raw(entry).map_or(0, |entry_data| devmajor(entry_data.dev))
+    crate::common::panic_boundary::ffi_default(|| unsafe {
+        from_raw(entry).map_or(0, |entry_data| devmajor(entry_data.dev))
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_devminor(entry: *mut archive_entry) -> dev_t {
-    from_raw(entry).map_or(0, |entry_data| devminor(entry_data.dev))
+    crate::common::panic_boundary::ffi_default(|| unsafe {
+        from_raw(entry).map_or(0, |entry_data| devminor(entry_data.dev))
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_rdev(entry: *mut archive_entry) -> dev_t {
-    from_raw(entry).map_or(0, |entry_data| entry_data.rdev)
+    crate::common::panic_boundary::ffi_default(|| unsafe {
+        from_raw(entry).map_or(0, |entry_data| entry_data.rdev)
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_rdevmajor(entry: *mut archive_entry) -> dev_t {
-    from_raw(entry).map_or(0, |entry_data| devmajor(entry_data.rdev))
+    crate::common::panic_boundary::ffi_default(|| unsafe {
+        from_raw(entry).map_or(0, |entry_data| devmajor(entry_data.rdev))
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_rdevminor(entry: *mut archive_entry) -> dev_t {
-    from_raw(entry).map_or(0, |entry_data| devminor(entry_data.rdev))
+    crate::common::panic_boundary::ffi_default(|| unsafe {
+        from_raw(entry).map_or(0, |entry_data| devminor(entry_data.rdev))
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_set_dev(entry: *mut archive_entry, dev: dev_t) {
-    if let Some(entry_data) = from_raw(entry) {
-        entry_data.dev = dev;
-        entry_data.dev_set = true;
-        mark_dirty(entry_data);
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            entry_data.dev = dev;
+            entry_data.dev_set = true;
+            mark_dirty(entry_data);
+        }
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_set_devmajor(entry: *mut archive_entry, dev: dev_t) {
-    if let Some(entry_data) = from_raw(entry) {
-        entry_data.dev = makedev(dev, devminor(entry_data.dev));
-        entry_data.dev_set = true;
-        mark_dirty(entry_data);
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            entry_data.dev = makedev(dev, devminor(entry_data.dev));
+            entry_data.dev_set = true;
+            mark_dirty(entry_data);
+        }
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_set_devminor(entry: *mut archive_entry, dev: dev_t) {
-    if let Some(entry_data) = from_raw(entry) {
-        entry_data.dev = makedev(devmajor(entry_data.dev), dev);
-        entry_data.dev_set = true;
-        mark_dirty(entry_data);
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            entry_data.dev = makedev(devmajor(entry_data.dev), dev);
+            entry_data.dev_set = true;
+            mark_dirty(entry_data);
+        }
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_set_rdev(entry: *mut archive_entry, dev: dev_t) {
-    if let Some(entry_data) = from_raw(entry) {
-        entry_data.rdev = dev;
-        mark_dirty(entry_data);
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            entry_data.rdev = dev;
+            mark_dirty(entry_data);
+        }
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_set_rdevmajor(entry: *mut archive_entry, dev: dev_t) {
-    if let Some(entry_data) = from_raw(entry) {
-        entry_data.rdev = makedev(dev, devminor(entry_data.rdev));
-        mark_dirty(entry_data);
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            entry_data.rdev = makedev(dev, devminor(entry_data.rdev));
+            mark_dirty(entry_data);
+        }
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_set_rdevminor(entry: *mut archive_entry, dev: dev_t) {
-    if let Some(entry_data) = from_raw(entry) {
-        entry_data.rdev = makedev(devmajor(entry_data.rdev), dev);
-        mark_dirty(entry_data);
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            entry_data.rdev = makedev(devmajor(entry_data.rdev), dev);
+            mark_dirty(entry_data);
+        }
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_filetype(entry: *mut archive_entry) -> mode_t {
-    from_raw(entry).map_or(0, |entry_data| entry_data.mode & AE_IFMT)
+    crate::common::panic_boundary::ffi_default(|| unsafe {
+        from_raw(entry).map_or(0, |entry_data| entry_data.mode & AE_IFMT)
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_perm(entry: *mut archive_entry) -> mode_t {
-    from_raw(entry).map_or(0, |entry_data| entry_data.mode & 0o7777)
+    crate::common::panic_boundary::ffi_default(|| unsafe {
+        from_raw(entry).map_or(0, |entry_data| entry_data.mode & 0o7777)
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_mode(entry: *mut archive_entry) -> mode_t {
-    from_raw(entry).map_or(0, |entry_data| entry_data.mode)
+    crate::common::panic_boundary::ffi_default(|| unsafe {
+        from_raw(entry).map_or(0, |entry_data| entry_data.mode)
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_set_filetype(entry: *mut archive_entry, filetype: c_uint) {
-    if let Some(entry_data) = from_raw(entry) {
-        set_filetype(entry_data, filetype as mode_t);
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            set_filetype(entry_data, filetype as mode_t);
+        }
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_set_perm(entry: *mut archive_entry, perm: mode_t) {
-    if let Some(entry_data) = from_raw(entry) {
-        set_perm(entry_data, perm);
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            set_perm(entry_data, perm);
+        }
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_set_mode(entry: *mut archive_entry, mode: mode_t) {
-    if let Some(entry_data) = from_raw(entry) {
-        set_mode(entry_data, mode);
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            set_mode(entry_data, mode);
+        }
+    })
 }
 
 #[no_mangle]
@@ -349,38 +403,44 @@ pub unsafe extern "C" fn archive_entry_fflags(
     set: *mut c_ulong,
     clear: *mut c_ulong,
 ) {
-    if let Some(entry_data) = from_raw(entry) {
-        if !set.is_null() {
-            *set = entry_data.fflags_set;
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            if !set.is_null() {
+                *set = entry_data.fflags_set;
+            }
+            if !clear.is_null() {
+                *clear = entry_data.fflags_clear;
+            }
         }
-        if !clear.is_null() {
-            *clear = entry_data.fflags_clear;
-        }
-    }
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_fflags_text(entry: *mut archive_entry) -> *const c_char {
-    let Some(entry_data) = from_raw(entry) else {
-        return ptr::null();
-    };
-    if let Some(text) = entry_data.fflags_text_cache.as_ref() {
-        return text.as_ptr();
-    }
-    if entry_data.fflags_set == 0 && entry_data.fflags_clear == 0 {
-        return ptr::null();
-    }
-    if entry_data.fflags_text_cache.is_none() {
-        let Some(text) = format_fflags_text(entry_data.fflags_set, entry_data.fflags_clear) else {
+    crate::common::panic_boundary::ffi_const_ptr(|| unsafe {
+        let Some(entry_data) = from_raw(entry) else {
             return ptr::null();
         };
-        entry_data.fflags_text_cache =
-            Some(std::ffi::CString::new(text).expect("fflags text must not contain interior NUL"));
-    }
-    entry_data
-        .fflags_text_cache
-        .as_ref()
-        .map_or(ptr::null(), |text| text.as_ptr())
+        if let Some(text) = entry_data.fflags_text_cache.as_ref() {
+            return text.as_ptr();
+        }
+        if entry_data.fflags_set == 0 && entry_data.fflags_clear == 0 {
+            return ptr::null();
+        }
+        if entry_data.fflags_text_cache.is_none() {
+            let Some(text) = format_fflags_text(entry_data.fflags_set, entry_data.fflags_clear)
+            else {
+                return ptr::null();
+            };
+            entry_data.fflags_text_cache = Some(
+                std::ffi::CString::new(text).expect("fflags text must not contain interior NUL"),
+            );
+        }
+        entry_data
+            .fflags_text_cache
+            .as_ref()
+            .map_or(ptr::null(), |text| text.as_ptr())
+    })
 }
 
 #[no_mangle]
@@ -389,11 +449,13 @@ pub unsafe extern "C" fn archive_entry_set_fflags(
     set: c_ulong,
     clear: c_ulong,
 ) {
-    if let Some(entry_data) = from_raw(entry) {
-        entry_data.fflags_set = set;
-        entry_data.fflags_clear = clear;
-        entry_data.fflags_text_cache = None;
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            entry_data.fflags_set = set;
+            entry_data.fflags_clear = clear;
+            entry_data.fflags_text_cache = None;
+        }
+    })
 }
 
 #[no_mangle]
@@ -401,13 +463,15 @@ pub unsafe extern "C" fn archive_entry_copy_fflags_text(
     entry: *mut archive_entry,
     text: *const c_char,
 ) -> *const c_char {
-    if let Some(entry_data) = from_raw(entry) {
-        let (set, clear) = parse_fflags_text(&from_optional_c_str(text).unwrap_or_default());
-        entry_data.fflags_set = set;
-        entry_data.fflags_clear = clear;
-        entry_data.fflags_text_cache = None;
-    }
-    ptr::null()
+    crate::common::panic_boundary::ffi_const_ptr(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            let (set, clear) = parse_fflags_text(&from_optional_c_str(text).unwrap_or_default());
+            entry_data.fflags_set = set;
+            entry_data.fflags_clear = clear;
+            entry_data.fflags_text_cache = None;
+        }
+        ptr::null()
+    })
 }
 
 #[no_mangle]
@@ -415,20 +479,24 @@ pub unsafe extern "C" fn archive_entry_copy_fflags_text_w(
     entry: *mut archive_entry,
     text: *const wchar_t,
 ) -> *const wchar_t {
-    if let Some(entry_data) = from_raw(entry) {
-        let (set, clear) = parse_fflags_text(&from_optional_wide(text).unwrap_or_default());
-        entry_data.fflags_set = set;
-        entry_data.fflags_clear = clear;
-        entry_data.fflags_text_cache = None;
-    }
-    ptr::null()
+    crate::common::panic_boundary::ffi_const_ptr(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            let (set, clear) = parse_fflags_text(&from_optional_wide(text).unwrap_or_default());
+            entry_data.fflags_set = set;
+            entry_data.fflags_clear = clear;
+            entry_data.fflags_text_cache = None;
+        }
+        ptr::null()
+    })
 }
 
 macro_rules! int_getters {
     ($name:ident, $field:ident, $ty:ty) => {
         #[no_mangle]
         pub unsafe extern "C" fn $name(entry: *mut archive_entry) -> $ty {
-            from_raw(entry).map_or(0, |entry_data| entry_data.$field as $ty)
+            crate::common::panic_boundary::ffi_default(|| unsafe {
+                from_raw(entry).map_or(0, |entry_data| entry_data.$field as $ty)
+            })
         }
     };
 }
@@ -441,27 +509,35 @@ int_getters!(archive_entry_size, size, i64);
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_nlink(entry: *mut archive_entry) -> c_uint {
-    from_raw(entry).map_or(0, |entry_data| entry_data.nlink)
+    crate::common::panic_boundary::ffi_default(|| unsafe {
+        from_raw(entry).map_or(0, |entry_data| entry_data.nlink)
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_ino_is_set(entry: *mut archive_entry) -> c_int {
-    from_raw(entry).map_or(0, |entry_data| bool_to_int(entry_data.ino_set))
+    crate::common::panic_boundary::ffi_int(0, || unsafe {
+        from_raw(entry).map_or(0, |entry_data| bool_to_int(entry_data.ino_set))
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_size_is_set(entry: *mut archive_entry) -> c_int {
-    from_raw(entry).map_or(0, |entry_data| bool_to_int(entry_data.size_set))
+    crate::common::panic_boundary::ffi_int(0, || unsafe {
+        from_raw(entry).map_or(0, |entry_data| bool_to_int(entry_data.size_set))
+    })
 }
 
 macro_rules! int_setters {
     ($name:ident, $field:ident, $ty:ty, $extra:expr) => {
         #[no_mangle]
         pub unsafe extern "C" fn $name(entry: *mut archive_entry, value: $ty) {
-            if let Some(entry_data) = from_raw(entry) {
-                entry_data.$field = value as _;
-                $extra(entry_data);
-            }
+            crate::common::panic_boundary::ffi_void(|| unsafe {
+                if let Some(entry_data) = from_raw(entry) {
+                    entry_data.$field = value as _;
+                    $extra(entry_data);
+                }
+            })
         }
     };
 }
@@ -512,26 +588,32 @@ int_setters!(
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_unset_size(entry: *mut archive_entry) {
-    if let Some(entry_data) = from_raw(entry) {
-        entry_data.size = 0;
-        entry_data.size_set = false;
-        mark_dirty(entry_data);
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            entry_data.size = 0;
+            entry_data.size_set = false;
+            mark_dirty(entry_data);
+        }
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_set_nlink(entry: *mut archive_entry, value: c_uint) {
-    if let Some(entry_data) = from_raw(entry) {
-        entry_data.nlink = value;
-        mark_dirty(entry_data);
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            entry_data.nlink = value;
+            mark_dirty(entry_data);
+        }
+    })
 }
 
 macro_rules! text_getters {
     ($name:ident, $field:ident) => {
         #[no_mangle]
         pub unsafe extern "C" fn $name(entry: *mut archive_entry) -> *const c_char {
-            from_raw(entry).map_or(ptr::null(), |entry_data| entry_data.$field.as_c_ptr())
+            crate::common::panic_boundary::ffi_const_ptr(|| unsafe {
+                from_raw(entry).map_or(ptr::null(), |entry_data| entry_data.$field.as_c_ptr())
+            })
         }
     };
 }
@@ -540,7 +622,9 @@ macro_rules! text_utf8_getters {
     ($name:ident, $field:ident) => {
         #[no_mangle]
         pub unsafe extern "C" fn $name(entry: *mut archive_entry) -> *const c_char {
-            from_raw(entry).map_or(ptr::null(), |entry_data| entry_data.$field.as_utf8_c_ptr())
+            crate::common::panic_boundary::ffi_const_ptr(|| unsafe {
+                from_raw(entry).map_or(ptr::null(), |entry_data| entry_data.$field.as_utf8_c_ptr())
+            })
         }
     };
 }
@@ -549,7 +633,9 @@ macro_rules! text_wide_getters {
     ($name:ident, $field:ident) => {
         #[no_mangle]
         pub unsafe extern "C" fn $name(entry: *mut archive_entry) -> *const wchar_t {
-            from_raw(entry).map_or(ptr::null(), |entry_data| entry_data.$field.as_wide_ptr())
+            crate::common::panic_boundary::ffi_const_ptr(|| unsafe {
+                from_raw(entry).map_or(ptr::null(), |entry_data| entry_data.$field.as_wide_ptr())
+            })
         }
     };
 }
@@ -577,19 +663,23 @@ macro_rules! text_setters {
     ($name:ident, $field:ident, c) => {
         #[no_mangle]
         pub unsafe extern "C" fn $name(entry: *mut archive_entry, value: *const c_char) {
-            if let Some(entry_data) = from_raw(entry) {
-                update_c_text(&mut entry_data.$field, value);
-                mark_dirty(entry_data);
-            }
+            crate::common::panic_boundary::ffi_void(|| unsafe {
+                if let Some(entry_data) = from_raw(entry) {
+                    update_c_text(&mut entry_data.$field, value);
+                    mark_dirty(entry_data);
+                }
+            })
         }
     };
     ($name:ident, $field:ident, w) => {
         #[no_mangle]
         pub unsafe extern "C" fn $name(entry: *mut archive_entry, value: *const wchar_t) {
-            if let Some(entry_data) = from_raw(entry) {
-                update_wide_text(&mut entry_data.$field, value);
-                mark_dirty(entry_data);
-            }
+            crate::common::panic_boundary::ffi_void(|| unsafe {
+                if let Some(entry_data) = from_raw(entry) {
+                    update_wide_text(&mut entry_data.$field, value);
+                    mark_dirty(entry_data);
+                }
+            })
         }
     };
 }
@@ -621,13 +711,15 @@ macro_rules! text_updates {
     ($name:ident, $field:ident, c) => {
         #[no_mangle]
         pub unsafe extern "C" fn $name(entry: *mut archive_entry, value: *const c_char) -> c_int {
-            if let Some(entry_data) = from_raw(entry) {
-                update_c_text(&mut entry_data.$field, value);
-                mark_dirty(entry_data);
-                1
-            } else {
-                0
-            }
+            crate::common::panic_boundary::ffi_int(0, || unsafe {
+                if let Some(entry_data) = from_raw(entry) {
+                    update_c_text(&mut entry_data.$field, value);
+                    mark_dirty(entry_data);
+                    1
+                } else {
+                    0
+                }
+            })
         }
     };
 }
@@ -640,13 +732,15 @@ text_updates!(archive_entry_update_uname_utf8, uname, c);
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_set_link(entry: *mut archive_entry, value: *const c_char) {
-    if let Some(entry_data) = from_raw(entry) {
-        set_link_target_bytes(
-            entry_data,
-            (!value.is_null()).then(|| CStr::from_ptr(value).to_bytes().to_vec()),
-        );
-        mark_dirty(entry_data);
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            set_link_target_bytes(
+                entry_data,
+                (!value.is_null()).then(|| CStr::from_ptr(value).to_bytes().to_vec()),
+            );
+            mark_dirty(entry_data);
+        }
+    })
 }
 
 #[no_mangle]
@@ -654,12 +748,16 @@ pub unsafe extern "C" fn archive_entry_set_link_utf8(
     entry: *mut archive_entry,
     value: *const c_char,
 ) {
-    archive_entry_set_link(entry, value);
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        archive_entry_set_link(entry, value);
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_copy_link(entry: *mut archive_entry, value: *const c_char) {
-    archive_entry_set_link(entry, value);
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        archive_entry_set_link(entry, value);
+    })
 }
 
 #[no_mangle]
@@ -667,10 +765,12 @@ pub unsafe extern "C" fn archive_entry_copy_link_w(
     entry: *mut archive_entry,
     value: *const wchar_t,
 ) {
-    if let Some(entry_data) = from_raw(entry) {
-        set_link_target(entry_data, from_optional_wide(value));
-        mark_dirty(entry_data);
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            set_link_target(entry_data, from_optional_wide(value));
+            mark_dirty(entry_data);
+        }
+    })
 }
 
 #[no_mangle]
@@ -678,36 +778,48 @@ pub unsafe extern "C" fn archive_entry_update_link_utf8(
     entry: *mut archive_entry,
     value: *const c_char,
 ) -> c_int {
-    archive_entry_set_link(entry, value);
-    1
+    crate::common::panic_boundary::ffi_int(0, || unsafe {
+        archive_entry_set_link(entry, value);
+        1
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_symlink_type(entry: *mut archive_entry) -> c_int {
-    from_raw(entry).map_or(0, |entry_data| entry_data.symlink_type)
+    crate::common::panic_boundary::ffi_int(0, || unsafe {
+        from_raw(entry).map_or(0, |entry_data| entry_data.symlink_type)
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_set_symlink_type(entry: *mut archive_entry, value: c_int) {
-    if let Some(entry_data) = from_raw(entry) {
-        entry_data.symlink_type = value;
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            entry_data.symlink_type = value;
+        }
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_is_data_encrypted(entry: *mut archive_entry) -> c_int {
-    from_raw(entry).map_or(0, |entry_data| bool_to_int(entry_data.data_encrypted))
+    crate::common::panic_boundary::ffi_int(0, || unsafe {
+        from_raw(entry).map_or(0, |entry_data| bool_to_int(entry_data.data_encrypted))
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_is_metadata_encrypted(entry: *mut archive_entry) -> c_int {
-    from_raw(entry).map_or(0, |entry_data| bool_to_int(entry_data.metadata_encrypted))
+    crate::common::panic_boundary::ffi_int(0, || unsafe {
+        from_raw(entry).map_or(0, |entry_data| bool_to_int(entry_data.metadata_encrypted))
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_is_encrypted(entry: *mut archive_entry) -> c_int {
-    from_raw(entry).map_or(0, |entry_data| {
-        bool_to_int(entry_data.data_encrypted || entry_data.metadata_encrypted)
+    crate::common::panic_boundary::ffi_int(0, || unsafe {
+        from_raw(entry).map_or(0, |entry_data| {
+            bool_to_int(entry_data.data_encrypted || entry_data.metadata_encrypted)
+        })
     })
 }
 
@@ -716,9 +828,11 @@ pub unsafe extern "C" fn archive_entry_set_is_data_encrypted(
     entry: *mut archive_entry,
     encrypted: i8,
 ) {
-    if let Some(entry_data) = from_raw(entry) {
-        entry_data.data_encrypted = encrypted != 0;
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            entry_data.data_encrypted = encrypted != 0;
+        }
+    })
 }
 
 #[no_mangle]
@@ -726,9 +840,11 @@ pub unsafe extern "C" fn archive_entry_set_is_metadata_encrypted(
     entry: *mut archive_entry,
     encrypted: i8,
 ) {
-    if let Some(entry_data) = from_raw(entry) {
-        entry_data.metadata_encrypted = encrypted != 0;
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            entry_data.metadata_encrypted = encrypted != 0;
+        }
+    })
 }
 
 #[no_mangle]
@@ -736,17 +852,19 @@ pub unsafe extern "C" fn archive_entry_mac_metadata(
     entry: *mut archive_entry,
     size: *mut size_t,
 ) -> *const c_void {
-    let Some(entry_data) = from_raw(entry) else {
-        return ptr::null();
-    };
-    if !size.is_null() {
-        *size = entry_data.mac_metadata.len();
-    }
-    if entry_data.mac_metadata.is_empty() {
-        ptr::null()
-    } else {
-        entry_data.mac_metadata.as_ptr().cast()
-    }
+    crate::common::panic_boundary::ffi_const_ptr(|| unsafe {
+        let Some(entry_data) = from_raw(entry) else {
+            return ptr::null();
+        };
+        if !size.is_null() {
+            *size = entry_data.mac_metadata.len();
+        }
+        if entry_data.mac_metadata.is_empty() {
+            ptr::null()
+        } else {
+            entry_data.mac_metadata.as_ptr().cast()
+        }
+    })
 }
 
 #[no_mangle]
@@ -755,33 +873,41 @@ pub unsafe extern "C" fn archive_entry_copy_mac_metadata(
     metadata: *const c_void,
     size: size_t,
 ) {
-    if let Some(entry_data) = from_raw(entry) {
-        if metadata.is_null() || size == 0 {
-            entry_data.mac_metadata.clear();
-        } else {
-            entry_data.mac_metadata =
-                std::slice::from_raw_parts(metadata.cast::<u8>(), size).to_vec();
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            if metadata.is_null() || size == 0 {
+                entry_data.mac_metadata.clear();
+            } else {
+                entry_data.mac_metadata =
+                    std::slice::from_raw_parts(metadata.cast::<u8>(), size).to_vec();
+            }
         }
-    }
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_copy_stat(entry: *mut archive_entry, st: *const stat) {
-    if let (Some(entry_data), Some(st)) = (from_raw(entry), st.as_ref()) {
-        copy_stat(entry_data, st);
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let (Some(entry_data), Some(st)) = (from_raw(entry), st.as_ref()) {
+            copy_stat(entry_data, st);
+        }
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_stat(entry: *mut archive_entry) -> *const stat {
-    from_raw(entry)
-        .map(|entry_data| materialize_stat(entry_data) as *const stat)
-        .unwrap_or(ptr::null())
+    crate::common::panic_boundary::ffi_const_ptr(|| unsafe {
+        from_raw(entry)
+            .map(|entry_data| materialize_stat(entry_data) as *const stat)
+            .unwrap_or(ptr::null())
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_strmode(entry: *mut archive_entry) -> *const c_char {
-    from_raw(entry).map_or(ptr::null(), strmode)
+    crate::common::panic_boundary::ffi_const_ptr(|| unsafe {
+        from_raw(entry).map_or(ptr::null(), strmode)
+    })
 }
 
 #[no_mangle]
@@ -789,24 +915,30 @@ pub unsafe extern "C" fn archive_entry_digest(
     entry: *mut archive_entry,
     digest_type: c_int,
 ) -> *const c_uchar {
-    let Some(entry_data) = from_raw(entry) else {
-        return ptr::null();
-    };
-    entry_data.digests.get(digest_type)
+    crate::common::panic_boundary::ffi_const_ptr(|| unsafe {
+        let Some(entry_data) = from_raw(entry) else {
+            return ptr::null();
+        };
+        entry_data.digests.get(digest_type)
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_acl(entry: *mut archive_entry) -> *mut archive_acl {
-    from_raw(entry)
-        .map(|entry_data| ptr::addr_of_mut!(entry_data.acl).cast::<archive_acl>())
-        .unwrap_or(ptr::null_mut())
+    crate::common::panic_boundary::ffi_ptr(|| unsafe {
+        from_raw(entry)
+            .map(|entry_data| ptr::addr_of_mut!(entry_data.acl).cast::<archive_acl>())
+            .unwrap_or(ptr::null_mut())
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_acl_clear(entry: *mut archive_entry) {
-    if let Some(entry_data) = from_raw(entry) {
-        clear_acl(entry_data);
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            clear_acl(entry_data);
+        }
+    })
 }
 
 #[no_mangle]
@@ -818,19 +950,21 @@ pub unsafe extern "C" fn archive_entry_acl_add_entry(
     qual: c_int,
     name: *const c_char,
 ) -> c_int {
-    let Some(entry_data) = from_raw(entry) else {
-        return ARCHIVE_FATAL;
-    };
-    let status = entry_data.acl.add_entry(
-        &mut entry_data.mode,
-        entry_type,
-        permset,
-        tag,
-        qual,
-        from_optional_c_str(name),
-    );
-    entry_data.strmode_cache = None;
-    status
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        let Some(entry_data) = from_raw(entry) else {
+            return ARCHIVE_FATAL;
+        };
+        let status = entry_data.acl.add_entry(
+            &mut entry_data.mode,
+            entry_type,
+            permset,
+            tag,
+            qual,
+            from_optional_c_str(name),
+        );
+        entry_data.strmode_cache = None;
+        status
+    })
 }
 
 #[no_mangle]
@@ -842,19 +976,21 @@ pub unsafe extern "C" fn archive_entry_acl_add_entry_w(
     qual: c_int,
     name: *const wchar_t,
 ) -> c_int {
-    let Some(entry_data) = from_raw(entry) else {
-        return ARCHIVE_FATAL;
-    };
-    let status = entry_data.acl.add_entry(
-        &mut entry_data.mode,
-        entry_type,
-        permset,
-        tag,
-        qual,
-        from_optional_wide(name),
-    );
-    entry_data.strmode_cache = None;
-    status
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        let Some(entry_data) = from_raw(entry) else {
+            return ARCHIVE_FATAL;
+        };
+        let status = entry_data.acl.add_entry(
+            &mut entry_data.mode,
+            entry_type,
+            permset,
+            tag,
+            qual,
+            from_optional_wide(name),
+        );
+        entry_data.strmode_cache = None;
+        status
+    })
 }
 
 #[no_mangle]
@@ -862,7 +998,9 @@ pub unsafe extern "C" fn archive_entry_acl_count(
     entry: *mut archive_entry,
     want_type: c_int,
 ) -> c_int {
-    from_raw(entry).map_or(0, |entry_data| entry_data.acl.count(want_type))
+    crate::common::panic_boundary::ffi_int(0, || unsafe {
+        from_raw(entry).map_or(0, |entry_data| entry_data.acl.count(want_type))
+    })
 }
 
 #[no_mangle]
@@ -870,8 +1008,10 @@ pub unsafe extern "C" fn archive_entry_acl_reset(
     entry: *mut archive_entry,
     want_type: c_int,
 ) -> c_int {
-    from_raw(entry).map_or(0, |entry_data| {
-        entry_data.acl.reset(entry_data.mode, want_type)
+    crate::common::panic_boundary::ffi_int(0, || unsafe {
+        from_raw(entry).map_or(0, |entry_data| {
+            entry_data.acl.reset(entry_data.mode, want_type)
+        })
     })
 }
 
@@ -885,11 +1025,13 @@ pub unsafe extern "C" fn archive_entry_acl_next(
     qual: *mut c_int,
     name: *mut *const c_char,
 ) -> c_int {
-    from_raw(entry).map_or(ARCHIVE_EOF, |entry_data| {
-        if entry_data.acl.iter_want_type != Some(want_type) {
-            entry_data.acl.reset(entry_data.mode, want_type);
-        }
-        entry_data.acl.next(entry_type, permset, tag, qual, name)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        from_raw(entry).map_or(ARCHIVE_EOF, |entry_data| {
+            if entry_data.acl.iter_want_type != Some(want_type) {
+                entry_data.acl.reset(entry_data.mode, want_type);
+            }
+            entry_data.acl.next(entry_type, permset, tag, qual, name)
+        })
     })
 }
 
@@ -898,9 +1040,11 @@ pub unsafe extern "C" fn archive_entry_acl_text(
     entry: *mut archive_entry,
     flags: c_int,
 ) -> *const c_char {
-    from_raw(entry)
-        .map(|entry_data| entry_data.acl.text_ptr(entry_data.mode, flags))
-        .unwrap_or(ptr::null())
+    crate::common::panic_boundary::ffi_const_ptr(|| unsafe {
+        from_raw(entry)
+            .map(|entry_data| entry_data.acl.text_ptr(entry_data.mode, flags))
+            .unwrap_or(ptr::null())
+    })
 }
 
 #[no_mangle]
@@ -908,9 +1052,11 @@ pub unsafe extern "C" fn archive_entry_acl_text_w(
     entry: *mut archive_entry,
     flags: c_int,
 ) -> *const wchar_t {
-    from_raw(entry)
-        .map(|entry_data| entry_data.acl.text_w_ptr(entry_data.mode, flags))
-        .unwrap_or(ptr::null())
+    crate::common::panic_boundary::ffi_const_ptr(|| unsafe {
+        from_raw(entry)
+            .map(|entry_data| entry_data.acl.text_w_ptr(entry_data.mode, flags))
+            .unwrap_or(ptr::null())
+    })
 }
 
 #[no_mangle]
@@ -919,13 +1065,15 @@ pub unsafe extern "C" fn archive_entry_acl_to_text(
     text_len: *mut isize,
     flags: c_int,
 ) -> *mut c_char {
-    from_raw(entry)
-        .map(|entry_data| {
-            entry_data
-                .acl
-                .to_text_malloc(entry_data.mode, flags, text_len)
-        })
-        .unwrap_or(ptr::null_mut())
+    crate::common::panic_boundary::ffi_ptr(|| unsafe {
+        from_raw(entry)
+            .map(|entry_data| {
+                entry_data
+                    .acl
+                    .to_text_malloc(entry_data.mode, flags, text_len)
+            })
+            .unwrap_or(ptr::null_mut())
+    })
 }
 
 #[no_mangle]
@@ -934,18 +1082,22 @@ pub unsafe extern "C" fn archive_entry_acl_to_text_w(
     text_len: *mut isize,
     flags: c_int,
 ) -> *mut wchar_t {
-    from_raw(entry)
-        .map(|entry_data| {
-            entry_data
-                .acl
-                .to_text_w_malloc(entry_data.mode, flags, text_len)
-        })
-        .unwrap_or(ptr::null_mut())
+    crate::common::panic_boundary::ffi_ptr(|| unsafe {
+        from_raw(entry)
+            .map(|entry_data| {
+                entry_data
+                    .acl
+                    .to_text_w_malloc(entry_data.mode, flags, text_len)
+            })
+            .unwrap_or(ptr::null_mut())
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_acl_types(entry: *mut archive_entry) -> c_int {
-    from_raw(entry).map_or(0, |entry_data| entry_data.acl.types())
+    crate::common::panic_boundary::ffi_int(0, || unsafe {
+        from_raw(entry).map_or(0, |entry_data| entry_data.acl.types())
+    })
 }
 
 #[no_mangle]
@@ -954,15 +1106,17 @@ pub unsafe extern "C" fn archive_entry_acl_from_text(
     text: *const c_char,
     want_type: c_int,
 ) -> c_int {
-    let Some(entry_data) = from_raw(entry) else {
-        return ARCHIVE_FATAL;
-    };
-    let text = from_optional_c_str(text).unwrap_or_default();
-    let status = entry_data
-        .acl
-        .from_text(&mut entry_data.mode, &text, want_type);
-    entry_data.strmode_cache = None;
-    status
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        let Some(entry_data) = from_raw(entry) else {
+            return ARCHIVE_FATAL;
+        };
+        let text = from_optional_c_str(text).unwrap_or_default();
+        let status = entry_data
+            .acl
+            .from_text(&mut entry_data.mode, &text, want_type);
+        entry_data.strmode_cache = None;
+        status
+    })
 }
 
 #[no_mangle]
@@ -971,23 +1125,27 @@ pub unsafe extern "C" fn archive_entry_acl_from_text_w(
     text: *const wchar_t,
     want_type: c_int,
 ) -> c_int {
-    let Some(entry_data) = from_raw(entry) else {
-        return ARCHIVE_FATAL;
-    };
-    let text = from_optional_wide(text).unwrap_or_default();
-    let status = entry_data
-        .acl
-        .from_text(&mut entry_data.mode, &text, want_type);
-    entry_data.strmode_cache = None;
-    status
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        let Some(entry_data) = from_raw(entry) else {
+            return ARCHIVE_FATAL;
+        };
+        let text = from_optional_wide(text).unwrap_or_default();
+        let status = entry_data
+            .acl
+            .from_text(&mut entry_data.mode, &text, want_type);
+        entry_data.strmode_cache = None;
+        status
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_xattr_clear(entry: *mut archive_entry) {
-    if let Some(entry_data) = from_raw(entry) {
-        entry_data.xattrs.clear();
-        entry_data.xattr_iter = 0;
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            entry_data.xattrs.clear();
+            entry_data.xattr_iter = 0;
+        }
+    })
 }
 
 #[no_mangle]
@@ -997,19 +1155,23 @@ pub unsafe extern "C" fn archive_entry_xattr_add_entry(
     value: *const c_void,
     size: size_t,
 ) {
-    if let Some(entry_data) = from_raw(entry) {
-        add_xattr(entry_data, name, value, size);
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            add_xattr(entry_data, name, value, size);
+        }
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_xattr_count(entry: *mut archive_entry) -> c_int {
-    from_raw(entry).map_or(0, |entry_data| entry_data.xattrs.len() as c_int)
+    crate::common::panic_boundary::ffi_int(0, || unsafe {
+        from_raw(entry).map_or(0, |entry_data| entry_data.xattrs.len() as c_int)
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_xattr_reset(entry: *mut archive_entry) -> c_int {
-    from_raw(entry).map_or(0, reset_xattrs)
+    crate::common::panic_boundary::ffi_int(0, || unsafe { from_raw(entry).map_or(0, reset_xattrs) })
 }
 
 #[no_mangle]
@@ -1019,17 +1181,21 @@ pub unsafe extern "C" fn archive_entry_xattr_next(
     value: *mut *const c_void,
     size: *mut size_t,
 ) -> c_int {
-    from_raw(entry).map_or(crate::common::error::ARCHIVE_WARN, |entry_data| {
-        next_xattr(entry_data, name, value, size)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        from_raw(entry).map_or(crate::common::error::ARCHIVE_WARN, |entry_data| {
+            next_xattr(entry_data, name, value, size)
+        })
     })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_sparse_clear(entry: *mut archive_entry) {
-    if let Some(entry_data) = from_raw(entry) {
-        entry_data.sparse.clear();
-        entry_data.sparse_iter = 0;
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            entry_data.sparse.clear();
+            entry_data.sparse_iter = 0;
+        }
+    })
 }
 
 #[no_mangle]
@@ -1038,19 +1204,21 @@ pub unsafe extern "C" fn archive_entry_sparse_add_entry(
     offset: i64,
     length: i64,
 ) {
-    if let Some(entry_data) = from_raw(entry) {
-        add_sparse(entry_data, offset, length);
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(entry_data) = from_raw(entry) {
+            add_sparse(entry_data, offset, length);
+        }
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_sparse_count(entry: *mut archive_entry) -> c_int {
-    from_raw(entry).map_or(0, sparse_count)
+    crate::common::panic_boundary::ffi_int(0, || unsafe { from_raw(entry).map_or(0, sparse_count) })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_sparse_reset(entry: *mut archive_entry) -> c_int {
-    from_raw(entry).map_or(0, reset_sparse)
+    crate::common::panic_boundary::ffi_int(0, || unsafe { from_raw(entry).map_or(0, reset_sparse) })
 }
 
 #[no_mangle]
@@ -1059,17 +1227,21 @@ pub unsafe extern "C" fn archive_entry_sparse_next(
     offset: *mut i64,
     length: *mut i64,
 ) -> c_int {
-    from_raw(entry).map_or(crate::common::error::ARCHIVE_WARN, |entry_data| {
-        next_sparse(entry_data, offset, length)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        from_raw(entry).map_or(crate::common::error::ARCHIVE_WARN, |entry_data| {
+            next_sparse(entry_data, offset, length)
+        })
     })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_linkresolver_new() -> *mut archive_entry_linkresolver {
-    Box::into_raw(Box::new(LinkResolverData {
-        strategy: crate::ffi::archive_common::ARCHIVE_FORMAT_TAR,
-        entries: std::collections::HashMap::new(),
-    })) as *mut archive_entry_linkresolver
+    crate::common::panic_boundary::ffi_ptr(|| unsafe {
+        Box::into_raw(Box::new(LinkResolverData {
+            strategy: crate::ffi::archive_common::ARCHIVE_FORMAT_TAR,
+            entries: std::collections::HashMap::new(),
+        })) as *mut archive_entry_linkresolver
+    })
 }
 
 #[no_mangle]
@@ -1077,16 +1249,20 @@ pub unsafe extern "C" fn archive_entry_linkresolver_set_strategy(
     resolver: *mut archive_entry_linkresolver,
     format_code: c_int,
 ) {
-    if let Some(resolver) = resolver.cast::<LinkResolverData>().as_mut() {
-        resolver.strategy = format_code;
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(resolver) = resolver.cast::<LinkResolverData>().as_mut() {
+            resolver.strategy = format_code;
+        }
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_entry_linkresolver_free(
     resolver: *mut archive_entry_linkresolver,
 ) {
-    free_linkresolver(resolver);
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        free_linkresolver(resolver);
+    })
 }
 
 #[no_mangle]
@@ -1095,9 +1271,11 @@ pub unsafe extern "C" fn archive_entry_linkify(
     entry: *mut *mut archive_entry,
     spare: *mut *mut archive_entry,
 ) {
-    if let Some(resolver) = resolver.cast::<LinkResolverData>().as_mut() {
-        linkify(resolver, entry, spare);
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        if let Some(resolver) = resolver.cast::<LinkResolverData>().as_mut() {
+            linkify(resolver, entry, spare);
+        }
+    })
 }
 
 #[no_mangle]
@@ -1105,9 +1283,11 @@ pub unsafe extern "C" fn archive_entry_partial_links(
     resolver: *mut archive_entry_linkresolver,
     links: *mut c_uint,
 ) -> *mut archive_entry {
-    resolver
-        .cast::<LinkResolverData>()
-        .as_mut()
-        .map(|resolver| partial_links(resolver, links))
-        .unwrap_or(ptr::null_mut())
+    crate::common::panic_boundary::ffi_ptr(|| unsafe {
+        resolver
+            .cast::<LinkResolverData>()
+            .as_mut()
+            .map(|resolver| partial_links(resolver, links))
+            .unwrap_or(ptr::null_mut())
+    })
 }

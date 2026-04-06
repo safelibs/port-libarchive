@@ -792,37 +792,51 @@ backend_reader_format_support!(
 
 #[no_mangle]
 pub extern "C" fn archive_read_support_compression_all(a: *mut archive) -> c_int {
-    archive_read_support_filter_all(a)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        archive_read_support_filter_all(a)
+    })
 }
 
 #[no_mangle]
 pub extern "C" fn archive_read_support_compression_bzip2(a: *mut archive) -> c_int {
-    archive_read_support_filter_bzip2(a)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        archive_read_support_filter_bzip2(a)
+    })
 }
 
 #[no_mangle]
 pub extern "C" fn archive_read_support_compression_compress(a: *mut archive) -> c_int {
-    archive_read_support_filter_compress(a)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        archive_read_support_filter_compress(a)
+    })
 }
 
 #[no_mangle]
 pub extern "C" fn archive_read_support_compression_gzip(a: *mut archive) -> c_int {
-    archive_read_support_filter_gzip(a)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        archive_read_support_filter_gzip(a)
+    })
 }
 
 #[no_mangle]
 pub extern "C" fn archive_read_support_compression_lzip(a: *mut archive) -> c_int {
-    archive_read_support_filter_lzip(a)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        archive_read_support_filter_lzip(a)
+    })
 }
 
 #[no_mangle]
 pub extern "C" fn archive_read_support_compression_lzma(a: *mut archive) -> c_int {
-    archive_read_support_filter_lzma(a)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        archive_read_support_filter_lzma(a)
+    })
 }
 
 #[no_mangle]
 pub extern "C" fn archive_read_support_compression_none(a: *mut archive) -> c_int {
-    archive_read_support_filter_none(a)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        archive_read_support_filter_none(a)
+    })
 }
 
 #[no_mangle]
@@ -830,7 +844,9 @@ pub extern "C" fn archive_read_support_compression_program(
     a: *mut archive,
     command: *const c_char,
 ) -> c_int {
-    archive_read_support_filter_program(a, command)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        archive_read_support_filter_program(a, command)
+    })
 }
 
 #[no_mangle]
@@ -840,22 +856,30 @@ pub extern "C" fn archive_read_support_compression_program_signature(
     signature: *const c_void,
     signature_len: size_t,
 ) -> c_int {
-    archive_read_support_filter_program_signature(a, command, signature, signature_len)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        archive_read_support_filter_program_signature(a, command, signature, signature_len)
+    })
 }
 
 #[no_mangle]
 pub extern "C" fn archive_read_support_compression_rpm(a: *mut archive) -> c_int {
-    archive_read_support_filter_rpm(a)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        archive_read_support_filter_rpm(a)
+    })
 }
 
 #[no_mangle]
 pub extern "C" fn archive_read_support_compression_uu(a: *mut archive) -> c_int {
-    archive_read_support_filter_uu(a)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        archive_read_support_filter_uu(a)
+    })
 }
 
 #[no_mangle]
 pub extern "C" fn archive_read_support_compression_xz(a: *mut archive) -> c_int {
-    archive_read_support_filter_xz(a)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        archive_read_support_filter_xz(a)
+    })
 }
 
 #[no_mangle]
@@ -980,38 +1004,40 @@ pub extern "C" fn archive_read_support_format_by_code(
     a: *mut archive,
     format_code: c_int,
 ) -> c_int {
-    match format_code & ARCHIVE_FORMAT_BASE_MASK {
-        ARCHIVE_FORMAT_7ZIP => archive_read_support_format_7zip(a),
-        ARCHIVE_FORMAT_AR => archive_read_support_format_ar(a),
-        ARCHIVE_FORMAT_CAB => archive_read_support_format_cab(a),
-        ARCHIVE_FORMAT_CPIO => archive_read_support_format_cpio(a),
-        ARCHIVE_FORMAT_EMPTY => archive_read_support_format_empty(a),
-        ARCHIVE_FORMAT_ISO9660 => archive_read_support_format_iso9660(a),
-        ARCHIVE_FORMAT_LHA => archive_read_support_format_lha(a),
-        ARCHIVE_FORMAT_MTREE => archive_read_support_format_mtree(a),
-        ARCHIVE_FORMAT_RAR => archive_read_support_format_rar(a),
-        ARCHIVE_FORMAT_RAR_V5 => archive_read_support_format_rar5(a),
-        ARCHIVE_FORMAT_RAW => archive_read_support_format_raw(a),
-        ARCHIVE_FORMAT_TAR => archive_read_support_format_tar(a),
-        ARCHIVE_FORMAT_WARC => archive_read_support_format_warc(a),
-        ARCHIVE_FORMAT_XAR => archive_read_support_format_xar(a),
-        ARCHIVE_FORMAT_ZIP => archive_read_support_format_zip(a),
-        _ => ffi_int(ARCHIVE_FATAL, || unsafe {
-            let Some(handle) = validate_read_with_state(
-                a,
-                "archive_read_support_format_by_code",
-                ARCHIVE_STATE_NEW,
-            ) else {
-                return ARCHIVE_FATAL;
-            };
-            set_error_string(
-                &mut handle.core,
-                -1,
-                "Invalid format code specified".to_string(),
-            );
-            ARCHIVE_FATAL
-        }),
-    }
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        match format_code & ARCHIVE_FORMAT_BASE_MASK {
+            ARCHIVE_FORMAT_7ZIP => archive_read_support_format_7zip(a),
+            ARCHIVE_FORMAT_AR => archive_read_support_format_ar(a),
+            ARCHIVE_FORMAT_CAB => archive_read_support_format_cab(a),
+            ARCHIVE_FORMAT_CPIO => archive_read_support_format_cpio(a),
+            ARCHIVE_FORMAT_EMPTY => archive_read_support_format_empty(a),
+            ARCHIVE_FORMAT_ISO9660 => archive_read_support_format_iso9660(a),
+            ARCHIVE_FORMAT_LHA => archive_read_support_format_lha(a),
+            ARCHIVE_FORMAT_MTREE => archive_read_support_format_mtree(a),
+            ARCHIVE_FORMAT_RAR => archive_read_support_format_rar(a),
+            ARCHIVE_FORMAT_RAR_V5 => archive_read_support_format_rar5(a),
+            ARCHIVE_FORMAT_RAW => archive_read_support_format_raw(a),
+            ARCHIVE_FORMAT_TAR => archive_read_support_format_tar(a),
+            ARCHIVE_FORMAT_WARC => archive_read_support_format_warc(a),
+            ARCHIVE_FORMAT_XAR => archive_read_support_format_xar(a),
+            ARCHIVE_FORMAT_ZIP => archive_read_support_format_zip(a),
+            _ => ffi_int(ARCHIVE_FATAL, || unsafe {
+                let Some(handle) = validate_read_with_state(
+                    a,
+                    "archive_read_support_format_by_code",
+                    ARCHIVE_STATE_NEW,
+                ) else {
+                    return ARCHIVE_FATAL;
+                };
+                set_error_string(
+                    &mut handle.core,
+                    -1,
+                    "Invalid format code specified".to_string(),
+                );
+                ARCHIVE_FATAL
+            }),
+        }
+    })
 }
 
 #[no_mangle]
@@ -1309,23 +1335,25 @@ pub extern "C" fn archive_read_open(
     client_reader: Option<ArchiveReadCallback>,
     client_closer: Option<ArchiveCloseCallback>,
 ) -> c_int {
-    let mut status = archive_read_set_open_callback(a, client_opener);
-    if status != ARCHIVE_OK {
-        return status;
-    }
-    status = archive_read_set_read_callback(a, client_reader);
-    if status != ARCHIVE_OK {
-        return status;
-    }
-    status = archive_read_set_close_callback(a, client_closer);
-    if status != ARCHIVE_OK {
-        return status;
-    }
-    status = archive_read_set_callback_data(a, client_data);
-    if status != ARCHIVE_OK {
-        return status;
-    }
-    archive_read_open1(a)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        let mut status = archive_read_set_open_callback(a, client_opener);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        status = archive_read_set_read_callback(a, client_reader);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        status = archive_read_set_close_callback(a, client_closer);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        status = archive_read_set_callback_data(a, client_data);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        archive_read_open1(a)
+    })
 }
 
 #[no_mangle]
@@ -1337,27 +1365,29 @@ pub extern "C" fn archive_read_open2(
     client_skipper: Option<ArchiveSkipCallback>,
     client_closer: Option<ArchiveCloseCallback>,
 ) -> c_int {
-    let mut status = archive_read_set_callback_data(a, client_data);
-    if status != ARCHIVE_OK {
-        return status;
-    }
-    status = archive_read_set_open_callback(a, client_opener);
-    if status != ARCHIVE_OK {
-        return status;
-    }
-    status = archive_read_set_read_callback(a, client_reader);
-    if status != ARCHIVE_OK {
-        return status;
-    }
-    status = archive_read_set_skip_callback(a, client_skipper);
-    if status != ARCHIVE_OK {
-        return status;
-    }
-    status = archive_read_set_close_callback(a, client_closer);
-    if status != ARCHIVE_OK {
-        return status;
-    }
-    archive_read_open1(a)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        let mut status = archive_read_set_callback_data(a, client_data);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        status = archive_read_set_open_callback(a, client_opener);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        status = archive_read_set_read_callback(a, client_reader);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        status = archive_read_set_skip_callback(a, client_skipper);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        status = archive_read_set_close_callback(a, client_closer);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        archive_read_open1(a)
+    })
 }
 
 #[no_mangle]
@@ -1667,23 +1697,29 @@ pub extern "C" fn archive_read_next_header2(a: *mut archive, entry: *mut archive
 
 #[no_mangle]
 pub extern "C" fn archive_read_data(a: *mut archive, buffer: *mut c_void, size: size_t) -> isize {
-    unsafe {
-        let Some(mut handle) = ReadLike::from_archive(a, "archive_read_data") else {
-            return ARCHIVE_FATAL as isize;
-        };
-        match &mut handle {
-            ReadLike::Archive(reader) => {
-                let status = require_open_reader(reader, "archive_read_data");
-                if status != ARCHIVE_OK {
-                    return status as isize;
+    crate::common::panic_boundary::ffi_value(
+        crate::common::error::ARCHIVE_FATAL as isize,
+        || unsafe {
+            unsafe {
+                let Some(mut handle) = ReadLike::from_archive(a, "archive_read_data") else {
+                    return ARCHIVE_FATAL as isize;
+                };
+                match &mut handle {
+                    ReadLike::Archive(reader) => {
+                        let status = require_open_reader(reader, "archive_read_data");
+                        if status != ARCHIVE_OK {
+                            return status as isize;
+                        }
+                        let status =
+                            (backend_api().archive_read_data)(reader.backend, buffer, size);
+                        sync_backend_core(a);
+                        return status;
+                    }
+                    ReadLike::Disk(reader) => native_read_disk_data(reader, buffer, size),
                 }
-                let status = (backend_api().archive_read_data)(reader.backend, buffer, size);
-                sync_backend_core(a);
-                return status;
             }
-            ReadLike::Disk(reader) => native_read_disk_data(reader, buffer, size),
-        }
-    }
+        },
+    )
 }
 
 #[no_mangle]
@@ -1715,64 +1751,77 @@ pub extern "C" fn archive_read_data_block(
 
 #[no_mangle]
 pub extern "C" fn archive_read_header_position(a: *mut archive) -> i64 {
-    unsafe {
-        let Some(handle) = validate_read_with_state(a, "archive_read_header_position", !0) else {
-            return ARCHIVE_FATAL as i64;
-        };
-        if handle.backend.is_null() {
-            0
-        } else {
-            (backend_api().archive_read_header_position)(handle.backend)
+    crate::common::panic_boundary::ffi_value(0, || unsafe {
+        unsafe {
+            let Some(handle) = validate_read_with_state(a, "archive_read_header_position", !0)
+            else {
+                return ARCHIVE_FATAL as i64;
+            };
+            if handle.backend.is_null() {
+                0
+            } else {
+                (backend_api().archive_read_header_position)(handle.backend)
+            }
         }
-    }
+    })
 }
 
 #[no_mangle]
 pub extern "C" fn archive_read_has_encrypted_entries(a: *mut archive) -> c_int {
-    unsafe {
-        let Some(handle) = validate_read_with_state(a, "archive_read_has_encrypted_entries", !0)
-        else {
-            return ARCHIVE_FATAL;
-        };
-        if handle.backend.is_null() {
-            ARCHIVE_READ_FORMAT_ENCRYPTION_UNSUPPORTED
-        } else {
-            (backend_api().archive_read_has_encrypted_entries)(handle.backend)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        unsafe {
+            let Some(handle) =
+                validate_read_with_state(a, "archive_read_has_encrypted_entries", !0)
+            else {
+                return ARCHIVE_FATAL;
+            };
+            if handle.backend.is_null() {
+                ARCHIVE_READ_FORMAT_ENCRYPTION_UNSUPPORTED
+            } else {
+                (backend_api().archive_read_has_encrypted_entries)(handle.backend)
+            }
         }
-    }
+    })
 }
 
 #[no_mangle]
 pub extern "C" fn archive_read_format_capabilities(a: *mut archive) -> c_int {
-    unsafe {
-        let Some(handle) = validate_read_with_state(a, "archive_read_format_capabilities", !0)
-        else {
-            return ARCHIVE_FATAL;
-        };
-        if handle.backend.is_null() {
-            0
-        } else {
-            (backend_api().archive_read_format_capabilities)(handle.backend)
+    crate::common::panic_boundary::ffi_int(0, || unsafe {
+        unsafe {
+            let Some(handle) = validate_read_with_state(a, "archive_read_format_capabilities", !0)
+            else {
+                return ARCHIVE_FATAL;
+            };
+            if handle.backend.is_null() {
+                0
+            } else {
+                (backend_api().archive_read_format_capabilities)(handle.backend)
+            }
         }
-    }
+    })
 }
 
 #[no_mangle]
 pub extern "C" fn archive_seek_data(a: *mut archive, offset: i64, whence: c_int) -> i64 {
-    unsafe {
-        let Some(handle) = validate_read_with_state(a, "archive_seek_data", !0) else {
-            return ARCHIVE_FATAL as i64;
-        };
-        if handle.backend.is_null() || !handle.backend_opened {
-            set_error_string(
-                &mut handle.core,
-                -1,
-                "No archive is currently open".to_string(),
-            );
-            return ARCHIVE_FATAL as i64;
-        }
-        (backend_api().archive_seek_data)(handle.backend, offset, whence)
-    }
+    crate::common::panic_boundary::ffi_value(
+        crate::common::error::ARCHIVE_FATAL as i64,
+        || unsafe {
+            unsafe {
+                let Some(handle) = validate_read_with_state(a, "archive_seek_data", !0) else {
+                    return ARCHIVE_FATAL as i64;
+                };
+                if handle.backend.is_null() || !handle.backend_opened {
+                    set_error_string(
+                        &mut handle.core,
+                        -1,
+                        "No archive is currently open".to_string(),
+                    );
+                    return ARCHIVE_FATAL as i64;
+                }
+                (backend_api().archive_seek_data)(handle.backend, offset, whence)
+            }
+        },
+    )
 }
 
 #[no_mangle]
@@ -2076,31 +2125,35 @@ pub extern "C" fn archive_read_extract_set_progress_callback(
     progress_func: Option<unsafe extern "C" fn(*mut c_void)>,
     user_data: *mut c_void,
 ) {
-    unsafe {
-        let Some(handle) = validate_read_with_state(
-            a,
-            "archive_read_extract_set_progress_callback",
-            crate::common::error::ARCHIVE_STATE_ANY,
-        ) else {
-            return;
-        };
-        handle.extract_progress = progress_func;
-        handle.extract_progress_user_data = user_data;
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        unsafe {
+            let Some(handle) = validate_read_with_state(
+                a,
+                "archive_read_extract_set_progress_callback",
+                crate::common::error::ARCHIVE_STATE_ANY,
+            ) else {
+                return;
+            };
+            handle.extract_progress = progress_func;
+            handle.extract_progress_user_data = user_data;
+        }
+    })
 }
 
 #[no_mangle]
 pub extern "C" fn archive_read_extract_set_skip_file(a: *mut archive, dev: i64, ino: i64) {
-    unsafe {
-        let Some(handle) = validate_read_with_state(
-            a,
-            "archive_read_extract_set_skip_file",
-            crate::common::error::ARCHIVE_STATE_ANY,
-        ) else {
-            return;
-        };
-        handle.extract_skip_file = Some((dev, ino));
-    }
+    crate::common::panic_boundary::ffi_void(|| unsafe {
+        unsafe {
+            let Some(handle) = validate_read_with_state(
+                a,
+                "archive_read_extract_set_skip_file",
+                crate::common::error::ARCHIVE_STATE_ANY,
+            ) else {
+                return;
+            };
+            handle.extract_skip_file = Some((dev, ino));
+        }
+    })
 }
 
 #[no_mangle]

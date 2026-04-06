@@ -873,30 +873,34 @@ pub extern "C" fn archive_write_fail(a: *mut archive) -> c_int {
 
 #[no_mangle]
 pub extern "C" fn archive_write_get_bytes_per_block(a: *mut archive) -> c_int {
-    unsafe {
-        let Some(handle) = validate_writer(a, "archive_write_get_bytes_per_block") else {
-            return ARCHIVE_FATAL;
-        };
-        if handle.backend.is_null() {
-            handle.bytes_per_block
-        } else {
-            (backend_api().archive_write_get_bytes_per_block)(handle.backend)
+    crate::common::panic_boundary::ffi_int(0, || unsafe {
+        unsafe {
+            let Some(handle) = validate_writer(a, "archive_write_get_bytes_per_block") else {
+                return ARCHIVE_FATAL;
+            };
+            if handle.backend.is_null() {
+                handle.bytes_per_block
+            } else {
+                (backend_api().archive_write_get_bytes_per_block)(handle.backend)
+            }
         }
-    }
+    })
 }
 
 #[no_mangle]
 pub extern "C" fn archive_write_get_bytes_in_last_block(a: *mut archive) -> c_int {
-    unsafe {
-        let Some(handle) = validate_writer(a, "archive_write_get_bytes_in_last_block") else {
-            return ARCHIVE_FATAL;
-        };
-        if handle.backend.is_null() {
-            handle.bytes_in_last_block
-        } else {
-            (backend_api().archive_write_get_bytes_in_last_block)(handle.backend)
+    crate::common::panic_boundary::ffi_int(0, || unsafe {
+        unsafe {
+            let Some(handle) = validate_writer(a, "archive_write_get_bytes_in_last_block") else {
+                return ARCHIVE_FATAL;
+            };
+            if handle.backend.is_null() {
+                handle.bytes_in_last_block
+            } else {
+                (backend_api().archive_write_get_bytes_in_last_block)(handle.backend)
+            }
         }
-    }
+    })
 }
 
 #[no_mangle]
@@ -969,32 +973,44 @@ pub extern "C" fn archive_write_add_filter_program(
 
 #[no_mangle]
 pub extern "C" fn archive_write_set_compression_bzip2(a: *mut archive) -> c_int {
-    archive_write_add_filter_bzip2(a)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        archive_write_add_filter_bzip2(a)
+    })
 }
 
 #[no_mangle]
 pub extern "C" fn archive_write_set_compression_compress(a: *mut archive) -> c_int {
-    archive_write_add_filter_compress(a)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        archive_write_add_filter_compress(a)
+    })
 }
 
 #[no_mangle]
 pub extern "C" fn archive_write_set_compression_gzip(a: *mut archive) -> c_int {
-    archive_write_add_filter_gzip(a)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        archive_write_add_filter_gzip(a)
+    })
 }
 
 #[no_mangle]
 pub extern "C" fn archive_write_set_compression_lzip(a: *mut archive) -> c_int {
-    archive_write_add_filter_lzip(a)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        archive_write_add_filter_lzip(a)
+    })
 }
 
 #[no_mangle]
 pub extern "C" fn archive_write_set_compression_lzma(a: *mut archive) -> c_int {
-    archive_write_add_filter_lzma(a)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        archive_write_add_filter_lzma(a)
+    })
 }
 
 #[no_mangle]
 pub extern "C" fn archive_write_set_compression_none(a: *mut archive) -> c_int {
-    archive_write_add_filter_none(a)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        archive_write_add_filter_none(a)
+    })
 }
 
 #[no_mangle]
@@ -1002,12 +1018,16 @@ pub extern "C" fn archive_write_set_compression_program(
     a: *mut archive,
     command: *const c_char,
 ) -> c_int {
-    archive_write_add_filter_program(a, command)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        archive_write_add_filter_program(a, command)
+    })
 }
 
 #[no_mangle]
 pub extern "C" fn archive_write_set_compression_xz(a: *mut archive) -> c_int {
-    archive_write_add_filter_xz(a)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        archive_write_add_filter_xz(a)
+    })
 }
 
 #[no_mangle]
@@ -1195,7 +1215,9 @@ pub extern "C" fn archive_write_open_filename_w(a: *mut archive, file: *const wc
 
 #[no_mangle]
 pub extern "C" fn archive_write_open_file(a: *mut archive, file: *const c_char) -> c_int {
-    archive_write_open_filename(a, file)
+    crate::common::panic_boundary::ffi_int(crate::common::error::ARCHIVE_FATAL, || unsafe {
+        archive_write_open_filename(a, file)
+    })
 }
 
 #[no_mangle]
@@ -1292,23 +1314,29 @@ pub extern "C" fn archive_write_data(
     buffer: *const c_void,
     size: size_t,
 ) -> isize {
-    unsafe {
-        let Some(mut handle) = WriteLike::from_archive(a, "archive_write_data") else {
-            return ARCHIVE_FATAL as isize;
-        };
-        match &mut handle {
-            WriteLike::Archive(writer) => {
-                let status = ensure_write_backend_open(writer);
-                if status != ARCHIVE_OK {
-                    return status as isize;
+    crate::common::panic_boundary::ffi_value(
+        crate::common::error::ARCHIVE_FATAL as isize,
+        || unsafe {
+            unsafe {
+                let Some(mut handle) = WriteLike::from_archive(a, "archive_write_data") else {
+                    return ARCHIVE_FATAL as isize;
+                };
+                match &mut handle {
+                    WriteLike::Archive(writer) => {
+                        let status = ensure_write_backend_open(writer);
+                        if status != ARCHIVE_OK {
+                            return status as isize;
+                        }
+                        let status =
+                            (backend_api().archive_write_data)(writer.backend, buffer, size);
+                        sync_backend_core(a);
+                        status
+                    }
+                    WriteLike::Disk(writer) => native_write_disk_data(writer, buffer, size),
                 }
-                let status = (backend_api().archive_write_data)(writer.backend, buffer, size);
-                sync_backend_core(a);
-                status
             }
-            WriteLike::Disk(writer) => native_write_disk_data(writer, buffer, size),
-        }
-    }
+        },
+    )
 }
 
 #[no_mangle]
@@ -1318,24 +1346,36 @@ pub extern "C" fn archive_write_data_block(
     size: size_t,
     offset: i64,
 ) -> isize {
-    unsafe {
-        let Some(mut handle) = WriteLike::from_archive(a, "archive_write_data_block") else {
-            return ARCHIVE_FATAL as isize;
-        };
-        match &mut handle {
-            WriteLike::Archive(writer) => {
-                let status = ensure_write_backend_open(writer);
-                if status != ARCHIVE_OK {
-                    return status as isize;
+    crate::common::panic_boundary::ffi_value(
+        crate::common::error::ARCHIVE_FATAL as isize,
+        || unsafe {
+            unsafe {
+                let Some(mut handle) = WriteLike::from_archive(a, "archive_write_data_block")
+                else {
+                    return ARCHIVE_FATAL as isize;
+                };
+                match &mut handle {
+                    WriteLike::Archive(writer) => {
+                        let status = ensure_write_backend_open(writer);
+                        if status != ARCHIVE_OK {
+                            return status as isize;
+                        }
+                        let status = (backend_api().archive_write_data_block)(
+                            writer.backend,
+                            buffer,
+                            size,
+                            offset,
+                        );
+                        sync_backend_core(a);
+                        status
+                    }
+                    WriteLike::Disk(writer) => {
+                        native_write_disk_data_block(writer, buffer, size, offset)
+                    }
                 }
-                let status =
-                    (backend_api().archive_write_data_block)(writer.backend, buffer, size, offset);
-                sync_backend_core(a);
-                status
             }
-            WriteLike::Disk(writer) => native_write_disk_data_block(writer, buffer, size, offset),
-        }
-    }
+        },
+    )
 }
 
 #[no_mangle]
