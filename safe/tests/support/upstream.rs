@@ -9,8 +9,13 @@ use crate::support::fixtures::fixture_manifest;
 static SUITE_ARTIFACTS: OnceLock<Mutex<HashMap<(String, String), SuiteArtifacts>>> =
     OnceLock::new();
 static TEST_PHASE_GROUPS: OnceLock<HashMap<(String, String), String>> = OnceLock::new();
+static PORTED_CASE_RUNNER_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
 
 pub fn run_ported_case(suite: &str, define_test: &str) {
+    let _runner_lock = PORTED_CASE_RUNNER_LOCK
+        .get_or_init(|| Mutex::new(()))
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
     let suite_fixtures = fixture_manifest().suite(suite);
     let case = suite_fixtures.case(define_test);
     let reference_dir = suite_fixtures.root_path();

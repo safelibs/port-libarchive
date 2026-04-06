@@ -39,7 +39,11 @@ fn reader_phase3_open_variants_read_the_same_archive() {
         assert_eq!(ARCHIVE_OK, read::archive_read_support_format_all(reader));
         assert_eq!(
             ARCHIVE_OK,
-            read::archive_read_open_memory(reader, archive_bytes.as_ptr().cast(), archive_bytes.len())
+            read::archive_read_open_memory(
+                reader,
+                archive_bytes.as_ptr().cast(),
+                archive_bytes.len()
+            )
         );
         assert_eq!("payload.txt", read_single_pathname(reader));
         assert!(read::archive_read_header_position(reader) >= 0);
@@ -78,12 +82,19 @@ fn reader_phase3_next_header2_and_data_round_trip_entry_contents() {
         assert_eq!(ARCHIVE_OK, read::archive_read_support_format_all(reader));
         assert_eq!(
             ARCHIVE_OK,
-            read::archive_read_open_memory(reader, archive_bytes.as_ptr().cast(), archive_bytes.len())
+            read::archive_read_open_memory(
+                reader,
+                archive_bytes.as_ptr().cast(),
+                archive_bytes.len()
+            )
         );
 
         let entry_ptr = entry::archive_entry_new();
         assert!(!entry_ptr.is_null());
-        assert_eq!(ARCHIVE_OK, read::archive_read_next_header2(reader, entry_ptr));
+        assert_eq!(
+            ARCHIVE_OK,
+            read::archive_read_next_header2(reader, entry_ptr)
+        );
         assert_eq!(
             "callbacks.txt",
             CStr::from_ptr(entry::archive_entry_pathname(entry_ptr))
@@ -94,7 +105,10 @@ fn reader_phase3_next_header2_and_data_round_trip_entry_contents() {
         let size = read::archive_read_data(reader, payload.as_mut_ptr().cast(), payload.len());
         assert_eq!(16, size);
         assert_eq!(b"callback payload", &payload[..size as usize]);
-        assert_eq!(ARCHIVE_EOF, read::archive_read_next_header2(reader, entry_ptr));
+        assert_eq!(
+            ARCHIVE_EOF,
+            read::archive_read_next_header2(reader, entry_ptr)
+        );
 
         entry::archive_entry_free(entry_ptr);
         assert_eq!(ARCHIVE_OK, read::archive_read_free(reader));

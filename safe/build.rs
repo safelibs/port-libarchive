@@ -31,7 +31,10 @@ fn load_package_version(version: &str) -> (String, u32, u32, u32) {
         components.next().is_none(),
         "unexpected package version format: {version}"
     );
-    assert!(major < 10, "major version component is too large: {version}");
+    assert!(
+        major < 10,
+        "major version component is too large: {version}"
+    );
 
     (
         format!("{major}{minor:03}{revision:03}"),
