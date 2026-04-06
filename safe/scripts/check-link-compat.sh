@@ -16,7 +16,7 @@ do
   }
 done
 
-cargo build --release >/dev/null
+cargo build --manifest-path "$ROOT/Cargo.toml" --release >/dev/null
 
 python3 - "$ROOT" <<'PY'
 import filecmp

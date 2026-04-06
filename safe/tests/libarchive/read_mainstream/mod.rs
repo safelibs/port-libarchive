@@ -4,6 +4,7 @@ use std::ffi::{c_char, c_void, CStr};
 
 use archive::common::error::ARCHIVE_OK;
 use archive::ffi::archive_entry_api as entry;
+use archive::ffi::archive_read as read;
 
 pub unsafe fn entry_pathname(entry_ptr: *mut archive::ffi::archive_entry) -> String {
     CStr::from_ptr(entry::archive_entry_pathname(entry_ptr))
@@ -104,4 +105,46 @@ pub unsafe extern "C" fn switch_callback(
     _client_data2: *mut c_void,
 ) -> i32 {
     ARCHIVE_OK
+}
+
+pub unsafe fn open_reader_with_callbacks(
+    reader: *mut archive::ffi::archive,
+    state: *mut CallbackReader,
+) -> i32 {
+    assert_eq!(ARCHIVE_OK, read::archive_read_support_filter_all(reader));
+    assert_eq!(ARCHIVE_OK, read::archive_read_support_format_all(reader));
+    read::archive_read_open2(
+        reader,
+        state.cast(),
+        Some(open_callback),
+        Some(read_callback),
+        Some(skip_callback),
+        Some(close_callback),
+    )
+}
+
+pub unsafe fn configure_reader_callbacks(
+    reader: *mut archive::ffi::archive,
+    state: *mut CallbackReader,
+) {
+    assert_eq!(
+        ARCHIVE_OK,
+        read::archive_read_set_callback_data(reader, state.cast())
+    );
+    assert_eq!(
+        ARCHIVE_OK,
+        read::archive_read_set_open_callback(reader, Some(open_callback))
+    );
+    assert_eq!(
+        ARCHIVE_OK,
+        read::archive_read_set_read_callback(reader, Some(read_callback))
+    );
+    assert_eq!(
+        ARCHIVE_OK,
+        read::archive_read_set_skip_callback(reader, Some(skip_callback))
+    );
+    assert_eq!(
+        ARCHIVE_OK,
+        read::archive_read_set_close_callback(reader, Some(close_callback))
+    );
 }

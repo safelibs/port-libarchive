@@ -192,6 +192,149 @@ unsafe fn placeholder_format_warning(
     ARCHIVE_WARN
 }
 
+unsafe fn callback_node_ptr(
+    handle: &mut crate::common::state::ReadArchiveHandle,
+    index: usize,
+) -> *mut ReadCallbackNode {
+    handle.callback_nodes[index].as_mut() as *mut ReadCallbackNode
+}
+
+unsafe fn update_callback_node_owners(
+    handle: &mut crate::common::state::ReadArchiveHandle,
+    owner: *mut archive,
+) {
+    for node in &mut handle.callback_nodes {
+        node.owner = owner;
+    }
+}
+
+unsafe fn ensure_callback_node_count(
+    handle: &mut crate::common::state::ReadArchiveHandle,
+    owner: *mut archive,
+    count: usize,
+) {
+    while handle.callback_nodes.len() < count {
+        handle.callback_nodes.push(Box::new(ReadCallbackNode {
+            owner,
+            client_data: ptr::null_mut(),
+        }));
+    }
+    update_callback_node_owners(handle, owner);
+}
+
+unsafe fn ensure_primary_callback_node(
+    handle: &mut crate::common::state::ReadArchiveHandle,
+    owner: *mut archive,
+) -> *mut ReadCallbackNode {
+    ensure_callback_node_count(handle, owner, 1);
+    callback_node_ptr(handle, 0)
+}
+
+unsafe extern "C" fn open_callback_shim(
+    _backend: *mut BackendArchive,
+    client_data: *mut c_void,
+) -> c_int {
+    let Some(node) = client_data.cast::<ReadCallbackNode>().as_mut() else {
+        return ARCHIVE_FATAL;
+    };
+    let Some(handle) = read_from_archive(node.owner) else {
+        return ARCHIVE_FATAL;
+    };
+    handle.open_cb.map_or(ARCHIVE_OK, |callback| {
+        callback(node.owner, node.client_data)
+    })
+}
+
+unsafe extern "C" fn read_callback_shim(
+    _backend: *mut BackendArchive,
+    client_data: *mut c_void,
+    buffer: *mut *const c_void,
+) -> isize {
+    let Some(node) = client_data.cast::<ReadCallbackNode>().as_mut() else {
+        return ARCHIVE_FATAL as isize;
+    };
+    let Some(handle) = read_from_archive(node.owner) else {
+        return ARCHIVE_FATAL as isize;
+    };
+    handle.read_cb.map_or(ARCHIVE_FATAL as isize, |callback| {
+        callback(node.owner, node.client_data, buffer)
+    })
+}
+
+unsafe extern "C" fn skip_callback_shim(
+    _backend: *mut BackendArchive,
+    client_data: *mut c_void,
+    request: i64,
+) -> i64 {
+    let Some(node) = client_data.cast::<ReadCallbackNode>().as_mut() else {
+        return ARCHIVE_FATAL as i64;
+    };
+    let Some(handle) = read_from_archive(node.owner) else {
+        return ARCHIVE_FATAL as i64;
+    };
+    handle.skip_cb.map_or(ARCHIVE_FATAL as i64, |callback| {
+        callback(node.owner, node.client_data, request)
+    })
+}
+
+unsafe extern "C" fn seek_callback_shim(
+    _backend: *mut BackendArchive,
+    client_data: *mut c_void,
+    offset: i64,
+    whence: c_int,
+) -> i64 {
+    let Some(node) = client_data.cast::<ReadCallbackNode>().as_mut() else {
+        return ARCHIVE_FATAL as i64;
+    };
+    let Some(handle) = read_from_archive(node.owner) else {
+        return ARCHIVE_FATAL as i64;
+    };
+    handle.seek_cb.map_or(ARCHIVE_FATAL as i64, |callback| {
+        callback(node.owner, node.client_data, offset, whence)
+    })
+}
+
+unsafe extern "C" fn close_callback_shim(
+    _backend: *mut BackendArchive,
+    client_data: *mut c_void,
+) -> c_int {
+    let Some(node) = client_data.cast::<ReadCallbackNode>().as_mut() else {
+        return ARCHIVE_FATAL;
+    };
+    let Some(handle) = read_from_archive(node.owner) else {
+        return ARCHIVE_FATAL;
+    };
+    handle.close_cb.map_or(ARCHIVE_OK, |callback| {
+        callback(node.owner, node.client_data)
+    })
+}
+
+unsafe extern "C" fn switch_callback_shim(
+    _backend: *mut BackendArchive,
+    client_data1: *mut c_void,
+    client_data2: *mut c_void,
+) -> c_int {
+    let node1 = client_data1.cast::<ReadCallbackNode>().as_mut();
+    let node2 = client_data2.cast::<ReadCallbackNode>().as_mut();
+    let owner = node1
+        .as_ref()
+        .map(|node| node.owner)
+        .or_else(|| node2.as_ref().map(|node| node.owner));
+    let Some(owner) = owner else {
+        return ARCHIVE_FATAL;
+    };
+    let Some(handle) = read_from_archive(owner) else {
+        return ARCHIVE_FATAL;
+    };
+    handle.switch_cb.map_or(ARCHIVE_OK, |callback| {
+        callback(
+            owner,
+            node1.map_or(ptr::null_mut(), |node| node.client_data),
+            node2.map_or(ptr::null_mut(), |node| node.client_data),
+        )
+    })
+}
+
 unsafe extern "C" fn passphrase_callback_shim(
     _backend: *mut BackendArchive,
     client_data: *mut c_void,
@@ -504,12 +647,28 @@ backend_reader_format_support!(
     archive_read_support_format_lha
 );
 backend_reader_format_support!(
+    archive_read_support_format_mtree,
+    archive_read_support_format_mtree
+);
+backend_reader_format_support!(
     archive_read_support_format_rar,
     archive_read_support_format_rar
 );
 backend_reader_format_support!(
     archive_read_support_format_rar5,
     archive_read_support_format_rar5
+);
+backend_reader_format_support!(
+    archive_read_support_format_warc,
+    archive_read_support_format_warc
+);
+backend_reader_format_support!(
+    archive_read_support_format_xar,
+    archive_read_support_format_xar
+);
+backend_reader_format_support!(
+    archive_read_support_format_zip,
+    archive_read_support_format_zip
 );
 #[no_mangle]
 pub extern "C" fn archive_read_support_compression_all(a: *mut archive) -> c_int {
@@ -659,6 +818,54 @@ pub extern "C" fn archive_read_support_filter_program_signature(
 }
 
 #[no_mangle]
+pub extern "C" fn archive_read_support_filter_by_code(
+    a: *mut archive,
+    filter_code: c_int,
+) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) =
+            validate_read_with_state(a, "archive_read_support_filter_by_code", ARCHIVE_STATE_NEW)
+        else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        let status = ensure_read_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        clear_backend_error(handle);
+        let status =
+            (backend_api().archive_read_support_filter_by_code)(handle.backend, filter_code);
+        sync_backend_core(a);
+        status
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_support_format_by_code(
+    a: *mut archive,
+    format_code: c_int,
+) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) =
+            validate_read_with_state(a, "archive_read_support_format_by_code", ARCHIVE_STATE_NEW)
+        else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        let status = ensure_read_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        clear_backend_error(handle);
+        let status =
+            (backend_api().archive_read_support_format_by_code)(handle.backend, format_code);
+        sync_backend_core(a);
+        status
+    })
+}
+
+#[no_mangle]
 pub extern "C" fn archive_read_support_format_all(a: *mut archive) -> c_int {
     ffi_int(ARCHIVE_FATAL, || unsafe {
         let Some(handle) =
@@ -666,24 +873,556 @@ pub extern "C" fn archive_read_support_format_all(a: *mut archive) -> c_int {
         else {
             return ARCHIVE_FATAL;
         };
-        let mut result = ARCHIVE_OK;
         for status in [
             archive_read_support_format_ar(a),
             archive_read_support_format_cpio(a),
             archive_read_support_format_empty(a),
+            archive_read_support_format_lha(a),
+            archive_read_support_format_mtree(a),
             archive_read_support_format_tar(a),
-            archive_read_support_format_raw(a),
+            archive_read_support_format_xar(a),
+            archive_read_support_format_warc(a),
+            archive_read_support_format_7zip(a),
+            archive_read_support_format_cab(a),
+            archive_read_support_format_rar(a),
+            archive_read_support_format_rar5(a),
+            archive_read_support_format_iso9660(a),
+            archive_read_support_format_zip(a),
         ] {
             if status <= ARCHIVE_FAILED {
                 return status;
-            }
-            if status < result {
-                result = status;
             }
         }
         clear_error(&mut handle.core);
         clear_backend_error(handle);
         ARCHIVE_OK
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_set_format(a: *mut archive, format_code: c_int) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) =
+            validate_read_with_state(a, "archive_read_set_format", ARCHIVE_STATE_NEW)
+        else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        let status = ensure_read_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        clear_backend_error(handle);
+        let status = (backend_api().archive_read_set_format)(handle.backend, format_code);
+        sync_backend_core(a);
+        status
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_append_filter(a: *mut archive, filter_code: c_int) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) =
+            validate_read_with_state(a, "archive_read_append_filter", ARCHIVE_STATE_NEW)
+        else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        let status = ensure_read_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        clear_backend_error(handle);
+        let status = (backend_api().archive_read_append_filter)(handle.backend, filter_code);
+        sync_backend_core(a);
+        status
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_append_filter_program(
+    a: *mut archive,
+    command: *const c_char,
+) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) =
+            validate_read_with_state(a, "archive_read_append_filter_program", ARCHIVE_STATE_NEW)
+        else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        let status = ensure_read_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        clear_backend_error(handle);
+        let status = (backend_api().archive_read_append_filter_program)(handle.backend, command);
+        sync_backend_core(a);
+        status
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_append_filter_program_signature(
+    a: *mut archive,
+    command: *const c_char,
+    signature: *const c_void,
+    signature_len: size_t,
+) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) = validate_read_with_state(
+            a,
+            "archive_read_append_filter_program_signature",
+            ARCHIVE_STATE_NEW,
+        ) else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        let status = ensure_read_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        clear_backend_error(handle);
+        let status = (backend_api().archive_read_append_filter_program_signature)(
+            handle.backend,
+            command,
+            signature,
+            signature_len,
+        );
+        sync_backend_core(a);
+        status
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_set_open_callback(
+    a: *mut archive,
+    callback: Option<ArchiveOpenCallback>,
+) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) =
+            validate_read_with_state(a, "archive_read_set_open_callback", ARCHIVE_STATE_NEW)
+        else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        handle.open_cb = callback;
+        let status = ensure_read_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        clear_backend_error(handle);
+        let status = (backend_api().archive_read_set_open_callback)(
+            handle.backend,
+            callback.map(|_| {
+                open_callback_shim
+                    as unsafe extern "C" fn(*mut BackendArchive, *mut c_void) -> c_int
+            }),
+        );
+        sync_backend_core(a);
+        status
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_set_read_callback(
+    a: *mut archive,
+    callback: Option<ArchiveReadCallback>,
+) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) =
+            validate_read_with_state(a, "archive_read_set_read_callback", ARCHIVE_STATE_NEW)
+        else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        handle.read_cb = callback;
+        let status = ensure_read_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        clear_backend_error(handle);
+        let status = (backend_api().archive_read_set_read_callback)(
+            handle.backend,
+            callback.map(|_| {
+                read_callback_shim
+                    as unsafe extern "C" fn(
+                        *mut BackendArchive,
+                        *mut c_void,
+                        *mut *const c_void,
+                    ) -> isize
+            }),
+        );
+        sync_backend_core(a);
+        status
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_set_seek_callback(
+    a: *mut archive,
+    callback: Option<ArchiveSeekCallback>,
+) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) =
+            validate_read_with_state(a, "archive_read_set_seek_callback", ARCHIVE_STATE_NEW)
+        else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        handle.seek_cb = callback;
+        let status = ensure_read_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        clear_backend_error(handle);
+        let status = (backend_api().archive_read_set_seek_callback)(
+            handle.backend,
+            callback.map(|_| {
+                seek_callback_shim
+                    as unsafe extern "C" fn(*mut BackendArchive, *mut c_void, i64, c_int) -> i64
+            }),
+        );
+        sync_backend_core(a);
+        status
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_set_skip_callback(
+    a: *mut archive,
+    callback: Option<ArchiveSkipCallback>,
+) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) =
+            validate_read_with_state(a, "archive_read_set_skip_callback", ARCHIVE_STATE_NEW)
+        else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        handle.skip_cb = callback;
+        let status = ensure_read_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        clear_backend_error(handle);
+        let status = (backend_api().archive_read_set_skip_callback)(
+            handle.backend,
+            callback.map(|_| {
+                skip_callback_shim
+                    as unsafe extern "C" fn(*mut BackendArchive, *mut c_void, i64) -> i64
+            }),
+        );
+        sync_backend_core(a);
+        status
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_set_close_callback(
+    a: *mut archive,
+    callback: Option<ArchiveCloseCallback>,
+) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) =
+            validate_read_with_state(a, "archive_read_set_close_callback", ARCHIVE_STATE_NEW)
+        else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        handle.close_cb = callback;
+        let status = ensure_read_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        clear_backend_error(handle);
+        let status = (backend_api().archive_read_set_close_callback)(
+            handle.backend,
+            callback.map(|_| {
+                close_callback_shim
+                    as unsafe extern "C" fn(*mut BackendArchive, *mut c_void) -> c_int
+            }),
+        );
+        sync_backend_core(a);
+        status
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_set_switch_callback(
+    a: *mut archive,
+    callback: Option<ArchiveSwitchCallback>,
+) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) =
+            validate_read_with_state(a, "archive_read_set_switch_callback", ARCHIVE_STATE_NEW)
+        else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        handle.switch_cb = callback;
+        let status = ensure_read_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        clear_backend_error(handle);
+        let status = (backend_api().archive_read_set_switch_callback)(
+            handle.backend,
+            callback.map(|_| {
+                switch_callback_shim
+                    as unsafe extern "C" fn(*mut BackendArchive, *mut c_void, *mut c_void) -> c_int
+            }),
+        );
+        sync_backend_core(a);
+        status
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_set_callback_data(
+    a: *mut archive,
+    client_data: *mut c_void,
+) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) =
+            validate_read_with_state(a, "archive_read_set_callback_data", ARCHIVE_STATE_NEW)
+        else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        let status = ensure_read_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        ensure_callback_node_count(handle, a, 1);
+        handle.callback_nodes[0].client_data = client_data;
+        clear_backend_error(handle);
+        let status = (backend_api().archive_read_set_callback_data)(
+            handle.backend,
+            ensure_primary_callback_node(handle, a).cast(),
+        );
+        sync_backend_core(a);
+        status
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_set_callback_data2(
+    a: *mut archive,
+    client_data: *mut c_void,
+    index: u32,
+) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) =
+            validate_read_with_state(a, "archive_read_set_callback_data2", ARCHIVE_STATE_NEW)
+        else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        let status = ensure_read_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        if handle.callback_nodes.is_empty() {
+            if index != 0 {
+                set_error_string(
+                    &mut handle.core,
+                    libc::EINVAL,
+                    "Invalid index specified.".to_string(),
+                );
+                return ARCHIVE_FATAL;
+            }
+            ensure_callback_node_count(handle, a, 1);
+        } else {
+            update_callback_node_owners(handle, a);
+            if index as usize >= handle.callback_nodes.len() {
+                set_error_string(
+                    &mut handle.core,
+                    libc::EINVAL,
+                    "Invalid index specified.".to_string(),
+                );
+                return ARCHIVE_FATAL;
+            }
+        }
+        handle.callback_nodes[index as usize].client_data = client_data;
+        clear_backend_error(handle);
+        let status = (backend_api().archive_read_set_callback_data2)(
+            handle.backend,
+            callback_node_ptr(handle, index as usize).cast(),
+            index,
+        );
+        sync_backend_core(a);
+        status
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_add_callback_data(
+    a: *mut archive,
+    client_data: *mut c_void,
+    index: u32,
+) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) =
+            validate_read_with_state(a, "archive_read_add_callback_data", ARCHIVE_STATE_NEW)
+        else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        let status = ensure_read_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        let index = index as usize;
+        if index > handle.callback_nodes.len() {
+            set_error_string(
+                &mut handle.core,
+                libc::EINVAL,
+                "Invalid index specified.".to_string(),
+            );
+            return ARCHIVE_FATAL;
+        }
+        handle.callback_nodes.insert(
+            index,
+            Box::new(ReadCallbackNode {
+                owner: a,
+                client_data,
+            }),
+        );
+        update_callback_node_owners(handle, a);
+        clear_backend_error(handle);
+        let status = (backend_api().archive_read_add_callback_data)(
+            handle.backend,
+            callback_node_ptr(handle, index).cast(),
+            index as u32,
+        );
+        if status != ARCHIVE_OK {
+            handle.callback_nodes.remove(index);
+        }
+        sync_backend_core(a);
+        status
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_append_callback_data(
+    a: *mut archive,
+    client_data: *mut c_void,
+) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) =
+            validate_read_with_state(a, "archive_read_append_callback_data", ARCHIVE_STATE_NEW)
+        else {
+            return ARCHIVE_FATAL;
+        };
+        archive_read_add_callback_data(a, client_data, handle.callback_nodes.len() as u32)
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_prepend_callback_data(
+    a: *mut archive,
+    client_data: *mut c_void,
+) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        archive_read_add_callback_data(a, client_data, 0)
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_open1(a: *mut archive) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) = validate_read_with_state(a, "archive_read_open1", ARCHIVE_STATE_NEW)
+        else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        let status = ensure_read_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        if handle.callback_nodes.is_empty() {
+            handle.callback_nodes.push(Box::new(ReadCallbackNode {
+                owner: a,
+                client_data: ptr::null_mut(),
+            }));
+            let status = (backend_api().archive_read_set_callback_data)(
+                handle.backend,
+                callback_node_ptr(handle, 0).cast(),
+            );
+            if status != ARCHIVE_OK {
+                sync_backend_core(a);
+                return status;
+            }
+        } else {
+            update_callback_node_owners(handle, a);
+        }
+        clear_backend_error(handle);
+        let status = (backend_api().archive_read_open1)(handle.backend);
+        finish_reader_status(a, handle, status)
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_open(
+    a: *mut archive,
+    client_data: *mut c_void,
+    opener: Option<ArchiveOpenCallback>,
+    reader: Option<ArchiveReadCallback>,
+    closer: Option<ArchiveCloseCallback>,
+) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let mut status = archive_read_set_open_callback(a, opener);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        status = archive_read_set_read_callback(a, reader);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        status = archive_read_set_close_callback(a, closer);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        status = archive_read_set_callback_data(a, client_data);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        archive_read_open1(a)
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_open2(
+    a: *mut archive,
+    client_data: *mut c_void,
+    opener: Option<ArchiveOpenCallback>,
+    reader: Option<ArchiveReadCallback>,
+    skipper: Option<ArchiveSkipCallback>,
+    closer: Option<ArchiveCloseCallback>,
+) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let mut status = archive_read_set_callback_data(a, client_data);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        status = archive_read_set_open_callback(a, opener);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        status = archive_read_set_read_callback(a, reader);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        status = archive_read_set_skip_callback(a, skipper);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        status = archive_read_set_close_callback(a, closer);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        archive_read_open1(a)
     })
 }
 
@@ -711,6 +1450,31 @@ pub extern "C" fn archive_read_open_memory(
 }
 
 #[no_mangle]
+pub extern "C" fn archive_read_open_memory2(
+    a: *mut archive,
+    buffer: *const c_void,
+    size: size_t,
+    read_size: size_t,
+) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) =
+            validate_read_with_state(a, "archive_read_open_memory2", ARCHIVE_STATE_NEW)
+        else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        let status = ensure_read_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        clear_backend_error(handle);
+        let status =
+            (backend_api().archive_read_open_memory2)(handle.backend, buffer, size, read_size);
+        finish_reader_status(a, handle, status)
+    })
+}
+
+#[no_mangle]
 pub extern "C" fn archive_read_open_filename(
     a: *mut archive,
     path: *const c_char,
@@ -729,6 +1493,99 @@ pub extern "C" fn archive_read_open_filename(
         }
         clear_backend_error(handle);
         let status = (backend_api().archive_read_open_filename)(handle.backend, path, block_size);
+        finish_reader_status(a, handle, status)
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_open_filenames(
+    a: *mut archive,
+    paths: *const *const c_char,
+    block_size: size_t,
+) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) =
+            validate_read_with_state(a, "archive_read_open_filenames", ARCHIVE_STATE_NEW)
+        else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        let status = ensure_read_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        clear_backend_error(handle);
+        let status = (backend_api().archive_read_open_filenames)(handle.backend, paths, block_size);
+        finish_reader_status(a, handle, status)
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_open_filename_w(
+    a: *mut archive,
+    path: *const wchar_t,
+    block_size: size_t,
+) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) =
+            validate_read_with_state(a, "archive_read_open_filename_w", ARCHIVE_STATE_NEW)
+        else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        let status = ensure_read_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        clear_backend_error(handle);
+        let status = (backend_api().archive_read_open_filename_w)(handle.backend, path, block_size);
+        finish_reader_status(a, handle, status)
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_open_file(
+    a: *mut archive,
+    path: *const c_char,
+    block_size: size_t,
+) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        archive_read_open_filename(a, path, block_size)
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_open_fd(a: *mut archive, fd: c_int, block_size: size_t) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) = validate_read_with_state(a, "archive_read_open_fd", ARCHIVE_STATE_NEW)
+        else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        let status = ensure_read_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        clear_backend_error(handle);
+        let status = (backend_api().archive_read_open_fd)(handle.backend, fd, block_size);
+        finish_reader_status(a, handle, status)
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn archive_read_open_FILE(a: *mut archive, file: *mut c_void) -> c_int {
+    ffi_int(ARCHIVE_FATAL, || unsafe {
+        let Some(handle) = validate_read_with_state(a, "archive_read_open_FILE", ARCHIVE_STATE_NEW)
+        else {
+            return ARCHIVE_FATAL;
+        };
+        clear_error(&mut handle.core);
+        let status = ensure_read_backend(handle);
+        if status != ARCHIVE_OK {
+            return status;
+        }
+        clear_backend_error(handle);
+        let status = (backend_api().archive_read_open_FILE)(handle.backend, file);
         finish_reader_status(a, handle, status)
     })
 }

@@ -76,7 +76,7 @@ unset PKG_CONFIG_PATH
 pkg-config --exists libarchive
 pkg-config --libs --static libarchive >/dev/null
 
-cargo build --release >/dev/null
+cargo build --manifest-path "$ROOT/Cargo.toml" --release >/dev/null
 
 readarray -t EXAMPLE_PATHS < <(
   python3 - "$CONTRACT" <<'PY'

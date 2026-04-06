@@ -210,7 +210,7 @@ sed 's/^/  /' "$BUILD_DIR/tests.txt"
 
 if [[ ! -f "$LIB_DIR/libarchive.so" ]]; then
   if [[ "$LIB_DIR" == "$ROOT/target/release" ]]; then
-    cargo build --release >/dev/null
+    cargo build --manifest-path "$ROOT/Cargo.toml" --release >/dev/null
   else
     printf 'missing required shared library: %s\n' "$LIB_DIR/libarchive.so" >&2
     exit 1
