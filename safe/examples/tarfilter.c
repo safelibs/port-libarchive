@@ -53,7 +53,7 @@ main(int argc, char **argv)
 		die("Couldn't enable decompression");
 	if (archive_read_support_format_all(ina) != ARCHIVE_OK)
 		die("Couldn't enable read formats");
-	if (archive_read_open_fd(ina, 0, 10240) != ARCHIVE_OK)
+	if (archive_read_open_filename(ina, NULL, 10240) != ARCHIVE_OK)
 		die("Couldn't open input archive");
 
 	/* Write an uncompressed ustar archive to stdout. */

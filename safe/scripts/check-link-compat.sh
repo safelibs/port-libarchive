@@ -36,6 +36,7 @@ package_metadata = json.loads(
 )
 lib_dir = root / "target/release"
 libarchive = lib_dir / "libarchive.so"
+libarchive_static = lib_dir / "libarchive.a"
 build_dir = root / "target/link-compat"
 symbols_file = root / "debian/libarchive13t64.symbols"
 original_exports_file = root / "abi/original_exported_symbols.txt"
@@ -147,17 +148,6 @@ def compare_sets(label: str, actual: list[str], expected: list[str]) -> None:
         f"missing: {missing[:20]}\n"
         f"extra: {extra[:20]}"
     )
-
-
-def require_superset(label: str, actual: list[str], required: list[str]) -> None:
-    actual_set = set(actual)
-    required_set = set(required)
-    missing = sorted(required_set - actual_set)
-    if missing:
-        raise RuntimeError(
-            f"{label} is missing entries required by the recorded contract\n"
-            f"missing: {missing[:20]}"
-        )
 
 
 def apply_placeholders(value: str, fixture_roots: dict[str, Path]) -> str:
@@ -303,15 +293,15 @@ def run_contract(target_name: str, executable: Path, contract: dict) -> None:
 
 if not libarchive.exists():
     raise RuntimeError(f"missing built safe library: {libarchive}")
+if not libarchive_static.exists():
+    raise RuntimeError(f"missing built safe static library: {libarchive_static}")
 
 shutil.rmtree(build_dir, ignore_errors=True)
 build_dir.mkdir(parents=True, exist_ok=True)
 ensure_build_tree_links()
 
 built_exports = extract_exports(libarchive)
-# The phase-1 runtime export oracle is a required subset, while the Debian
-# symbols file remains the exact gate for the live shared-library ABI.
-require_superset(
+compare_sets(
     "exported symbol set",
     built_exports,
     load_plain_symbols(original_exports_file),
@@ -341,7 +331,7 @@ for target in manifest["targets"]:
 
     link_cmd = [cc, "-o", str(output)]
     link_cmd.extend(str(path) for path in object_paths)
-    link_cmd.extend(["-L" + str(lib_dir), "-larchive"])
+    link_cmd.append(str(libarchive_static))
     link_cmd.extend(target.get("extra_libraries", []))
     link_cmd.extend(ldflags)
     run(link_cmd)

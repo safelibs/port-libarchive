@@ -1006,7 +1006,7 @@ unzip(const char *fn)
 	if ((a = archive_read_new()) == NULL)
 		error("archive_read_new failed");
 
-	ac(archive_read_support_format_zip(a));
+	ac(archive_read_support_format_all(a));
 
 	if (O_arg)
 		ac(archive_read_set_format_option(a, "zip", "hdrcharset", O_arg));

@@ -284,7 +284,7 @@ tar_mode_r(struct bsdtar *bsdtar)
 	archive_read_support_format_tar(a);
 	archive_read_support_format_gnutar(a);
 	set_reader_options(bsdtar, a);
-	r = archive_read_open_fd(a, bsdtar->fd, 10240);
+	r = archive_read_open_filename(a, bsdtar->filename, 10240);
 	if (r != ARCHIVE_OK)
 		lafe_errc(1, archive_errno(a),
 		    "Can't read archive %s: %s", bsdtar->filename,
@@ -374,7 +374,7 @@ tar_mode_u(struct bsdtar *bsdtar)
 	archive_read_support_format_tar(a);
 	archive_read_support_format_gnutar(a);
 	set_reader_options(bsdtar, a);
-	if (archive_read_open_fd(a, bsdtar->fd, bsdtar->bytes_per_block)
+	if (archive_read_open_filename(a, bsdtar->filename, bsdtar->bytes_per_block)
 	    != ARCHIVE_OK) {
 		lafe_errc(1, 0,
 		    "Can't open %s: %s", bsdtar->filename,
