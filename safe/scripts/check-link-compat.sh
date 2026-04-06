@@ -149,6 +149,17 @@ def compare_sets(label: str, actual: list[str], expected: list[str]) -> None:
     )
 
 
+def require_superset(label: str, actual: list[str], required: list[str]) -> None:
+    actual_set = set(actual)
+    required_set = set(required)
+    missing = sorted(required_set - actual_set)
+    if missing:
+        raise RuntimeError(
+            f"{label} is missing entries required by the recorded contract\n"
+            f"missing: {missing[:20]}"
+        )
+
+
 def apply_placeholders(value: str, fixture_roots: dict[str, Path]) -> str:
     rendered = value
     for key, path in fixture_roots.items():
@@ -298,7 +309,9 @@ build_dir.mkdir(parents=True, exist_ok=True)
 ensure_build_tree_links()
 
 built_exports = extract_exports(libarchive)
-compare_sets(
+# The phase-1 runtime export oracle is a required subset, while the Debian
+# symbols file remains the exact gate for the live shared-library ABI.
+require_superset(
     "exported symbol set",
     built_exports,
     load_plain_symbols(original_exports_file),

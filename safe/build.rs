@@ -3,89 +3,62 @@ use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-fn original_root(manifest_dir: &Path) -> PathBuf {
-    manifest_dir
-        .parent()
-        .unwrap_or_else(|| {
-            panic!(
-                "failed to locate repository root from {}",
-                manifest_dir.display()
-            )
-        })
-        .join("original/libarchive-3.7.2")
-}
-
 fn trim_component(component: &str) -> u32 {
     component
         .parse::<u32>()
         .unwrap_or_else(|err| panic!("failed to parse version component {component}: {err}"))
 }
 
-fn load_upstream_version(version_path: &Path) -> (String, u32, u32, u32, String) {
-    let raw = fs::read_to_string(version_path)
-        .unwrap_or_else(|err| panic!("failed to read {}: {err}", version_path.display()));
-    let raw = raw.trim();
-    let digits = raw
-        .chars()
-        .take_while(|ch| ch.is_ascii_digit())
-        .collect::<String>();
-    let quality = &raw[digits.len()..];
+fn load_package_version(version: &str) -> (String, u32, u32, u32) {
+    let mut components = version.split('.');
+    let major = trim_component(
+        components
+            .next()
+            .unwrap_or_else(|| panic!("missing major version component in {version}")),
+    );
+    let minor = trim_component(
+        components
+            .next()
+            .unwrap_or_else(|| panic!("missing minor version component in {version}")),
+    );
+    let revision = trim_component(
+        components
+            .next()
+            .unwrap_or_else(|| panic!("missing revision component in {version}")),
+    );
 
     assert!(
-        digits.len() == 7,
-        "unexpected upstream version format in {}: {raw}",
-        version_path.display()
+        components.next().is_none(),
+        "unexpected package version format: {version}"
     );
+    assert!(major < 10, "major version component is too large: {version}");
 
-    let major = trim_component(&digits[0..1]);
-    let minor = trim_component(&digits[1..4]);
-    let revision = trim_component(&digits[4..7]);
-    let package_version = if quality.is_empty() {
-        format!("{major}.{minor}.{revision}")
-    } else {
-        format!("{major}.{minor}.{revision}{quality}")
-    };
-
-    (digits, major, minor, revision, package_version)
+    (
+        format!("{major}{minor:03}{revision:03}"),
+        major,
+        minor,
+        revision,
+    )
 }
 
-fn load_cmake_interface_base(cmake_path: &Path) -> u32 {
-    let contents = fs::read_to_string(cmake_path)
-        .unwrap_or_else(|err| panic!("failed to read {}: {err}", cmake_path.display()));
-    let interface_line = contents
-        .lines()
-        .find(|line| line.contains("math(EXPR INTERFACE_VERSION"))
-        .unwrap_or_else(|| {
-            panic!(
-                "failed to locate INTERFACE_VERSION logic in {}",
-                cmake_path.display()
-            )
-        });
-    let expression = interface_line.split('"').nth(1).unwrap_or_else(|| {
-        panic!(
-            "failed to parse INTERFACE_VERSION expression in {}",
-            cmake_path.display()
-        )
-    });
-    let expression = expression.replace(' ', "");
-    let (base, rhs) = expression
-        .split_once('+')
-        .unwrap_or_else(|| panic!("unexpected INTERFACE_VERSION expression {expression}"));
-    assert_eq!(
-        rhs, "${_minor}",
-        "unexpected INTERFACE_VERSION expression {expression}"
-    );
-    trim_component(base)
+fn extract_json_string(document: &str, key: &str) -> String {
+    let needle = format!("\"{key}\": \"");
+    let start = document
+        .find(&needle)
+        .unwrap_or_else(|| panic!("failed to locate JSON string key {key}"));
+    let value = &document[start + needle.len()..];
+    let end = value
+        .find('"')
+        .unwrap_or_else(|| panic!("failed to parse JSON string key {key}"));
+    value[..end].to_owned()
 }
 
-fn verify_cmake_soversion_logic(cmake_path: &Path) {
-    let contents = fs::read_to_string(cmake_path)
-        .unwrap_or_else(|err| panic!("failed to read {}: {err}", cmake_path.display()));
-    assert!(
-        contents.contains("SET(SOVERSION \"${INTERFACE_VERSION}\")"),
-        "unexpected SOVERSION logic in {}",
-        cmake_path.display()
-    );
+fn parse_soname_major(soname: &str) -> u32 {
+    let major = soname
+        .rsplit('.')
+        .next()
+        .unwrap_or_else(|| panic!("failed to parse SONAME major from {soname}"));
+    trim_component(major)
 }
 
 fn collect_public_symbols(header: &Path, symbols: &mut BTreeSet<String>) {
@@ -400,7 +373,6 @@ fn libarchive_backend_sources(libarchive_dir: &Path) -> Vec<PathBuf> {
 
 fn build_vendored_backend(
     manifest_dir: &Path,
-    upstream_root: &Path,
     libarchive_dir: &Path,
     generated_config_dir: &Path,
     out_dir: &Path,
@@ -411,8 +383,8 @@ fn build_vendored_backend(
         manifest_dir.join("include/archive_entry.h"),
     ];
     let backend_symbol_headers = [
-        upstream_root.join("libarchive/archive.h"),
-        upstream_root.join("libarchive/archive_entry.h"),
+        libarchive_dir.join("archive.h"),
+        libarchive_dir.join("archive_entry.h"),
     ];
     let prefix_header = write_backend_symbol_prefix(out_dir, &backend_symbol_headers);
     let linked_rs = write_backend_linked_rs(out_dir, &backend_rs);
@@ -462,7 +434,6 @@ fn main() {
     let manifest_dir = PathBuf::from(
         env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR must be set for build.rs"),
     );
-    let upstream_root = original_root(&manifest_dir);
     let libarchive_dir = manifest_dir.join("c_src/libarchive");
     let map_path = manifest_dir.join("abi/libarchive.map");
     let build_contract_path = manifest_dir.join("generated/original_build_contract.json");
@@ -470,8 +441,6 @@ fn main() {
     let generated_config_dir = manifest_dir.join("generated/original_c_build");
     let generated_config_path = generated_config_dir.join("config.h");
     let variadic_shim = manifest_dir.join("c_shims/archive_set_error.c");
-    let upstream_version_path = upstream_root.join("build/version");
-    let upstream_cmake_path = upstream_root.join("CMakeLists.txt");
 
     println!("cargo:rerun-if-changed={}", libarchive_dir.display());
     println!("cargo:rerun-if-changed={}", map_path.display());
@@ -479,17 +448,10 @@ fn main() {
     println!("cargo:rerun-if-changed={}", package_metadata_path.display());
     println!("cargo:rerun-if-changed={}", generated_config_path.display());
     println!("cargo:rerun-if-changed={}", variadic_shim.display());
-    println!("cargo:rerun-if-changed={}", upstream_version_path.display());
-    println!("cargo:rerun-if-changed={}", upstream_cmake_path.display());
 
     let cargo_package_version =
         env::var("CARGO_PKG_VERSION").expect("CARGO_PKG_VERSION must be set for build.rs");
-    let (version_digits, _major, minor, _revision, package_version) =
-        load_upstream_version(&upstream_version_path);
-    assert_eq!(
-        package_version, cargo_package_version,
-        "Cargo package version drifted from upstream build/version"
-    );
+    let (version_digits, _major, minor, revision) = load_package_version(&cargo_package_version);
 
     let build_contract = fs::read_to_string(&build_contract_path)
         .unwrap_or_else(|err| panic!("failed to read {}: {err}", build_contract_path.display()));
@@ -510,24 +472,49 @@ fn main() {
 
     let package_metadata = fs::read_to_string(&package_metadata_path)
         .unwrap_or_else(|err| panic!("failed to read {}: {err}", package_metadata_path.display()));
+    let package_version = extract_json_string(&package_metadata, "package_version");
+    let runtime_soname_install_path =
+        extract_json_string(&package_metadata, "runtime_soname_install_path");
+    let runtime_shared_library_install_path =
+        extract_json_string(&package_metadata, "runtime_shared_library_install_path");
     assert!(
         package_metadata.contains(&format!("\"package_version\": \"{package_version}\"")),
         "unexpected original package metadata version"
     );
+    assert_eq!(
+        package_version, cargo_package_version,
+        "Cargo package version drifted from recorded package metadata"
+    );
 
-    verify_cmake_soversion_logic(&upstream_cmake_path);
-    let interface_base = load_cmake_interface_base(&upstream_cmake_path);
-    let cmake_interface_version = interface_base + minor;
+    let soname = Path::new(&runtime_soname_install_path)
+        .file_name()
+        .and_then(|value| value.to_str())
+        .unwrap_or_else(|| {
+            panic!(
+                "failed to parse runtime SONAME basename from {}",
+                runtime_soname_install_path
+            )
+        })
+        .to_owned();
+    let soname_major = parse_soname_major(&soname);
+    let cmake_interface_version = soname_major + minor;
     let libtool_current = cmake_interface_version;
     let libtool_age = minor;
-    let soname_major = libtool_current
-        .checked_sub(libtool_age)
-        .expect("libtool current must be >= age");
-    let soname = format!("libarchive.so.{soname_major}");
+    let expected_runtime_name = format!("libarchive.so.{soname_major}.{minor}.{revision}");
+    let runtime_name = Path::new(&runtime_shared_library_install_path)
+        .file_name()
+        .and_then(|value| value.to_str())
+        .unwrap_or_else(|| {
+            panic!(
+                "failed to parse runtime shared library basename from {}",
+                runtime_shared_library_install_path
+            )
+        });
 
     assert_eq!(version_digits, "3007002");
     assert_eq!(package_version, "3.7.2");
     assert_eq!(soname, "libarchive.so.13");
+    assert_eq!(runtime_name, expected_runtime_name);
     assert!(
         package_metadata.contains(&format!("/{}", soname)),
         "unexpected original package metadata SONAME"
@@ -559,7 +546,6 @@ pub const LIBARCHIVE_LIBTOOL_AGE: u32 = {libtool_age};
         .compile("archive_variadic_shim");
     build_vendored_backend(
         &manifest_dir,
-        &upstream_root,
         &libarchive_dir,
         &generated_config_dir,
         &out_dir,

@@ -160,7 +160,7 @@ def resolve(path: str) -> Path:
         return artifact
     if str(artifact).startswith("safe/"):
         return root / artifact.relative_to("safe")
-    return root.parent / artifact
+    raise SystemExit(f"unsupported non-vendored artifact path: {path}")
 
 rows = [
     row for row in manifest["rows"]
@@ -183,6 +183,12 @@ for row in rows:
     else:
         selected_sources.append(resolve(source))
 generated_list = resolve(contract["generated_headers"]["list_h_by_suite"][suite])
+
+for source in selected_sources:
+    if not source.is_file():
+        raise SystemExit(f"missing vendored source: {source}")
+if not generated_list.is_file():
+    raise SystemExit(f"missing preserved generated header: {generated_list}")
 
 ordered_names = []
 for line in generated_list.read_text(encoding="utf-8").splitlines():

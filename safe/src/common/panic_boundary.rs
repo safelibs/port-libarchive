@@ -26,14 +26,14 @@ pub(crate) fn ffi_ptr<T, F>(f: F) -> *mut T
 where
     F: FnOnce() -> *mut T,
 {
-    ffi_default(f)
+    ffi_value(std::ptr::null_mut(), f)
 }
 
 pub(crate) fn ffi_const_ptr<T, F>(f: F) -> *const T
 where
     F: FnOnce() -> *const T,
 {
-    ffi_default(f)
+    ffi_value(std::ptr::null(), f)
 }
 
 pub(crate) fn ffi_void<F>(f: F)

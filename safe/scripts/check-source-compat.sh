@@ -92,15 +92,22 @@ PY
 
 resolve_vendored_source() {
   local recorded_path="$1"
-  local safe_relative="${recorded_path#original/libarchive-3.7.2/}"
-  local vendored_path="$ROOT/$safe_relative"
+  case "$recorded_path" in
+    original/libarchive-3.7.2/*)
+      ;;
+    *)
+      printf 'unsupported non-vendored source path: %s\n' "$recorded_path" >&2
+      exit 1
+      ;;
+  esac
 
-  if [[ -f "$vendored_path" ]]; then
-    printf '%s\n' "$vendored_path"
-    return 0
-  fi
+  local vendored_path="$ROOT/${recorded_path#original/libarchive-3.7.2/}"
+  [[ -f "$vendored_path" ]] || {
+    printf 'missing vendored source: %s\n' "$vendored_path" >&2
+    exit 1
+  }
 
-  printf '%s\n' "$ROOT/../$recorded_path"
+  printf '%s\n' "$vendored_path"
 }
 
 MINITAR_SRC="$(resolve_vendored_source "${EXAMPLE_PATHS[0]}")"
