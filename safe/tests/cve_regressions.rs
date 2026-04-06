@@ -18,11 +18,73 @@ use archive::ffi::archive_entry_api as entry;
 use archive::ffi::archive_read as read;
 use archive::ffi::archive_read_disk as read_disk;
 use archive::ffi::archive_write as write;
+use archive::ffi::archive_write_disk as write_disk;
+
+fn tar_header(name: &str, size: usize, typeflag: u8) -> [u8; 512] {
+    fn write_octal(field: &mut [u8], value: u64) {
+        let width = field.len().saturating_sub(1);
+        let text = format!("{value:0width$o}", width = width);
+        field[..width].copy_from_slice(text.as_bytes());
+        field[width] = 0;
+    }
+
+    let mut header = [0u8; 512];
+    header[..name.len()].copy_from_slice(name.as_bytes());
+    write_octal(&mut header[100..108], 0o644);
+    write_octal(&mut header[108..116], 0);
+    write_octal(&mut header[116..124], 0);
+    write_octal(&mut header[124..136], size as u64);
+    write_octal(&mut header[136..148], 0);
+    header[148..156].fill(b' ');
+    header[156] = typeflag;
+    header[257..263].copy_from_slice(b"ustar\0");
+    header[263..265].copy_from_slice(b"00");
+
+    let checksum = header.iter().map(|byte| u32::from(*byte)).sum::<u32>();
+    let checksum_text = format!("{checksum:06o}\0 ");
+    header[148..156].copy_from_slice(checksum_text.as_bytes());
+    header
+}
+
+fn cpio_newc_entry(path: &str, mode: u32, declared_size: u32, data: &[u8]) -> Vec<u8> {
+    let header = format!(
+        concat!(
+            "070701",
+            "{:08x}{:08x}{:08x}{:08x}{:08x}{:08x}{:08x}",
+            "{:08x}{:08x}{:08x}{:08x}{:08x}{:08x}"
+        ),
+        1u32,
+        mode,
+        0u32,
+        0u32,
+        1u32,
+        0u32,
+        declared_size,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        path.len() as u32 + 1,
+        0u32,
+    );
+    let mut bytes = header.into_bytes();
+    bytes.extend_from_slice(path.as_bytes());
+    bytes.push(0);
+    while bytes.len() % 4 != 0 {
+        bytes.push(0);
+    }
+    bytes.extend_from_slice(data);
+    while bytes.len() % 4 != 0 {
+        bytes.push(0);
+    }
+    bytes
+}
 
 #[test]
 fn matrix_covers_relevant_cves_and_verification_targets_are_present() {
     let relevant = security_support::load_json("relevant_cves.json");
     let matrix = security_support::load_json("safe/generated/cve_matrix.json");
+    let manifest = security_support::load_json("safe/generated/test_manifest.json");
     let safe_root = Path::new(env!("CARGO_MANIFEST_DIR"));
 
     let relevant_ids = security_support::cve_ids(&relevant, "records")
@@ -47,18 +109,43 @@ fn matrix_covers_relevant_cves_and_verification_targets_are_present() {
         let tokens = verification.split_whitespace().collect::<Vec<_>>();
         assert!(!tokens.is_empty());
         match tokens[0] {
-            "./scripts/check-i686-cve.sh" | "./scripts/run-upstream-c-tests.sh" => {
+            "./scripts/check-i686-cve.sh" => {
                 let script = safe_root.join(tokens[0].trim_start_matches("./"));
                 assert!(script.exists(), "missing verification script {script:?}");
+            }
+            "./scripts/run-upstream-c-tests.sh" => {
+                let script = safe_root.join(tokens[0].trim_start_matches("./"));
+                assert!(script.exists(), "missing verification script {script:?}");
+                assert_eq!(4, tokens.len(), "expected exact upstream test invocation");
+                let suite = tokens[1];
+                let phase_group = tokens[2];
+                let define_test = tokens[3];
+                assert!(manifest["rows"]
+                    .as_array()
+                    .expect("manifest rows")
+                    .iter()
+                    .any(|row| {
+                        row["suite"].as_str() == Some(suite)
+                            && row["phase_group"].as_str() == Some(phase_group)
+                            && row["define_test"].as_str() == Some(define_test)
+                    }));
             }
             "cargo" => {
                 assert_eq!(Some(&"test"), tokens.get(1));
                 assert_eq!(Some(&"--test"), tokens.get(2));
+                assert_eq!(Some(&"--"), tokens.get(4));
+                assert_eq!(Some(&"--exact"), tokens.get(5));
                 let test_bin = tokens.get(3).expect("cargo test binary");
+                let test_name = tokens.get(6).expect("cargo test name");
                 let test_file = safe_root.join("tests").join(format!("{test_bin}.rs"));
                 assert!(
                     test_file.exists(),
                     "missing verification test file {test_file:?}"
+                );
+                let contents = std::fs::read_to_string(&test_file).expect("read verification test");
+                assert!(
+                    contents.contains(test_name),
+                    "missing verification test name {test_name} in {test_file:?}"
                 );
             }
             other => panic!("unsupported verification target {other}"),
@@ -106,7 +193,7 @@ fn filesystem_extraction_guards_block_absolute_parent_symlink_and_hardlink_escap
 
         let outside_target = outside.path().join("hardlink-target.txt");
         support::write_file(&outside_target, b"outside");
-        let raw_entry = security_support::regular_file_entry("inside.txt", 0);
+        let raw_entry = security_support::regular_file_entry("inside.txt", 4);
         let hardlink =
             std::ffi::CString::new(outside_target.to_string_lossy().to_string()).unwrap();
         entry::archive_entry_set_hardlink(raw_entry, hardlink.as_ptr());
@@ -189,6 +276,96 @@ fn forward_progress_and_bounds_guards_cover_decoder_edge_cases() {
     assert!(!archive::read::format::longlink_complete(b"name"));
     assert!(archive::read::format::cpio_symlink_size_ok(4, 4));
     assert!(!archive::read::format::cpio_symlink_size_ok(5, 4));
+}
+
+#[test]
+fn gnu_longlink_truncation_is_rejected() {
+    let mut archive = Vec::new();
+    archive.extend_from_slice(&tar_header("././@LongLink", 20, b'L'));
+    archive.extend_from_slice(b"truncated-name");
+
+    unsafe {
+        let reader = read::archive_read_new();
+        assert!(!reader.is_null());
+        assert_eq!(ARCHIVE_OK, read::archive_read_support_filter_all(reader));
+        assert_eq!(ARCHIVE_OK, read::archive_read_support_format_tar(reader));
+        assert_eq!(
+            ARCHIVE_OK,
+            read::archive_read_open_memory(reader, archive.as_ptr().cast(), archive.len())
+        );
+
+        let mut raw_entry = ptr::null_mut();
+        assert_ne!(
+            ARCHIVE_OK,
+            read::archive_read_next_header(reader, &mut raw_entry)
+        );
+        assert_eq!(ARCHIVE_OK, common::archive_read_free(reader));
+    }
+}
+
+#[test]
+fn acl_metadata_write_rejects_symlink_escape_before_apply() {
+    let temp = support::TempDir::new("cve-acl-root");
+    let outside = support::TempDir::new("cve-acl-outside");
+    let _cwd = support::pushd(temp.path());
+    support::symlink(Path::new("pivot"), outside.path());
+
+    unsafe {
+        let disk = write_disk::archive_write_disk_new();
+        assert!(!disk.is_null());
+        assert_eq!(
+            0,
+            write_disk::archive_write_disk_set_options(
+                disk,
+                security_support::SECURE_WRITE_FLAGS | 0x0020,
+            )
+        );
+
+        let raw_entry = security_support::regular_file_entry("pivot/acl-escape.txt", 0);
+        assert_eq!(
+            ARCHIVE_OK,
+            entry::archive_entry_acl_add_entry(
+                raw_entry,
+                entry::ARCHIVE_ENTRY_ACL_TYPE_ACCESS,
+                entry::ARCHIVE_ENTRY_ACL_READ | entry::ARCHIVE_ENTRY_ACL_WRITE,
+                entry::ARCHIVE_ENTRY_ACL_USER_OBJ,
+                -1,
+                ptr::null(),
+            )
+        );
+
+        assert_ne!(ARCHIVE_OK, write::archive_write_header(disk, raw_entry));
+        entry::archive_entry_free(raw_entry);
+        assert_eq!(ARCHIVE_OK, common::archive_write_free(disk));
+    }
+
+    assert!(!outside.path().join("acl-escape.txt").exists());
+}
+
+#[test]
+fn cpio_symlink_size_mismatch_is_rejected() {
+    let archive = cpio_newc_entry("link", libc::S_IFLNK | 0o777, 16, b"abc");
+
+    unsafe {
+        let reader = read::archive_read_new();
+        assert!(!reader.is_null());
+        assert_eq!(ARCHIVE_OK, read::archive_read_support_filter_all(reader));
+        assert_eq!(ARCHIVE_OK, read::archive_read_support_format_cpio(reader));
+        assert_eq!(
+            ARCHIVE_OK,
+            read::archive_read_open_memory(reader, archive.as_ptr().cast(), archive.len())
+        );
+
+        let mut raw_entry = ptr::null_mut();
+        let header_status = read::archive_read_next_header(reader, &mut raw_entry);
+        if header_status == ARCHIVE_OK {
+            let mut buf = [0u8; 16];
+            assert!(read::archive_read_data(reader, buf.as_mut_ptr().cast(), buf.len()) < 0);
+        } else {
+            assert_ne!(ARCHIVE_OK, header_status);
+        }
+        assert_eq!(ARCHIVE_OK, common::archive_read_free(reader));
+    }
 }
 
 #[test]
