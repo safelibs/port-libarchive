@@ -5,7 +5,7 @@ mod advanced_support;
 
 use std::ffi::{c_char, c_void, CString};
 
-use archive::common::error::{ARCHIVE_FAILED, ARCHIVE_OK, ARCHIVE_WARN};
+use archive::common::error::{ARCHIVE_FAILED, ARCHIVE_OK};
 use archive::ffi::archive_common as common;
 use archive::ffi::archive_options as options;
 use archive::ffi::archive_read as read;
@@ -38,12 +38,6 @@ fn advanced_reader_wrappers_accept_remaining_formats_and_options() {
         assert_eq!(ARCHIVE_OK, read::archive_read_support_format_mtree(reader));
         assert_eq!(ARCHIVE_OK, read::archive_read_support_format_warc(reader));
         assert_eq!(ARCHIVE_OK, read::archive_read_support_format_xar(reader));
-
-        for format_code in [
-            0xE0000, 0xC0000, 0x40000, 0xB0000, 0x80000, 0xF0000, 0xA0000,
-        ] {
-            assert!(read::archive_read_support_format_by_code(reader, format_code) >= ARCHIVE_WARN);
-        }
 
         assert_eq!(
             ARCHIVE_OK,

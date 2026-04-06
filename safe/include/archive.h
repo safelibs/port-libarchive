@@ -423,7 +423,6 @@ __LA_DECL int archive_read_support_compression_xz(struct archive *)
 #endif
 
 __LA_DECL int archive_read_support_filter_all(struct archive *);
-__LA_DECL int archive_read_support_filter_by_code(struct archive *, int);
 __LA_DECL int archive_read_support_filter_bzip2(struct archive *);
 __LA_DECL int archive_read_support_filter_compress(struct archive *);
 __LA_DECL int archive_read_support_filter_gzip(struct archive *);
@@ -447,7 +446,6 @@ __LA_DECL int archive_read_support_filter_zstd(struct archive *);
 __LA_DECL int archive_read_support_format_7zip(struct archive *);
 __LA_DECL int archive_read_support_format_all(struct archive *);
 __LA_DECL int archive_read_support_format_ar(struct archive *);
-__LA_DECL int archive_read_support_format_by_code(struct archive *, int);
 __LA_DECL int archive_read_support_format_cab(struct archive *);
 __LA_DECL int archive_read_support_format_cpio(struct archive *);
 __LA_DECL int archive_read_support_format_empty(struct archive *);
@@ -471,85 +469,16 @@ __LA_DECL int archive_read_support_format_zip_streamable(struct archive *);
 /* Reads starting from central directory; requires seekable input. */
 __LA_DECL int archive_read_support_format_zip_seekable(struct archive *);
 
-/* Functions to manually set the format and filters to be used. This is
- * useful to bypass the bidding process when the format and filters to use
- * is known in advance.
- */
-__LA_DECL int archive_read_set_format(struct archive *, int);
-__LA_DECL int archive_read_append_filter(struct archive *, int);
-__LA_DECL int archive_read_append_filter_program(struct archive *,
-    const char *);
-__LA_DECL int archive_read_append_filter_program_signature
-    (struct archive *, const char *, const void * /* match */, size_t);
-
-/* Set various callbacks. */
-__LA_DECL int archive_read_set_open_callback(struct archive *,
-    archive_open_callback *);
-__LA_DECL int archive_read_set_read_callback(struct archive *,
-    archive_read_callback *);
-__LA_DECL int archive_read_set_seek_callback(struct archive *,
-    archive_seek_callback *);
-__LA_DECL int archive_read_set_skip_callback(struct archive *,
-    archive_skip_callback *);
-__LA_DECL int archive_read_set_close_callback(struct archive *,
-    archive_close_callback *);
-/* Callback used to switch between one data object to the next */
-__LA_DECL int archive_read_set_switch_callback(struct archive *,
-    archive_switch_callback *);
-
-/* This sets the first data object. */
-__LA_DECL int archive_read_set_callback_data(struct archive *, void *);
-/* This sets data object at specified index */
-__LA_DECL int archive_read_set_callback_data2(struct archive *, void *,
-    unsigned int);
-/* This adds a data object at the specified index. */
-__LA_DECL int archive_read_add_callback_data(struct archive *, void *,
-    unsigned int);
-/* This appends a data object to the end of list */
-__LA_DECL int archive_read_append_callback_data(struct archive *, void *);
-/* This prepends a data object to the beginning of list */
-__LA_DECL int archive_read_prepend_callback_data(struct archive *, void *);
-
-/* Opening freezes the callbacks. */
-__LA_DECL int archive_read_open1(struct archive *);
-
-/* Convenience wrappers around the above. */
-__LA_DECL int archive_read_open(struct archive *, void *_client_data,
-		     archive_open_callback *, archive_read_callback *,
-		     archive_close_callback *);
-__LA_DECL int archive_read_open2(struct archive *, void *_client_data,
-		     archive_open_callback *, archive_read_callback *,
-		     archive_skip_callback *, archive_close_callback *);
-
 /*
- * A variety of shortcuts that invoke archive_read_open() with
- * canned callbacks suitable for common situations.  The ones that
- * accept a block size handle tape blocking correctly.
+ * Phase 3 intentionally exposes only the round-trip reader subset consumed by
+ * the write_disk oracle. Callback-driven opens, support-by-code helpers, and
+ * alternate open wrappers remain deferred to later phases.
  */
-/* Use this if you know the filename.  Note: NULL indicates stdin. */
 __LA_DECL int archive_read_open_filename(struct archive *,
 		     const char *_filename, size_t _block_size);
-/* Use this for reading multivolume files by filenames.
- * NOTE: Must be NULL terminated. Sorting is NOT done. */
-__LA_DECL int archive_read_open_filenames(struct archive *,
-		     const char **_filenames, size_t _block_size);
-__LA_DECL int archive_read_open_filename_w(struct archive *,
-		     const wchar_t *_filename, size_t _block_size);
-/* archive_read_open_file() is a deprecated synonym for ..._open_filename(). */
-__LA_DECL int archive_read_open_file(struct archive *,
-		     const char *_filename, size_t _block_size) __LA_DEPRECATED;
 /* Read an archive that's stored in memory. */
 __LA_DECL int archive_read_open_memory(struct archive *,
 		     const void * buff, size_t size);
-/* A more involved version that is only used for internal testing. */
-__LA_DECL int archive_read_open_memory2(struct archive *a, const void *buff,
-		     size_t size, size_t read_size);
-/* Read an archive that's already open, using the file descriptor. */
-__LA_DECL int archive_read_open_fd(struct archive *, int _fd,
-		     size_t _block_size);
-/* Read an archive that's already open, using a FILE *. */
-/* Note: DO NOT use this with tape drives. */
-__LA_DECL int archive_read_open_FILE(struct archive *, FILE *_file);
 
 /* Parses and returns next entry header. */
 __LA_DECL int archive_read_next_header(struct archive *,
