@@ -3,491 +3,285 @@ yaml_source_mode: inline-only
 verifier_encoding: explicit-phases
 phases:
   - order: 1
-    id: impl_safe_scaffold
+    id: impl_port_doc_architecture
     type: implement
     bounce_target: null
     required_preexisting_inputs:
-      - original/libarchive-3.7.2/libarchive/archive.h
-      - original/libarchive-3.7.2/libarchive/archive_entry.h
-      - original/libarchive-3.7.2/configure.ac
-      - original/libarchive-3.7.2/config.h.in
-      - original/libarchive-3.7.2/build/autogen.sh
-      - original/libarchive-3.7.2/build/version
-      - original/libarchive-3.7.2/CMakeLists.txt
-      - original/libarchive-3.7.2/Makefile.am
-      - original/libarchive-3.7.2/build/pkgconfig/libarchive.pc.in
-      - original/libarchive-3.7.2/libarchive/CMakeLists.txt
-      - original/libarchive-3.7.2/libarchive/test/CMakeLists.txt
-      - original/libarchive-3.7.2/tar/test/CMakeLists.txt
-      - original/libarchive-3.7.2/cpio/test/CMakeLists.txt
-      - original/libarchive-3.7.2/cat/test/CMakeLists.txt
-      - original/libarchive-3.7.2/unzip/test/CMakeLists.txt
-      - original/libarchive-3.7.2/test_utils/test_common.h
-      - original/libarchive-3.7.2/test_utils/test_main.c
-      - original/libarchive-3.7.2/debian/control
-      - original/libarchive-3.7.2/debian/rules
-      - original/libarchive-3.7.2/debian/libarchive-dev.docs
-      - original/libarchive-3.7.2/debian/libarchive13t64.symbols
-      - original/libarchive-3.7.2/debian/tests/control
-      - original/libarchive-3.7.2/debian/tests/minitar
-      - original/libarchive-3.7.2/debian/patches/series
-      - original/libarchive-3.7.2/examples/minitar/minitar.c
-      - original/libarchive-3.7.2/examples/untar.c
-      - original/libarchive-3.7.2/libarchive/test/
-      - original/libarchive-3.7.2/tar/test/
-      - original/libarchive-3.7.2/cpio/test/
-      - original/libarchive-3.7.2/cat/test/
-      - original/libarchive-3.7.2/unzip/test/
-      - test-original.sh
-      - dependents.json
-      - relevant_cves.json
+      - safe/Cargo.toml
+      - safe/Cargo.lock
+      - safe/build.rs
+      - safe/src/lib.rs
+      - safe/src/ffi/
+      - safe/src/common/api.rs
+      - safe/src/common/backend.rs
+      - safe/src/common/state.rs
+      - safe/src/read/mod.rs
+      - safe/src/write/mod.rs
+      - safe/src/disk/native.rs
+      - safe/include/archive.h
+      - safe/include/archive_entry.h
+      - safe/c_shims/archive_set_error.c
+      - safe/scripts/build-c-frontends.sh
+      - safe/scripts/render-pkg-config.sh
+      - safe/pkgconfig/libarchive.pc.in
+      - safe/debian/control
+      - safe/debian/rules
+      - safe/debian/README.Debian
+      - safe/debian/tests/control
+      - safe/debian/tests/minitar
+      - safe/debian/libarchive13t64.symbols
+      - safe/debian/libarchive13t64.lintian-overrides
+      - safe/debian/libarchive-dev.install
+      - safe/debian/libarchive-tools.install
+      - safe/debian/libarchive13t64.install
+      - safe/debian/libarchive-dev.docs
+      - safe/debian/libarchive-tools.docs
+      - safe/generated/api_inventory.json
+      - safe/generated/link_compat_manifest.json
+      - safe/generated/original_build_contract.json
+      - safe/generated/original_package_metadata.json
+      - safe/generated/original_pkgconfig/libarchive.pc
+      - safe/generated/pkgconfig/libarchive.pc
+      - safe/generated/original_c_build/config.h
+      - .plan/workflow-structure.yaml
+      - .plan/phases/01-architecture-baseline.md
+      - .plan/phases/02-unsafe-ffi-inventory.md
+      - .plan/phases/03-remaining-issues-validation.md
+      - .plan/phases/04-final-reconciliation.md
   - order: 2
-    id: check_safe_scaffold_build
+    id: check_port_doc_architecture
     type: check
-    bounce_target: impl_safe_scaffold
+    bounce_target: impl_port_doc_architecture
     required_preexisting_inputs:
+      - safe/PORT.md
       - safe/Cargo.toml
+      - safe/Cargo.lock
       - safe/build.rs
       - safe/src/lib.rs
-      - safe/src/common/error.rs
+      - safe/src/ffi/
+      - safe/src/common/api.rs
+      - safe/src/common/backend.rs
       - safe/src/common/state.rs
-      - safe/src/common/panic_boundary.rs
-      - safe/src/ffi/mod.rs
-      - safe/src/ffi/bootstrap.rs
+      - safe/src/read/mod.rs
+      - safe/src/write/mod.rs
+      - safe/src/disk/native.rs
       - safe/include/archive.h
       - safe/include/archive_entry.h
-      - safe/abi/libarchive.map
-  - order: 3
-    id: check_safe_scaffold_abi_contract
-    type: check
-    bounce_target: impl_safe_scaffold
-    required_preexisting_inputs:
-      - safe/abi/libarchive.map
+      - safe/c_shims/archive_set_error.c
+      - safe/scripts/check-abi.sh
+      - safe/scripts/render-pkg-config.sh
+      - safe/pkgconfig/libarchive.pc.in
       - safe/abi/exported_symbols.txt
-      - safe/pkgconfig/libarchive.pc.in
-      - safe/config/libarchive_test_phase_groups.json
+      - safe/abi/libarchive.map
       - safe/abi/original_exported_symbols.txt
       - safe/abi/original_version_info.txt
+      - safe/debian/control
+      - safe/debian/rules
+      - safe/debian/README.Debian
+      - safe/debian/tests/control
+      - safe/debian/tests/minitar
+      - safe/debian/libarchive13t64.symbols
+      - safe/debian/libarchive13t64.lintian-overrides
+      - safe/debian/libarchive-dev.install
+      - safe/debian/libarchive-tools.install
+      - safe/debian/libarchive13t64.install
+      - safe/debian/libarchive-dev.docs
+      - safe/debian/libarchive-tools.docs
       - safe/generated/api_inventory.json
       - safe/generated/link_compat_manifest.json
       - safe/generated/original_build_contract.json
-      - safe/generated/original_c_build/**
-      - safe/generated/original_link_objects/**
-      - safe/generated/original_pkgconfig/libarchive.pc
       - safe/generated/original_package_metadata.json
+      - safe/generated/original_pkgconfig/libarchive.pc
       - safe/generated/pkgconfig/libarchive.pc
-      - safe/generated/test_manifest.json
-      - safe/scripts/build-original-oracle.sh
-      - safe/scripts/check-abi.sh
-      - safe/scripts/render-pkg-config.sh
-      - safe/tools/gen_api_inventory.py
-      - safe/tools/gen_link_compat_manifest.py
-      - safe/tools/gen_test_manifest.py
-      - original/libarchive-3.7.2/debian/libarchive13t64.symbols
-      - original/libarchive-3.7.2/examples/minitar/minitar.c
-      - original/libarchive-3.7.2/examples/untar.c
+      - safe/generated/original_c_build/config.h
+  - order: 3
+    id: impl_port_doc_unsafe_ffi
+    type: implement
+    bounce_target: null
+    required_preexisting_inputs:
+      - safe/PORT.md
+      - safe/src/
+      - safe/src/ffi/
+      - safe/tests/
+      - safe/build.rs
+      - safe/c_shims/archive_set_error.c
+      - safe/generated/api_inventory.json
+      - safe/abi/exported_symbols.txt
+      - safe/abi/libarchive.map
+      - safe/target/release/libarchive.so
   - order: 4
-    id: impl_foundation_objects
-    type: implement
-    bounce_target: null
+    id: check_port_doc_unsafe_ffi
+    type: check
+    bounce_target: impl_port_doc_unsafe_ffi
     required_preexisting_inputs:
+      - safe/PORT.md
       - safe/Cargo.toml
+      - safe/src/
+      - safe/src/ffi/
+      - safe/tests/
       - safe/build.rs
-      - safe/src/lib.rs
-      - safe/src/common/error.rs
-      - safe/src/common/state.rs
-      - safe/src/common/panic_boundary.rs
-      - safe/src/ffi/mod.rs
-      - safe/src/ffi/bootstrap.rs
-      - safe/include/archive.h
-      - safe/include/archive_entry.h
-      - safe/abi/libarchive.map
-      - safe/abi/original_exported_symbols.txt
+      - safe/c_shims/archive_set_error.c
       - safe/generated/api_inventory.json
-      - safe/generated/original_build_contract.json
-      - safe/generated/original_c_build/**
-      - safe/generated/test_manifest.json
-      - safe/config/libarchive_test_phase_groups.json
-      - safe/scripts/run-upstream-c-tests.sh
-      - original/libarchive-3.7.2/libarchive/archive_private.h
-      - original/libarchive-3.7.2/libarchive/archive_entry_private.h
-      - original/libarchive-3.7.2/libarchive/archive_entry.c
-      - original/libarchive-3.7.2/libarchive/archive_entry_sparse.c
-      - original/libarchive-3.7.2/libarchive/archive_entry_stat.c
-      - original/libarchive-3.7.2/libarchive/archive_entry_xattr.c
-      - original/libarchive-3.7.2/libarchive/archive_entry_link_resolver.c
-      - original/libarchive-3.7.2/libarchive/archive_acl.c
-      - original/libarchive-3.7.2/libarchive/archive_match.c
-      - original/libarchive-3.7.2/libarchive/archive_pathmatch.c
-      - original/libarchive-3.7.2/libarchive/archive_getdate.c
-      - original/libarchive-3.7.2/libarchive/archive_options.c
-      - original/libarchive-3.7.2/libarchive/archive_pack_dev.c
-      - original/libarchive-3.7.2/libarchive/archive_string.c
-      - original/libarchive-3.7.2/libarchive/archive_string_sprintf.c
-      - original/libarchive-3.7.2/libarchive/test/
+      - safe/abi/exported_symbols.txt
+      - safe/abi/libarchive.map
+      - safe/target/release/libarchive.so
   - order: 5
-    id: check_foundation_rust_and_c_api
-    type: check
-    bounce_target: impl_foundation_objects
-    required_preexisting_inputs:
-      - safe/src/common/**
-      - safe/src/entry/**
-      - safe/src/match/**
-      - safe/src/util/**
-      - safe/src/ffi/archive_common.rs
-      - safe/src/ffi/archive_entry.rs
-      - safe/src/ffi/archive_match.rs
-      - safe/tests/support/**
-      - safe/tests/libarchive/foundation/**
-      - safe/generated/test_manifest.json
-      - safe/generated/original_build_contract.json
-      - safe/generated/original_c_build/**
-      - safe/scripts/run-upstream-c-tests.sh
-      - original/libarchive-3.7.2/libarchive/test/
-  - order: 6
-    id: impl_write_and_disk
+    id: impl_port_doc_remaining_issues
     type: implement
     bounce_target: null
     required_preexisting_inputs:
-      - safe/Cargo.toml
-      - safe/build.rs
-      - safe/src/lib.rs
-      - safe/src/common/**
-      - safe/src/entry/**
-      - safe/src/match/**
-      - safe/src/util/**
-      - safe/src/ffi/mod.rs
-      - safe/src/ffi/bootstrap.rs
-      - safe/src/ffi/archive_common.rs
-      - safe/src/ffi/archive_entry.rs
-      - safe/src/ffi/archive_match.rs
-      - safe/include/archive.h
-      - safe/include/archive_entry.h
-      - safe/generated/api_inventory.json
-      - safe/generated/original_build_contract.json
-      - safe/generated/original_c_build/**
-      - safe/generated/test_manifest.json
+      - safe/PORT.md
+      - safe/tests/
+      - safe/tests/fixtures-manifest.toml
       - safe/config/libarchive_test_phase_groups.json
-      - safe/scripts/run-upstream-c-tests.sh
-      - safe/tests/support/**
-      - safe/tests/libarchive/foundation/**
-      - relevant_cves.json
-      - original/libarchive-3.7.2/libarchive/archive_read.c
-      - original/libarchive-3.7.2/libarchive/archive_read_private.h
-      - original/libarchive-3.7.2/libarchive/archive_read_open_*.c
-      - original/libarchive-3.7.2/libarchive/archive_read_set_format.c
-      - original/libarchive-3.7.2/libarchive/archive_read_support_filter_*.c
-      - original/libarchive-3.7.2/libarchive/archive_read_support_format_*.c
-      - original/libarchive-3.7.2/libarchive/archive_write.c
-      - original/libarchive-3.7.2/libarchive/archive_write_private.h
-      - original/libarchive-3.7.2/libarchive/archive_write_open_*.c
-      - original/libarchive-3.7.2/libarchive/archive_write_set_options.c
-      - original/libarchive-3.7.2/libarchive/archive_write_set_passphrase.c
-      - original/libarchive-3.7.2/libarchive/archive_write_add_filter*.c
-      - original/libarchive-3.7.2/libarchive/archive_write_set_format*.c
-      - original/libarchive-3.7.2/libarchive/archive_read_disk_*.c
-      - original/libarchive-3.7.2/libarchive/archive_read_extract*.c
-      - original/libarchive-3.7.2/libarchive/archive_write_disk_posix.c
-      - original/libarchive-3.7.2/libarchive/archive_write_disk_private.h
-      - original/libarchive-3.7.2/libarchive/test/
-  - order: 7
-    id: check_write_and_disk
-    type: check
-    bounce_target: impl_write_and_disk
-    required_preexisting_inputs:
-      - safe/src/read/**
-      - safe/src/write/**
-      - safe/src/disk/**
-      - safe/src/ffi/archive_read.rs
-      - safe/src/ffi/archive_write.rs
-      - safe/src/ffi/archive_write_disk.rs
-      - safe/src/ffi/archive_read_disk.rs
-      - safe/tests/libarchive/write_disk/**
       - safe/generated/test_manifest.json
-      - safe/generated/original_build_contract.json
-      - safe/generated/original_c_build/**
-      - safe/scripts/run-upstream-c-tests.sh
-      - relevant_cves.json
-      - original/libarchive-3.7.2/libarchive/test/
-  - order: 8
-    id: impl_read_core_mainstream
-    type: implement
-    bounce_target: null
-    required_preexisting_inputs:
-      - safe/Cargo.toml
-      - safe/build.rs
-      - safe/src/lib.rs
-      - safe/src/common/**
-      - safe/src/entry/**
-      - safe/src/match/**
-      - safe/src/util/**
-      - safe/src/read/**
-      - safe/src/write/**
-      - safe/src/disk/**
-      - safe/src/ffi/archive_read.rs
-      - safe/src/ffi/archive_read_disk.rs
-      - safe/src/ffi/archive_write.rs
-      - safe/src/ffi/archive_write_disk.rs
-      - safe/include/archive.h
-      - safe/include/archive_entry.h
-      - safe/pkgconfig/libarchive.pc.in
-      - safe/generated/api_inventory.json
-      - safe/generated/original_build_contract.json
-      - safe/generated/original_c_build/**
-      - safe/generated/original_pkgconfig/libarchive.pc
-      - safe/generated/pkgconfig/libarchive.pc
-      - safe/generated/test_manifest.json
-      - safe/scripts/check-source-compat.sh
-      - safe/scripts/render-pkg-config.sh
-      - safe/scripts/run-upstream-c-tests.sh
-      - safe/tests/support/**
-      - safe/tests/libarchive/write_disk/**
-      - original/libarchive-3.7.2/libarchive/archive_read.c
-      - original/libarchive-3.7.2/libarchive/archive_read_private.h
-      - original/libarchive-3.7.2/libarchive/archive_read_open_*.c
-      - original/libarchive-3.7.2/libarchive/archive_read_set_format.c
-      - original/libarchive-3.7.2/libarchive/archive_read_set_options.c
-      - original/libarchive-3.7.2/libarchive/archive_read_support_filter_*.c
-      - original/libarchive-3.7.2/libarchive/archive_read_support_format_*.c
-      - original/libarchive-3.7.2/examples/minitar/minitar.c
-      - original/libarchive-3.7.2/examples/untar.c
-      - original/libarchive-3.7.2/libarchive/test/
-  - order: 9
-    id: check_read_core_mainstream
-    type: check
-    bounce_target: impl_read_core_mainstream
-    required_preexisting_inputs:
-      - safe/src/read/**
-      - safe/src/ffi/archive_read.rs
-      - safe/tests/libarchive/read_mainstream/**
-      - safe/generated/original_pkgconfig/libarchive.pc
-      - safe/generated/pkgconfig/libarchive.pc
-      - safe/generated/test_manifest.json
-      - safe/generated/original_build_contract.json
-      - safe/generated/original_c_build/**
-      - safe/scripts/check-source-compat.sh
-      - safe/scripts/render-pkg-config.sh
-      - safe/scripts/run-upstream-c-tests.sh
-      - original/libarchive-3.7.2/examples/minitar/minitar.c
-      - original/libarchive-3.7.2/examples/untar.c
-      - original/libarchive-3.7.2/libarchive/test/
-  - order: 10
-    id: impl_advanced_formats_cve
-    type: implement
-    bounce_target: null
-    required_preexisting_inputs:
-      - safe/Cargo.toml
-      - safe/src/read/**
-      - safe/src/write/**
-      - safe/src/disk/**
-      - safe/src/ffi/archive_read.rs
-      - safe/src/ffi/archive_write.rs
-      - safe/generated/api_inventory.json
-      - safe/generated/original_build_contract.json
-      - safe/generated/original_c_build/**
-      - safe/generated/test_manifest.json
-      - safe/generated/original_pkgconfig/libarchive.pc
-      - safe/generated/pkgconfig/libarchive.pc
-      - safe/scripts/run-upstream-c-tests.sh
-      - safe/tests/libarchive/read_mainstream/**
-      - original/libarchive-3.7.2/libarchive/archive_read_support_format_*.c
-      - original/libarchive-3.7.2/libarchive/archive_write_set_format_*.c
-      - original/libarchive-3.7.2/libarchive/archive_write_set_format_by_name.c
-      - original/libarchive-3.7.2/libarchive/archive_write_set_format_filter_by_ext.c
-      - original/libarchive-3.7.2/libarchive/archive_write_set_passphrase.c
-      - original/libarchive-3.7.2/libarchive/archive_read_set_options.c
-      - original/libarchive-3.7.2/libarchive/archive_write_set_options.c
-      - original/libarchive-3.7.2/libarchive/archive_ppmd7.c
-      - original/libarchive-3.7.2/libarchive/archive_ppmd8.c
-      - original/libarchive-3.7.2/libarchive/archive_blake2*.c
-      - original/libarchive-3.7.2/libarchive/xxhash.c
-      - original/libarchive-3.7.2/debian/patches/series
-      - original/libarchive-3.7.2/libarchive/test/
-      - all_cves.json
-      - relevant_cves.json
-  - order: 11
-    id: check_advanced_formats
-    type: check
-    bounce_target: impl_advanced_formats_cve
-    required_preexisting_inputs:
-      - safe/src/read/format/**
-      - safe/src/write/format/**
-      - safe/src/algorithms/**
-      - safe/src/ffi/archive_options.rs
-      - safe/tests/libarchive/advanced/**
-      - safe/generated/test_manifest.json
-      - safe/generated/original_build_contract.json
-      - safe/generated/original_c_build/**
-      - safe/scripts/run-upstream-c-tests.sh
-      - original/libarchive-3.7.2/libarchive/test/
-  - order: 12
-    id: check_cve_regressions
-    type: check
-    bounce_target: impl_advanced_formats_cve
-    required_preexisting_inputs:
-      - safe/generated/cve_matrix.json
-      - safe/scripts/check-i686-cve.sh
-      - safe/tests/libarchive/security/**
-      - all_cves.json
-      - relevant_cves.json
-      - original/libarchive-3.7.2/debian/patches/series
-  - order: 13
-    id: impl_packaging_tooling_compat
-    type: implement
-    bounce_target: null
-    required_preexisting_inputs:
-      - safe/Cargo.toml
-      - safe/build.rs
-      - safe/include/archive.h
-      - safe/include/archive_entry.h
-      - safe/pkgconfig/libarchive.pc.in
-      - safe/generated/original_pkgconfig/libarchive.pc
-      - safe/generated/original_package_metadata.json
-      - safe/generated/original_build_contract.json
-      - safe/generated/original_c_build/**
-      - safe/generated/original_link_objects/**
-      - safe/generated/link_compat_manifest.json
-      - safe/generated/test_manifest.json
+      - safe/generated/rust_test_manifest.json
       - safe/generated/cve_matrix.json
       - safe/generated/api_inventory.json
-      - safe/generated/pkgconfig/libarchive.pc
-      - safe/scripts/render-pkg-config.sh
+      - safe/scripts/check-rust-test-coverage.sh
       - safe/scripts/check-source-compat.sh
-      - safe/scripts/run-upstream-c-tests.sh
-      - safe/scripts/check-i686-cve.sh
-      - safe/src/**
-      - original/libarchive-3.7.2/debian/**
-      - original/libarchive-3.7.2/libarchive_fe/**
-      - original/libarchive-3.7.2/tar/**
-      - original/libarchive-3.7.2/cpio/**
-      - original/libarchive-3.7.2/cat/**
-      - original/libarchive-3.7.2/unzip/**
-      - original/libarchive-3.7.2/examples/**
-      - original/libarchive-3.7.2/doc/man/**
-      - test-original.sh
-      - dependents.json
-  - order: 14
-    id: check_packaging_and_dependents
-    type: check
-    bounce_target: impl_packaging_tooling_compat
-    required_preexisting_inputs:
-      - safe/debian/**
-      - safe/examples/**
-      - safe/doc/man/**
-      - safe/c_src/**
-      - safe/scripts/run-debian-minitar.sh
-      - safe/pkgconfig/libarchive.pc.in
-      - safe/generated/original_pkgconfig/libarchive.pc
-      - safe/generated/original_package_metadata.json
-      - test-original.sh
-      - dependents.json
-  - order: 15
-    id: check_link_compat_and_frontends
-    type: check
-    bounce_target: impl_packaging_tooling_compat
-    required_preexisting_inputs:
-      - safe/c_src/**
-      - safe/abi/original_exported_symbols.txt
-      - safe/abi/original_version_info.txt
-      - safe/scripts/check-link-compat.sh
-      - safe/scripts/run-upstream-c-tests.sh
-      - safe/generated/link_compat_manifest.json
-      - safe/generated/original_link_objects/**
-      - safe/generated/original_package_metadata.json
-      - safe/generated/original_build_contract.json
-      - safe/generated/original_c_build/**
-      - safe/generated/test_manifest.json
-      - original/libarchive-3.7.2/tar/test/
-      - original/libarchive-3.7.2/cpio/test/
-      - original/libarchive-3.7.2/cat/test/
-      - original/libarchive-3.7.2/unzip/test/
-  - order: 16
-    id: impl_final_test_port_closure
-    type: implement
-    bounce_target: null
-    required_preexisting_inputs:
-      - safe/abi/original_exported_symbols.txt
-      - safe/abi/original_version_info.txt
-      - safe/generated/test_manifest.json
-      - safe/generated/cve_matrix.json
-      - safe/generated/original_pkgconfig/libarchive.pc
-      - safe/generated/original_package_metadata.json
-      - safe/generated/original_build_contract.json
-      - safe/generated/original_c_build/**
-      - safe/generated/original_link_objects/**
-      - safe/generated/link_compat_manifest.json
       - safe/scripts/check-abi.sh
       - safe/scripts/check-link-compat.sh
       - safe/scripts/check-i686-cve.sh
-      - safe/scripts/run-debian-minitar.sh
       - safe/scripts/run-upstream-c-tests.sh
-      - safe/tests/libarchive/**
-      - safe/c_src/**
-      - safe/debian/**
-      - safe/examples/**
-      - safe/src/**
-      - original/libarchive-3.7.2/libarchive/test/
-      - original/libarchive-3.7.2/tar/test/
-      - original/libarchive-3.7.2/cpio/test/
-      - original/libarchive-3.7.2/cat/test/
-      - original/libarchive-3.7.2/unzip/test/
+      - safe/debian/control
+      - safe/debian/rules
+      - safe/debian/tests/control
+      - safe/debian/tests/minitar
+      - safe/debian/README.Debian
+      - safe/debian/libarchive13t64.symbols
+      - safe/debian/libarchive13t64.lintian-overrides
+      - safe/debian/libarchive-dev.install
+      - safe/debian/libarchive-tools.install
+      - safe/debian/libarchive13t64.install
+      - safe/debian/libarchive-dev.docs
+      - safe/debian/libarchive-tools.docs
+      - safe/src/read/mod.rs
+      - safe/src/read/format/mod.rs
+      - safe/src/write/mod.rs
+      - safe/src/write/format/mod.rs
+      - safe/src/disk/native.rs
+      - safe/tests/cve_regressions.rs
       - dependents.json
+      - relevant_cves.json
       - test-original.sh
-  - order: 17
-    id: check_full_rust_test_corpus
+      - original/libarchive-3.7.2/libarchive/test/test_write_format_zip_file.c
+      - original/libarchive-3.7.2/libarchive/test/test_write_format_zip_file_zip64.c
+      - original/libarchive-3.7.2/libarchive/test/test_write_format_iso9660_zisofs.c
+  - order: 6
+    id: check_port_doc_remaining_issues
     type: check
-    bounce_target: impl_final_test_port_closure
+    bounce_target: impl_port_doc_remaining_issues
     required_preexisting_inputs:
+      - safe/PORT.md
       - safe/Cargo.toml
-      - safe/build.rs
+      - safe/Cargo.lock
+      - safe/tests/
+      - safe/tests/fixtures-manifest.toml
+      - safe/config/libarchive_test_phase_groups.json
       - safe/generated/test_manifest.json
       - safe/generated/rust_test_manifest.json
+      - safe/generated/cve_matrix.json
+      - safe/generated/api_inventory.json
+      - safe/generated/pkgconfig/libarchive.pc
       - safe/scripts/check-rust-test-coverage.sh
-      - safe/tests/fixtures-manifest.toml
-      - safe/tests/libarchive/**
-      - safe/tests/tar/**
-      - safe/tests/cpio/**
-      - safe/tests/cat/**
-      - safe/tests/unzip/**
-      - safe/src/**
-  - order: 18
-    id: check_full_matrix_final
-    type: check
-    bounce_target: impl_final_test_port_closure
+      - safe/scripts/check-source-compat.sh
+      - safe/scripts/check-abi.sh
+      - safe/scripts/check-link-compat.sh
+      - safe/scripts/check-i686-cve.sh
+      - safe/scripts/run-upstream-c-tests.sh
+      - safe/debian/control
+      - safe/debian/rules
+      - safe/debian/tests/control
+      - safe/debian/tests/minitar
+      - safe/debian/README.Debian
+      - safe/debian/libarchive13t64.symbols
+      - safe/debian/libarchive13t64.lintian-overrides
+      - safe/debian/libarchive-dev.install
+      - safe/debian/libarchive-tools.install
+      - safe/debian/libarchive13t64.install
+      - safe/debian/libarchive-dev.docs
+      - safe/debian/libarchive-tools.docs
+      - safe/src/read/mod.rs
+      - safe/src/read/format/mod.rs
+      - safe/src/write/mod.rs
+      - safe/src/write/format/mod.rs
+      - safe/src/disk/native.rs
+      - safe/tests/cve_regressions.rs
+      - dependents.json
+      - relevant_cves.json
+      - test-original.sh
+      - original/libarchive-3.7.2/libarchive/test/
+      - original/libarchive-3.7.2/libarchive/test/test_write_format_zip_file.c
+      - original/libarchive-3.7.2/libarchive/test/test_write_format_zip_file_zip64.c
+      - original/libarchive-3.7.2/libarchive/test/test_write_format_iso9660_zisofs.c
+  - order: 7
+    id: impl_port_doc_finalize
+    type: implement
+    bounce_target: null
     required_preexisting_inputs:
+      - safe/PORT.md
       - safe/Cargo.toml
+      - safe/Cargo.lock
       - safe/build.rs
+      - safe/src/
+      - safe/tests/
+      - safe/include/archive.h
+      - safe/include/archive_entry.h
+      - safe/c_shims/archive_set_error.c
+      - safe/scripts/render-pkg-config.sh
+      - safe/generated/api_inventory.json
+      - safe/generated/cve_matrix.json
+      - safe/generated/link_compat_manifest.json
+      - safe/generated/original_build_contract.json
+      - safe/generated/original_package_metadata.json
+      - safe/generated/original_pkgconfig/libarchive.pc
+      - safe/generated/pkgconfig/libarchive.pc
+      - safe/generated/original_c_build/config.h
+      - safe/generated/rust_test_manifest.json
+      - safe/generated/test_manifest.json
+      - safe/abi/exported_symbols.txt
       - safe/abi/libarchive.map
       - safe/abi/original_exported_symbols.txt
       - safe/abi/original_version_info.txt
-      - safe/include/archive.h
-      - safe/include/archive_entry.h
-      - safe/pkgconfig/libarchive.pc.in
-      - safe/generated/test_manifest.json
-      - safe/generated/rust_test_manifest.json
-      - safe/generated/cve_matrix.json
-      - safe/generated/original_pkgconfig/libarchive.pc
-      - safe/generated/original_package_metadata.json
-      - safe/generated/original_build_contract.json
-      - safe/generated/original_c_build/**
-      - safe/generated/original_link_objects/**
-      - safe/generated/link_compat_manifest.json
-      - safe/scripts/check-rust-test-coverage.sh
-      - safe/scripts/check-abi.sh
-      - safe/scripts/check-link-compat.sh
-      - safe/scripts/check-i686-cve.sh
-      - safe/scripts/run-debian-minitar.sh
-      - safe/scripts/run-upstream-c-tests.sh
-      - safe/tests/fixtures-manifest.toml
-      - safe/tests/libarchive/**
-      - safe/tests/tar/**
-      - safe/tests/cpio/**
-      - safe/tests/cat/**
-      - safe/tests/unzip/**
-      - safe/c_src/**
-      - safe/debian/**
-      - safe/examples/**
-      - safe/doc/man/**
-      - safe/src/**
+      - safe/debian/control
+      - safe/debian/rules
+      - safe/debian/tests/control
+      - safe/debian/README.Debian
+      - safe/target/release/libarchive.so
       - dependents.json
+      - relevant_cves.json
+      - test-original.sh
+  - order: 8
+    id: check_port_doc_finalize
+    type: check
+    bounce_target: impl_port_doc_finalize
+    required_preexisting_inputs:
+      - safe/PORT.md
+      - safe/Cargo.toml
+      - safe/Cargo.lock
+      - safe/build.rs
+      - safe/src/
+      - safe/tests/
+      - safe/scripts/render-pkg-config.sh
+      - safe/generated/api_inventory.json
+      - safe/generated/cve_matrix.json
+      - safe/generated/link_compat_manifest.json
+      - safe/generated/original_build_contract.json
+      - safe/generated/original_package_metadata.json
+      - safe/generated/original_pkgconfig/libarchive.pc
+      - safe/generated/pkgconfig/libarchive.pc
+      - safe/generated/rust_test_manifest.json
+      - safe/generated/test_manifest.json
+      - safe/abi/exported_symbols.txt
+      - safe/abi/libarchive.map
+      - safe/abi/original_exported_symbols.txt
+      - safe/abi/original_version_info.txt
+      - safe/debian/control
+      - safe/debian/rules
+      - safe/debian/tests/control
+      - safe/debian/README.Debian
+      - safe/target/release/libarchive.so
+      - dependents.json
+      - relevant_cves.json
       - test-original.sh
