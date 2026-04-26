@@ -22,7 +22,7 @@ The internal/backend boundary is explicit. `safe/src/common/backend.rs:46-426` d
 
 Error propagation across the Rust/C seam is also centralized. `safe/src/common/api.rs:18-42` links a static library named `archive_variadic_shim`, registers `archive_set_error_bridge` exactly once through a `Once`, and teaches the C shim to forward `archive_set_error(...)` calls into `set_error_option` on the Rust `ArchiveCore`. That lets vendored C code keep calling the original variadic entrypoint while the Rust side retains ownership of the authoritative per-handle error state.
 
-At runtime, public entrypoints validate the handle and state with `archive_magic` and `archive_check_magic`, dispatch either into the vendored backend through `backend_api()` or into native Rust disk helpers, then mirror backend state back into `ArchiveCore` with `sync_backend_core`. Teardown follows the same split. `safe/src/common/state.rs:634-692` frees per-kind resources by dropping Rust boxes, freeing temporary entry objects, invoking backend `archive_*_free` hooks, and running lookup cleanups. `safe/src/common/state.rs:694-756` performs close semantics first, calling either backend `archive_read_close` or `archive_write_close` or the native disk close helpers before marking the handle closed and clearing `backend_opened`.
+At runtime, public entrypoints validate the handle and state with `archive_magic` and `archive_check_magic`, dispatch either into the vendored backend through `backend_api()` or into native Rust disk helpers, then mirror backend state back into `ArchiveCore` with `sync_backend_core`. Teardown follows the same split. `safe/src/common/state.rs:634-692` frees per-kind resources by dropping Rust boxes, freeing temporary entry objects, invoking backend `archive_*_free` hooks, and running lookup cleanups. `safe/src/common/state.rs:694-756` performs close semantics first, calling either backend `archive_read_close` or `archive_write_close` or the native disk close helpers before marking the handle closed and clearing `backend_opened`. `safe/src/common/state.rs:758-790` then mirrors backend format and error state back through raw archive handles for later Rust-visible queries.
 
 ### Build pipeline
 
@@ -74,7 +74,7 @@ Installation is also explicit. `safe/debian/rules:40-60` creates `debian/tmp/usr
 
 ## 2. Where the unsafe Rust lives
 
-The initial repository-wide pass `rg -n '\bunsafe\b' safe`, `rg -l '\bunsafe\b' safe`, and `rg -l 'extern "C"' safe` found 35 checked-in files containing the token `unsafe`. After removing non-site grep hits and vendored-C comments, the actual Rust syntax surface is 1,122 checked-in unsafe sites across 31 Rust files: 572 `unsafe {}` blocks, 295 `unsafe extern "C" fn` types, 175 `unsafe extern "C" fn` declarations, 78 `unsafe fn` declarations, and 2 `unsafe impl` markers.
+The initial repository-wide pass `rg -n '\bunsafe\b' safe`, `rg -l '\bunsafe\b' safe`, and `rg -l 'extern "C"' safe` found 35 checked-in files containing the token `unsafe`. After removing non-site grep hits and vendored-C comments, the actual Rust syntax surface is 1,132 checked-in unsafe sites across 31 Rust files: 574 `unsafe {}` blocks, 295 `unsafe extern "C" fn` types, 175 `unsafe extern "C" fn` declarations, 86 `unsafe fn` declarations, and 2 `unsafe impl` markers.
 
 `rg` reconciliation notes:
 - `safe/build.rs:147` and `safe/build.rs:155` only parse the string literal `unsafe extern "C" fn` while generating `backend_linked.rs`; they are not executable Rust unsafe sites.
@@ -82,13 +82,13 @@ The initial repository-wide pass `rg -n '\bunsafe\b' safe`, `rg -l '\bunsafe\b' 
 - `safe/c_src/unzip/bsdunzip.c:377` is a vendored C comment mentioning an unsafe path pattern; it is relevant to later caveats but not to the Rust census.
 - `safe/PORT.md` is documentation and now contains many `unsafe` references by design; it is not part of the executable Rust site count below.
 
-Large internal-only clusters that are not forced by the public libarchive ABI boundary include `safe/src/common/backend.rs:46-426` plus `safe/src/common/backend.rs:420-421`, `safe/src/common/helpers.rs:59-75`, `safe/src/common/state.rs:426-450`, `safe/src/common/state.rs:558-598`, `safe/src/common/state.rs:634-756`, `safe/src/common/api.rs:18-42`, `safe/src/disk/mod.rs`, `safe/src/match/internal.rs:19-21`, `safe/src/disk/native.rs:93-110` and the syscall-heavy helpers that follow, `safe/src/entry/internal.rs`, `safe/src/util/mod.rs`, and the internal callback/backend glue in `safe/src/read/mod.rs` and `safe/src/write/mod.rs`.
+Large internal-only clusters that are not forced by the public libarchive ABI boundary include `safe/src/common/backend.rs:46-426` plus `safe/src/common/backend.rs:420-421`, `safe/src/common/helpers.rs:59-75`, `safe/src/common/state.rs:426-450`, `safe/src/common/state.rs:558-598`, `safe/src/common/state.rs:634-790`, `safe/src/common/api.rs:18-42`, `safe/src/disk/mod.rs`, `safe/src/match/internal.rs:19-21`, `safe/src/disk/native.rs:93-110` and the syscall-heavy helpers that follow, `safe/src/entry/internal.rs`, `safe/src/util/mod.rs`, and the internal callback/backend glue in `safe/src/read/mod.rs` and `safe/src/write/mod.rs`.
 
 | Purpose bucket | Sites |
 | --- | ---: |
 | public ABI entrypoints and callback shims | 370 |
 | backend bridge calls into vendored C | 415 |
-| raw-pointer casting and ownership conversion | 38 |
+| raw-pointer casting and ownership conversion | 48 |
 | allocator and buffer and CStr interop | 78 |
 | libc and syscall and descriptor interaction | 113 |
 | test-only FFI setup and helper code | 108 |
@@ -892,6 +892,7 @@ Large internal-only clusters that are not forced by the public libarchive ABI bo
 
 | File:line | Syntactic form | Enclosing symbol | Purpose bucket | Why this unsafe exists |
 | --- | --- | --- | --- | --- |
+| `safe/src/common/api.rs:382` | `unsafe block` | `is_match_archive` | raw-pointer casting and ownership conversion | This block performs pointer casts, raw ownership recovery, or zero-initialization that depends on external layout and lifetime invariants. |
 | `safe/src/common/state.rs:426` | `unsafe fn declaration` | `ArchiveCore::core_from_archive` | raw-pointer casting and ownership conversion | This helper relies on callers to uphold layout, aliasing, and lifetime invariants while casting opaque pointers or transferring ownership. |
 | `safe/src/common/state.rs:430` | `unsafe fn declaration` | `ArchiveCore::read_from_archive` | raw-pointer casting and ownership conversion | This helper relies on callers to uphold layout, aliasing, and lifetime invariants while casting opaque pointers or transferring ownership. |
 | `safe/src/common/state.rs:434` | `unsafe fn declaration` | `ArchiveCore::write_from_archive` | raw-pointer casting and ownership conversion | This helper relies on callers to uphold layout, aliasing, and lifetime invariants while casting opaque pointers or transferring ownership. |
@@ -900,6 +901,12 @@ Large internal-only clusters that are not forced by the public libarchive ABI bo
 | `safe/src/common/state.rs:450` | `unsafe fn declaration` | `ArchiveCore::backend_archive` | raw-pointer casting and ownership conversion | This helper relies on callers to uphold layout, aliasing, and lifetime invariants while casting opaque pointers or transferring ownership. |
 | `safe/src/common/state.rs:558` | `unsafe fn declaration` | `archive_magic` | raw-pointer casting and ownership conversion | This helper relies on callers to uphold layout, aliasing, and lifetime invariants while casting opaque pointers or transferring ownership. |
 | `safe/src/common/state.rs:562` | `unsafe fn declaration` | `archive_check_magic` | raw-pointer casting and ownership conversion | This helper relies on callers to uphold layout, aliasing, and lifetime invariants while casting opaque pointers or transferring ownership. |
+| `safe/src/common/state.rs:634` | `unsafe fn declaration` | `free_archive` | raw-pointer casting and ownership conversion | This helper relies on callers to uphold layout, aliasing, and lifetime invariants while casting opaque pointers or transferring ownership. |
+| `safe/src/common/state.rs:694` | `unsafe fn declaration` | `close_archive` | raw-pointer casting and ownership conversion | This helper relies on callers to uphold layout, aliasing, and lifetime invariants while casting opaque pointers or transferring ownership. |
+| `safe/src/common/state.rs:758` | `unsafe fn declaration` | `sync_backend_core` | raw-pointer casting and ownership conversion | This helper relies on callers to uphold layout, aliasing, and lifetime invariants while casting opaque pointers or transferring ownership. |
+| `safe/src/common/state.rs:775` | `unsafe fn declaration` | `backend_error_number` | raw-pointer casting and ownership conversion | This helper relies on callers to uphold layout, aliasing, and lifetime invariants while casting opaque pointers or transferring ownership. |
+| `safe/src/common/state.rs:784` | `unsafe fn declaration` | `backend_error_string_ptr` | raw-pointer casting and ownership conversion | This helper relies on callers to uphold layout, aliasing, and lifetime invariants while casting opaque pointers or transferring ownership. |
+| `safe/src/disk/mod.rs:343` | `unsafe block` | `validate_read_disk` | raw-pointer casting and ownership conversion | This block performs pointer casts, raw ownership recovery, or zero-initialization that depends on external layout and lifetime invariants. |
 | `safe/src/disk/mod.rs:361` | `unsafe block` | `validate_write_disk` | raw-pointer casting and ownership conversion | This block performs pointer casts, raw ownership recovery, or zero-initialization that depends on external layout and lifetime invariants. |
 | `safe/src/entry/internal.rs:391` | `unsafe block` | `ArchiveEntryData::clone` | raw-pointer casting and ownership conversion | This block performs pointer casts, raw ownership recovery, or zero-initialization that depends on external layout and lifetime invariants. |
 | `safe/src/entry/internal.rs:436` | `unsafe block` | `ArchiveEntryData::default` | raw-pointer casting and ownership conversion | This block performs pointer casts, raw ownership recovery, or zero-initialization that depends on external layout and lifetime invariants. |
@@ -919,6 +926,8 @@ Large internal-only clusters that are not forced by the public libarchive ABI bo
 | `safe/src/match/internal.rs:162` | `unsafe fn declaration` | `validate_match_archive` | raw-pointer casting and ownership conversion | This helper relies on callers to uphold layout, aliasing, and lifetime invariants while casting opaque pointers or transferring ownership. |
 | `safe/src/match/internal.rs:502` | `unsafe block` | `time_excluded` | raw-pointer casting and ownership conversion | This block performs pointer casts, raw ownership recovery, or zero-initialization that depends on external layout and lifetime invariants. |
 | `safe/src/match/internal.rs:590` | `unsafe block` | `owner_excluded` | raw-pointer casting and ownership conversion | This block performs pointer casts, raw ownership recovery, or zero-initialization that depends on external layout and lifetime invariants. |
+| `safe/src/read/mod.rs:39` | `unsafe fn declaration` | `ReadLike::from_archive` | raw-pointer casting and ownership conversion | This helper relies on callers to uphold layout, aliasing, and lifetime invariants while casting opaque pointers or transferring ownership. |
+| `safe/src/read/mod.rs:74` | `unsafe fn declaration` | `mirror_archive_error` | raw-pointer casting and ownership conversion | This helper relies on callers to uphold layout, aliasing, and lifetime invariants while casting opaque pointers or transferring ownership. |
 | `safe/src/read/mod.rs:137` | `unsafe block` | `validate_read_with_state` | raw-pointer casting and ownership conversion | This block performs pointer casts, raw ownership recovery, or zero-initialization that depends on external layout and lifetime invariants. |
 | `safe/src/read/mod.rs:145` | `unsafe fn declaration` | `ensure_read_backend` | raw-pointer casting and ownership conversion | This helper relies on callers to uphold layout, aliasing, and lifetime invariants while casting opaque pointers or transferring ownership. |
 | `safe/src/read/mod.rs:160` | `unsafe fn declaration` | `clear_backend_error` | raw-pointer casting and ownership conversion | This helper relies on callers to uphold layout, aliasing, and lifetime invariants while casting opaque pointers or transferring ownership. |
@@ -930,6 +939,7 @@ Large internal-only clusters that are not forced by the public libarchive ABI bo
 | `safe/src/read/mod.rs:225` | `unsafe fn declaration` | `ensure_primary_callback_node` | raw-pointer casting and ownership conversion | This helper relies on callers to uphold layout, aliasing, and lifetime invariants while casting opaque pointers or transferring ownership. |
 | `safe/src/read/mod.rs:687` | `unsafe fn declaration` | `register_zip_format` | raw-pointer casting and ownership conversion | This helper relies on callers to uphold layout, aliasing, and lifetime invariants while casting opaque pointers or transferring ownership. |
 | `safe/src/read/mod.rs:1665` | `unsafe fn declaration` | `require_open_reader` | raw-pointer casting and ownership conversion | This helper relies on callers to uphold layout, aliasing, and lifetime invariants while casting opaque pointers or transferring ownership. |
+| `safe/src/write/mod.rs:51` | `unsafe fn declaration` | `WriteLike::from_archive` | raw-pointer casting and ownership conversion | This helper relies on callers to uphold layout, aliasing, and lifetime invariants while casting opaque pointers or transferring ownership. |
 
 ### allocator and buffer and CStr interop
 
