@@ -1449,7 +1449,49 @@ The live undefined-symbol table on `safe/target/release/libarchive.so` shows the
 
 ## 4. Remaining issues
 
-This section is intentionally deferred to phase `impl_port_doc_remaining_issues`. It will be replaced in place with the remaining-issues, coverage, packaging-caveat, dependent-coverage, and CVE-scope reconciliation grounded in the checked-in manifests and later verification runs.
+### Observed passes
+
+- `./scripts/check-source-compat.sh`, `./scripts/check-abi.sh --strict`, `./scripts/check-link-compat.sh`, `./scripts/check-rust-test-coverage.sh`, `./scripts/check-i686-cve.sh`, `cargo test --test cve_regressions`, and the targeted upstream harness run `./scripts/run-upstream-c-tests.sh libarchive advanced_formats test_read_format_rar_filter test_read_format_rar5_loop_bug test_read_format_warc_incomplete test_read_format_zip_mac_metadata test_read_format_rar_multivolume_seek_data` all passed in this phase.
+- The required byte-for-byte ZIP writer tests are present in both authoritative manifests and the libarchive ported-case list: `test_write_format_zip_file` and `test_write_format_zip_file_zip64` both appear in `safe/generated/test_manifest.json`, `safe/generated/rust_test_manifest.json`, and `safe/tests/libarchive/ported_cases.rs:590-591`. The same checked-in `ported_cases.rs` list also includes other byte-sensitive libarchive cases such as `test_acl_pax_posix1e` (`safe/tests/libarchive/ported_cases.rs:3`), `test_write_format_cpio_empty` and `test_write_format_cpio_newc` (`safe/tests/libarchive/ported_cases.rs:549-550`), `test_ustar_filename_encoding_UTF8_CP866` (`safe/tests/libarchive/ported_cases.rs:483`), `test_write_format_zip_empty_zip64` (`safe/tests/libarchive/ported_cases.rs:588`), and the ZIP filename-encoding family (`safe/tests/libarchive/ported_cases.rs:600-605`).
+- The spot-check reruns for exact-output-sensitive tests all passed: `test_write_format_zip_file`, `test_write_format_zip_file_zip64`, `test_write_format_zip_empty_zip64`, `test_write_format_cpio_empty`, `test_write_format_cpio_newc`, `test_acl_pax_posix1e`, `test_zip_filename_encoding_UTF8`, and `test_ustar_filename_encoding_UTF8_CP866`. The targeted upstream-C rerun also passed `test_read_format_rar_filter`, `test_read_format_rar5_loop_bug`, `test_read_format_warc_incomplete`, `test_read_format_zip_mac_metadata`, and `test_read_format_rar_multivolume_seek_data`.
+- `cargo test --test cve_regressions` passed all 12 tests, including the secure-extraction guard coverage in `safe/tests/cve_regressions.rs:156-212`, the checked arithmetic and helper coverage in `safe/tests/cve_regressions.rs:214-279`, the GNU longlink and ACL/write-disk regressions in `safe/tests/cve_regressions.rs:282-343`, and the i686/zisofs coverage in `safe/tests/cve_regressions.rs:488-557`.
+
+### Observed failures
+
+- None. No command run in this phase failed.
+
+### Checks not rerun
+
+- `./test-original.sh --target safe` was not rerun. Section 4 therefore treats `dependents.json` plus `test-original.sh` as intended downstream coverage scope and prerequisite documentation, not as fresh runtime evidence.
+- The full Docker and FUSE dependent sweep over the 12 packages recorded in `dependents.json` was not rerun. The checked-in harness still expects Docker, `/dev/fuse`, local Debian package builds, and the exact dependent set enforced by `test-original.sh:54-105`.
+- The Debian autopkgtest path was not rerun as an installed-package test. `safe/debian/tests/control:1-2` and `safe/debian/tests/minitar:4-62` still document a `minitar`-only smoke test that builds `examples/minitar/minitar.c` and `examples/untar.c`, checks MIME types, and verifies a small tar extraction round-trip, but this phase did not execute it through `autopkgtest`.
+- Only the targeted five-test advanced-format subset of `./scripts/run-upstream-c-tests.sh` was rerun in this phase. The rest of the preserved upstream suites and phase groups were not rerun here.
+
+### Source-derived caveats and remaining gaps
+
+- The document cannot claim global bit-for-bit equivalence. The checked-in evidence proves specific exact-output-sensitive cases, not universal writer equivalence. Upstream source files such as `original/libarchive-3.7.2/libarchive/test/test_write_format_zip_file.c`, `test_write_format_zip_file_zip64.c`, `test_write_format_cpio_empty.c`, `test_write_format_cpio_newc.c`, `test_acl_pax.c`, `test_zip_filename_encoding.c`, and `test_ustar_filename_encoding.c` do contain byte-for-byte, fixed-buffer, fixed-field, or fixed-reference assertions, and the manifests map those cases to current Rust tests. That is meaningful evidence for those cases, but it does not prove byte-for-byte identity for every tar, cpio, zip, xar, ISO9660, 7zip, filter, locale, timestamp, compression, or option combination. This document therefore does not claim universal output identity with upstream.
+- The authoritative preserved-test mapping is the pair `safe/generated/test_manifest.json` and `safe/generated/rust_test_manifest.json`, not filename inference. `safe/tests/libarchive/ported_cases.rs` is only the `libarchive`-suite dispatch list; exact-output-sensitive cases from the `tar`, `cpio`, `cat`, and `unzip` suites rely on their own `rust_test_target` mappings in `safe/generated/rust_test_manifest.json`.
+- The read side still carries explicit deferred-format scaffolding and ISO9660 option emulation caveats. `safe/src/read/mod.rs:181-193` defines `placeholder_format_warning()`, which marks a format as placeholder and returns `ARCHIVE_WARN` with a `reader support for <name> is deferred in this port` error string. If placeholder state is active for ISO9660, the option setters only emulate a narrow subset: `joliet` is accepted, unknown `iso9660:*` options fail, and `iso9660:zisofs-layout` only checks layout safety rather than proving full reader parity (`safe/src/read/mod.rs:368-497`). At the same time, the advanced-format symbol inventory in `safe/src/read/format/mod.rs:3-8` still names `archive_read_support_format_7zip`, `archive_read_support_format_cab`, `archive_read_support_format_iso9660`, and `archive_read_support_format_lha`, and the active entrypoints currently register backend support directly (`safe/src/read/mod.rs:650-685`). The checked-in evidence therefore supports tested backend-backed behavior plus targeted guard logic, not a claim of independent Rust-native parity across those advanced readers.
+- The current checked arithmetic and CVE regression coverage is targeted rather than complete. `safe/src/read/format/mod.rs:10-123` provides reusable checked helpers for zisofs layout math, WARC skip math, substream counts, line/read-ahead budgeting, filter/window bounds, monotonic seeks, GNU longlink termination, ZIP extra-field spans, CPIO symlink-size checks, and sparse-skip targets. `safe/src/write/format/mod.rs:15-30` adds checked helpers for ISO9660 filename sizing, ZIP entry-size validation, and the i686 zstd long-window limit. Those helpers are exercised directly by `safe/tests/cve_regressions.rs:214-279` and `safe/tests/cve_regressions.rs:488-557`, which gives strong checked-in coverage for the bug classes behind `CVE-2026-5121`, `CVE-2026-4426`, `CVE-2025-5916`, `CVE-2024-57970`, `CVE-2016-4809`, and `CVE-2016-6250`, plus the Ubuntu i686 zstd context. The advanced RAR, RAR5, and ZIP mac-ext classes called out in `relevant_cves.json` and `safe/generated/cve_matrix.json` still rely primarily on preserved upstream tests and vendored backend behavior rather than dedicated Rust-native regression helpers, even though the targeted upstream harness rerun passed the selected cases in this phase.
+- The secure-extraction and historical `umask` bug class is improved, but the document is limited to what the checked-in code and tests actually prove. `safe/src/disk/native.rs:1166-1176` reads `/proc/self/status` to observe the current umask instead of temporarily calling `umask()`, which avoids recreating the original process-global race pattern from `CVE-2023-30571`. `safe/src/disk/native.rs:1396-1490` then uses `mkdirat`, rejects absolute paths and `..` escapes under secure flags, and refuses symlink traversal unless explicit replacement is enabled. `safe/tests/cve_regressions.rs:156-212` proves rejection of absolute-path, parent-path, symlink, and hardlink escape attempts and proves the process umask is unchanged across the test. It does not prove that every write-disk metadata path is descriptor-only or that the entire extraction engine is race-free under all concurrent workloads.
+- The non-vendored Rust and packaging tree currently has no live TODO or FIXME markers. `rg -n 'TODO|FIXME' safe/src safe/tests safe/scripts safe/debian safe/build.rs safe/c_shims -S` returned no matches in this phase. The vendored `safe/c_src` tree still contains many imported TODO/FIXME markers, including validation and extraction caveats in `safe/c_src/libarchive/archive_read_support_format_iso9660.c:189,687`, `safe/c_src/libarchive/archive_read_support_format_zip.c:865,1358,3589`, and `safe/c_src/libarchive/archive_write_disk_posix.c:2991`. Those are imported upstream caveats in code paths the port still delegates to vendored backend or vendored frontend code; they are not live TODOs in the Rust tree, but they remain relevant caveats for parity claims.
+- A dedicated performance-evidence search found no checked-in benchmark harness or checked-in performance report that compares `safe` against `original`. There is no `safe/bench`, `safe/benches`, or similarly named benchmark tree, and no checked-in Criterion or Hyperfine-style report artifact. This document therefore does not claim performance parity.
+
+### Packaging caveats
+
+- `safe/debian/README.Debian:1-8` still documents the i386 `_FILE_OFFSET_BITS 64` requirement. Consumers that ignore it on 32-bit Linux can still produce empty archives or corrupt output even if the packaged library build itself is correct.
+- The autopkgtest scope is intentionally narrow. `safe/debian/tests/control:1-2` defines only `Tests: minitar`, and `safe/debian/tests/minitar:4-62` only exercises the `minitar` and `untar` examples plus a few MIME-type and extraction checks. That is packaging smoke coverage, not format-wide parity coverage.
+- `safe/debian/rules:65-68` only runs `./scripts/check-source-compat.sh` when `DEB_BUILD_OPTIONS` contains `check`, so Debian package builds do not automatically rerun that verification hook in every build. `safe/debian/rules:40-60` also assembles the installation tree manually by installing `libarchive.so` as `libarchive.so.13.7.2`, hand-creating the `libarchive.so.13` and `libarchive.so` symlinks, staging headers and pkg-config output, and installing the vendored C frontends directly.
+- `safe/debian/libarchive13t64.symbols:3-31,128` still contains live `#MISSING:` entries. Those lines are explicit packaging caveats about unresolved symbol coverage in the Debian contract, not evidence that the gap has already been reconciled.
+- `safe/debian/libarchive13t64.lintian-overrides:1` intentionally overrides the `package-name-doesnt-match-sonames` warning because the package is named `libarchive13t64` while the SONAME remains `libarchive.so.13`. That mismatch is documented and intentional, but it is still a deliberate packaging exception.
+
+### Explicit absence findings
+
+- No observed command failures in this phase.
+- No live TODO or FIXME markers outside vendored `safe/c_src`.
+- No checked-in benchmark or performance-comparison artifact.
+- No checked-in evidence sufficient to justify a global bit-for-bit equivalence claim.
+- No fresh downstream dependent runtime results from `./test-original.sh --target safe` in this phase.
 
 ## 5. Dependencies and other libraries used
 
@@ -1545,58 +1587,36 @@ Autopkgtest dependency from `safe/debian/tests/control:1-2`:
 
 ## 6. How this document was produced
 
-This is the phase-1 reproducibility log. Later phases will extend it with the full unsafe census, remaining-issues checks, and any additional unavailable-tool notes.
+This section is the reproducibility log for phase `impl_port_doc_remaining_issues`. It records the real audit and verification commands that were run for the remaining-issues reconciliation, plus the relevant commands that were intentionally not rerun.
 
-### Files consulted in this phase
+### Commands run
 
-- Planning inputs: `.plan/goal.md`, `.plan/plan.md`, `.plan/workflow-structure.yaml`, and `.plan/phases/01-architecture-baseline.md` through `.plan/phases/04-final-reconciliation.md`.
-- Crate/build inputs: `safe/Cargo.toml`, `safe/Cargo.lock`, `safe/build.rs`.
-- Rust architecture inputs: `safe/src/lib.rs`, `safe/src/ffi/mod.rs`, `safe/src/ffi/bootstrap.rs`, `safe/src/ffi/archive_common.rs`, `safe/src/ffi/archive_entry.rs`, `safe/src/ffi/archive_match.rs`, `safe/src/ffi/archive_options.rs`, `safe/src/ffi/archive_read.rs`, `safe/src/ffi/archive_read_disk.rs`, `safe/src/ffi/archive_write.rs`, `safe/src/ffi/archive_write_disk.rs`, `safe/src/common/api.rs`, `safe/src/common/backend.rs`, `safe/src/common/state.rs`, `safe/src/read/mod.rs`, `safe/src/write/mod.rs`, `safe/src/disk/native.rs`.
-- Packaging/build glue inputs: `safe/include/archive.h`, `safe/include/archive_entry.h`, `safe/c_shims/archive_set_error.c`, `safe/scripts/build-c-frontends.sh`, `safe/scripts/render-pkg-config.sh`, `safe/scripts/check-abi.sh`, `safe/scripts/check-source-compat.sh`, `safe/pkgconfig/libarchive.pc.in`, `safe/debian/control`, `safe/debian/rules`, `safe/debian/README.Debian`, `safe/debian/tests/control`, `safe/debian/*.install`, `safe/debian/*.docs`.
-- Captured-oracle inputs: `safe/generated/original_build_contract.json`, `safe/generated/original_package_metadata.json`, `safe/generated/original_pkgconfig/libarchive.pc`, `safe/generated/pkgconfig/libarchive.pc`, `safe/generated/original_c_build/config.h`.
-- Test/dependency-purpose inputs: `safe/tests/support/fixtures.rs`, `safe/tests/support/upstream.rs`, `safe/tests/libarchive/security/mod.rs`, and `safe/tests/fixtures-manifest.toml`.
-- Registry-source inputs for direct dependency classification: local crate sources for `libc-0.2.184`, `cc-1.2.59`, `serde-1.0.228`, `serde_json-1.0.149`, and `toml-0.8.23` under `${CARGO_HOME:-$HOME/.cargo}/registry/src/...`.
-
-### Commands executed in this phase
-
-- Repository and plan discovery:
-  - `git status --short`
-  - `rg --files .plan safe | sort`
-  - `rg -n 'PORT.md|impl_port_doc_architecture|check_port_doc_architecture|six required headings|required headings|Section 1|Section 5|Section 6' .plan safe -S`
-  - `rg -n '^## ' .plan/plan.md .plan/plan-before-cleanup.md .plan/phases -S`
-- Cargo topology and dependency inspection:
-  - `cargo metadata --format-version 1 --manifest-path safe/Cargo.toml --no-deps`
-  - `cargo tree --manifest-path safe/Cargo.toml -e normal,build,dev`
-  - `cargo tree --manifest-path safe/Cargo.toml -i serde -e normal,build,dev`
-  - `cargo tree --manifest-path safe/Cargo.toml -i serde_json -e normal,build,dev`
-  - `cargo tree --manifest-path safe/Cargo.toml -i toml -e normal,build,dev`
-  - `cargo tree --manifest-path safe/Cargo.toml -i libc -e normal,build,dev`
-  - `cargo tree --manifest-path safe/Cargo.toml -i cc -e normal,build,dev`
-- File and directory inspection:
-  - `nl -ba <file> | sed -n ...` across the files listed above
-  - `rg --files safe/src/ffi | sort`
-  - `rg -n '\\bserde\\b|serde_json|toml::|Deserialize|Serialize' safe/src safe/tests safe/tools safe/scripts`
-  - directory and packaging manifest listings under `safe/src`, `safe/include`, `safe/c_shims`, `safe/c_src`, `safe/generated`, `safe/abi`, `safe/scripts`, `safe/tests`, `safe/pkgconfig`, `safe/debian`, `safe/examples`, `safe/doc/man`, `safe/config`, and `safe/tools`
-- Direct-dependency unsafe classification:
-  - `find "${CARGO_HOME:-$HOME/.cargo}/registry/src" -name '<crate>-<version>'`
-  - `rg -n 'forbid\\(unsafe\\_code\\)|deny\\(unsafe\\_code\\)|allow\\(unsafe\\_code\\)|\\bunsafe\\b' <crate-source>`
-  - `nl -ba <crate-source>/src/lib.rs | sed -n ...`
-- Pkg-config contract checks:
-  - `cd safe && ./scripts/render-pkg-config.sh --check`
-  - `cd safe && ./scripts/render-pkg-config.sh --mode build-tree`
+- Evidence and inventory queries:
+  - `python3` manifest audit snippets to confirm `test_write_format_zip_file` and `test_write_format_zip_file_zip64` are present in `safe/generated/test_manifest.json`, `safe/generated/rust_test_manifest.json`, and `safe/tests/libarchive/ported_cases.rs`
+  - `cargo test --test libarchive -- --list | rg 'test_write_format_zip_file|test_write_format_zip_file_zip64|test_write_format_zip_empty_zip64|test_write_format_cpio_empty|test_write_format_cpio_newc|test_acl_pax_posix1e|test_zip_filename_encoding_UTF8|test_ustar_filename_encoding_UTF8_CP866'`
+  - `rg -n 'TODO|FIXME' safe/src safe/tests safe/scripts safe/debian safe/build.rs safe/c_shims -S`
+  - `rg -n '(TODO|FIXME)([: )]|$)' safe/c_src -S`
+  - `find safe -maxdepth 3 \( -type d \( -name bench -o -name benches -o -name benchmark -o -name benchmarks \) -o -type f \( -name '*bench*' -o -name '*benchmark*' -o -name '*hyperfine*' -o -name '*criterion*' -o -name '*perf*' \) \) | sort`
+  - `docker --version && test -e /dev/fuse && echo FUSE_OK`
   - `git diff -- safe/generated/pkgconfig/libarchive.pc`
-- Verifier and sanity-check commands run in this phase:
-  - `cargo build --manifest-path safe/Cargo.toml --release`
-  - `cd safe && ./scripts/check-abi.sh --inventory-only`
-  - `readelf --dyn-syms --wide safe/target/release/libarchive.so | rg ' archive_'`
-  - `git diff --check`
-  - `python3` snippets to confirm the six required headings are present in order and that every referenced repo path in `safe/PORT.md` exists
+- Verification commands that passed:
+  - `./scripts/check-source-compat.sh`
+  - `./scripts/check-abi.sh --strict`
+    Result: `validated ABI: 421 exported symbols, 0 defined version names, SONAME libarchive.so.13`
+  - `./scripts/check-link-compat.sh`
+  - `./scripts/check-rust-test-coverage.sh`
+    Result: `validated 762 Rust test mappings against 802 listed cargo tests`
+  - `./scripts/check-i686-cve.sh`
+  - `cargo test --test cve_regressions`
+    Result: `12 passed; 0 failed`
+  - `bash -lc 'set -euo pipefail; for t in test_write_format_zip_file test_write_format_zip_file_zip64 test_write_format_zip_empty_zip64 test_write_format_cpio_empty test_write_format_cpio_newc test_acl_pax_posix1e test_zip_filename_encoding_UTF8 test_ustar_filename_encoding_UTF8_CP866; do cargo test --test libarchive -- --exact "$t"; done'`
+    Result: all 8 spot-check exact-output-sensitive tests passed
+  - `./scripts/run-upstream-c-tests.sh libarchive advanced_formats test_read_format_rar_filter test_read_format_rar5_loop_bug test_read_format_warc_incomplete test_read_format_zip_mac_metadata test_read_format_rar_multivolume_seek_data`
+    Result: `Tests run: 5`, `Tests failed: 0`, `Skips reported: 0`
 
-### Deferred or not-yet-run items
+### Commands intentionally not rerun
 
-- The remaining-issues validation matrix is intentionally deferred to section 4 work.
-- `safe/generated/pkgconfig/libarchive.pc` changed in the phase-1 baseline only because the checked-out repository path changed; the non-path pkg-config contract was preserved.
-
-### Unavailable tools
-
-- `cargo-geiger` was not installed in this environment (`which cargo-geiger` returned nothing), so this document does not claim any `cargo geiger` output.
+- `./test-original.sh --target safe`
+- the full Docker and FUSE dependent sweep for all 12 packages in `dependents.json`
+- the packaged autopkgtest path driven by `safe/debian/tests/control` and `safe/debian/tests/minitar`
+- full `./scripts/run-upstream-c-tests.sh` reruns outside the targeted five-test advanced-format subset used in this phase
