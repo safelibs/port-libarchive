@@ -1,4 +1,4 @@
-prefix=/home/yans/code/safelibs/ported/libarchive/safe
+prefix=/home/yans/safelibs/pipeline/ports/port-libarchive/safe
 exec_prefix=${prefix}
 libdir=${exec_prefix}/target/release
 includedir=${prefix}/include
