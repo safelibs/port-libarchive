@@ -1,4 +1,8 @@
-/*.deb
-/*.ddeb
-/*.buildinfo
-/*.changes
+/.work/
+/build/
+/dist/
+*.deb
+*.ddeb
+*.buildinfo
+*.changes
+*.log
