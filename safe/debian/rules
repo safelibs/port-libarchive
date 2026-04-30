@@ -1,5 +1,7 @@
 #!/usr/bin/make -f
 
+export DEB_BUILD_OPTIONS := $(DEB_BUILD_OPTIONS) nostrip noautodbgsym
+
 # Aim for the top, adapt if anything should break on the buildds.
 DEB_BUILD_MAINT_OPTIONS=	hardening=+all
 export DEB_BUILD_MAINT_OPTIONS
@@ -26,7 +28,7 @@ override_dh_auto_configure:
 	:
 
 override_dh_auto_build:
-	cargo build --release
+	cargo rustc --release -- -Clinker=clang -Clink-arg=-fuse-ld=lld
 	./scripts/build-c-frontends.sh --build-dir "$(FRONTEND_BUILD_DIR)" --suite all --lib-dir "$(LIB_DIR)"
 	./scripts/render-pkg-config.sh --mode staged-sysroot --prefix /usr --output "$(RENDERED_PKGCONFIG)"
 

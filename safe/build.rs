@@ -556,7 +556,6 @@ pub const LIBARCHIVE_LIBTOOL_AGE: u32 = {libtool_age};
 
     let target = env::var("TARGET").unwrap_or_default();
     if target.contains("linux") {
-        println!("cargo:rustc-cdylib-link-arg=-Wl,--export-dynamic-symbol=archive_set_error");
         println!(
             "cargo:rustc-cdylib-link-arg=-Wl,--version-script={}",
             map_path.display()
